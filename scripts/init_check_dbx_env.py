@@ -749,7 +749,6 @@ def run_resource_model_endpoint() -> bool:
     if endpoints:
         for name, _ in endpoints:
             choices.append(f"Available : {name}")
-    choices.append("enter endpoint name manually")
     for i in range(1, len(inact) + 1):
         choices.append(f"activate [{i}]")
 
@@ -757,9 +756,13 @@ def run_resource_model_endpoint() -> bool:
         print(f"\n  {C}Action?{W}")
         for i, c in enumerate(choices, 1):
             print(f"    {B}[{i}]{W} {c}")
+        print(f"\n    {B}[0]{W} enter endpoint name manually")
         try:
-            raw = input(f"  Choice (1-{len(choices)}): ").strip()
+            raw = input(f"  Choice (0-{len(choices)}): ").strip()
             idx = int(raw)
+            if idx == 0:
+                choice = "enter endpoint name manually"
+                break
             if 1 <= idx <= len(choices):
                 choice = choices[idx - 1]
                 break
