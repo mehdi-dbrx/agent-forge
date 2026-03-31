@@ -116,6 +116,9 @@ def prompt_choice(prompt: str, choices: list[str]) -> str:
             idx = int(raw)
             if 1 <= idx <= len(choices):
                 return choices[idx - 1]
+        except KeyboardInterrupt:
+            print(f"\n\n  {WARN} Interrupted — exiting.{W}\n")
+            sys.exit(130)
         except (ValueError, EOFError):
             pass
         print(f"  {WARN} Invalid choice{W}")
@@ -181,6 +184,9 @@ def run_resource_warehouse() -> bool:
             if 1 <= idx <= len(choices):
                 choice = choices[idx - 1]
                 break
+        except KeyboardInterrupt:
+            print(f"\n\n  {WARN} Interrupted — exiting.{W}\n")
+            sys.exit(130)
         except (ValueError, EOFError):
             pass
         print(f"  {WARN} Invalid choice{W}")
@@ -286,6 +292,9 @@ def run_resource_profile() -> bool:
             if 1 <= idx <= len(choices):
                 choice = choices[idx - 1]
                 break
+        except KeyboardInterrupt:
+            print(f"\n\n  {WARN} Interrupted — exiting.{W}\n")
+            sys.exit(130)
         except (ValueError, EOFError):
             pass
         print(f"  {WARN} Invalid choice{W}")
@@ -766,6 +775,9 @@ def run_resource_model_endpoint() -> bool:
             if 1 <= idx <= len(choices):
                 choice = choices[idx - 1]
                 break
+        except KeyboardInterrupt:
+            print(f"\n\n  {WARN} Interrupted — exiting.{W}\n")
+            sys.exit(130)
         except (ValueError, EOFError):
             pass
         print(f"  {WARN} Invalid choice{W}")
@@ -1459,7 +1471,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print(f"\n  {WARN} Interrupted{W}")
+        print(f"\n\n  {WARN} Interrupted — exiting.{W}\n")
         sys.exit(130)
     except Exception as e:
         print(f"\n  {FAIL} {e}{W}")
