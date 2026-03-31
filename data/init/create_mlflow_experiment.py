@@ -28,7 +28,7 @@ def main() -> None:
         print(f"Failed to connect: {e}", file=sys.stderr)
         sys.exit(1)
 
-    experiment_name = f"/Users/{username}/amadeus-checkin-agents"
+    experiment_name = f"/Users/{username}/agent-forge"
     experiment_id = ""
 
     try:
@@ -36,7 +36,7 @@ def main() -> None:
         experiment_id = str(getattr(exp, "experiment_id", ""))
     except Exception as e:
         if "RESOURCE_ALREADY_EXISTS" in str(e) or "already exists" in str(e).lower():
-            experiment_name = f"/Users/{username}/amadeus-checkin-agents-{secrets.token_hex(4)}"
+            experiment_name = f"/Users/{username}/agent-forge-{secrets.token_hex(4)}"
             try:
                 exp = w.experiments.create_experiment(name=experiment_name)
                 experiment_id = str(getattr(exp, "experiment_id", ""))
