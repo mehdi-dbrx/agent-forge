@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from 'express';
 import { authMiddleware, requireAuth } from '../middleware/auth';
 
 const ALLOWED_TABLES = ['checkin_metrics', 'flights', 'checkin_agents', 'border_officers', 'border_terminals'] as const;
+const EMPTY_TABLES = new Set(['checkin_metrics', 'checkin_agents', 'border_officers', 'border_terminals']);
 
 export const tablesRouter = Router();
 tablesRouter.use(authMiddleware);
@@ -15,6 +16,10 @@ tablesRouter.get('/:tableName', requireAuth, async (req: Request, res: Response)
   const tableName = req.params.tableName;
   if (!ALLOWED_TABLES.includes(tableName as (typeof ALLOWED_TABLES)[number])) {
     return res.status(400).json({ error: 'Table not allowed', allowed: [...ALLOWED_TABLES] });
+  }
+
+  if (EMPTY_TABLES.has(tableName)) {
+    return res.json({ columns: [], rows: [] });
   }
 
   const apiProxy = process.env.API_PROXY || '';
