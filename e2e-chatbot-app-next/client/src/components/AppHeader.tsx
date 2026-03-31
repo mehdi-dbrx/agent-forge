@@ -28,7 +28,7 @@ export function AppHeader() {
       <div className="flex items-center gap-3">
         <SidebarToggle />
         <span className="font-semibold tracking-tight text-foreground text-base">
-          Amadeus Fixed Resource Management
+
         </span>
       </div>
       <div className="flex flex-1 items-center justify-center px-4">

@@ -1,0 +1,46 @@
+bundle:
+  name: agent-forge
+
+resources:
+  experiments:
+    agent_experiment:
+      name: /Users/${workspace.current_user.userName}/${bundle.name}-${bundle.target}
+
+  apps:
+    agent_app:
+      name: "${bundle.target}-agent"
+      description: "LangGraph agent application"
+      source_code_path: ./
+
+      resources:
+        - name: 'experiment'
+          experiment:
+            experiment_id: "${resources.experiments.agent_experiment.id}"
+            permission: 'CAN_MANAGE'
+        - name: 'sql_warehouse'
+          sql_warehouse:
+            id: 'faaf94be091e498f'
+            permission: 'CAN_USE'
+        - name: 'genie_space'
+          genie_space:
+            name: 'PLACEHOLDER_GENIE_NAME'
+            space_id: '01f12ce1bdc716a9aafe66339d8cdea1'
+            permission: 'CAN_RUN'
+        - name: 'serving_endpoint'
+          serving_endpoint:
+            name: 'https://adb-984752964297111.11.azuredatabricks.net/serving-endpoints/databricks-claude-sonnet-4-6/invocations'
+            permission: 'CAN_QUERY'
+
+targets:
+  dev:
+    mode: development
+
+  default:
+    mode: production
+    default: true
+    workspace:
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/default
+    resources:
+      apps:
+        agent_app:
+          name: 'agent-vibe'

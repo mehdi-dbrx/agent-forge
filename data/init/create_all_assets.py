@@ -193,9 +193,8 @@ def verify_assets() -> bool:
 
 
 def main() -> None:
-    proc_dir = ROOT / "data" / "proc"
-    proc_sql = sorted(proc_dir.glob("*.sql"))
-    total_steps = 1 + len(INIT_SQL) + 1 + len(proc_sql) + 1
+    # 1 (schema) + tables + 1 (genie) + 1 (functions) + 1 (procedures) + 1 (verify)
+    total_steps = 1 + len(INIT_SQL) + 1 + 1 + 1 + 1
 
     print(f"\n{BOLD}{M}╔══════════════════════════════════════════╗{W}")
     print(f"{BOLD}{M}║  Create All Assets                       ║{W}")
@@ -218,11 +217,13 @@ def main() -> None:
     if not run_step("create_genie_space", ["uv", "run", "python", "data/init/create_genie_space.py"], step, total_steps):
         sys.exit(1)
 
-    for sql_path in proc_sql:
-        step += 1
-        rel = str(sql_path.relative_to(ROOT))
-        if not run_step(f"run_sql {rel}", ["uv", "run", "python", "data/py/run_sql.py", rel], step, total_steps):
-            sys.exit(1)
+    step += 1
+    if not run_step("create_all_functions", ["uv", "run", "python", "data/init/create_all_functions.py"], step, total_steps):
+        sys.exit(1)
+
+    step += 1
+    if not run_step("create_all_procedures", ["uv", "run", "python", "data/init/create_all_procedures.py"], step, total_steps):
+        sys.exit(1)
 
     step += 1
     section("verification", step, total_steps)

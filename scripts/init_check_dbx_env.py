@@ -1524,6 +1524,55 @@ def main() -> None:
                 print(f"  {DIM}Skipped{W}\n")
                 abort_step()
 
+    # UC Functions
+    section("UC Functions (data/func/)")
+    _func_sql = sorted((ROOT / "data" / "func").glob("*.sql"))
+    _func_ddl = [p for p in _func_sql if re.search(r"\bCREATE\b", p.read_text(), re.IGNORECASE)]
+    if _func_ddl:
+        print(f"  {C}Will CREATE OR REPLACE:{W}")
+        for p in _func_ddl:
+            print(f"    {B}+{W} {p.stem}")
+        if len(_func_sql) > len(_func_ddl):
+            print(f"  {DIM}Skipping {len(_func_sql) - len(_func_ddl)} query template(s) without CREATE{W}")
+    else:
+        print(f"  {DIM}No CREATE function files found in data/func/{W}")
+    try:
+        raw = input(f"\n  {C}Create/replace all UC functions? [y/N]: {W}").strip().lower()
+        if raw in ("y", "yes"):
+            rc = subprocess.call(["uv", "run", "python", "data/init/create_all_functions.py"], cwd=ROOT)
+            if rc == 0:
+                print(f"  {OK} {G}Functions created{W}\n")
+            else:
+                print(f"  {FAIL} create_all_functions exited with {rc}{W}\n")
+        else:
+            print(f"  {DIM}Skipped{W}")
+    except (EOFError, KeyboardInterrupt):
+        print(f"\n\n  {WARN} Interrupted — exiting.{W}\n")
+        sys.exit(130)
+
+    # UC Procedures
+    section("UC Procedures (data/proc/)")
+    _proc_sql = sorted((ROOT / "data" / "proc").glob("*.sql"))
+    if _proc_sql:
+        print(f"  {C}Will CREATE OR REPLACE:{W}")
+        for p in _proc_sql:
+            print(f"    {B}+{W} {p.stem}")
+    else:
+        print(f"  {DIM}No procedure files found in data/proc/{W}")
+    try:
+        raw = input(f"\n  {C}Create/replace all UC procedures? [y/N]: {W}").strip().lower()
+        if raw in ("y", "yes"):
+            rc = subprocess.call(["uv", "run", "python", "data/init/create_all_procedures.py"], cwd=ROOT)
+            if rc == 0:
+                print(f"  {OK} {G}Procedures created{W}\n")
+            else:
+                print(f"  {FAIL} create_all_procedures exited with {rc}{W}\n")
+        else:
+            print(f"  {DIM}Skipped{W}")
+    except (EOFError, KeyboardInterrupt):
+        print(f"\n\n  {WARN} Interrupted — exiting.{W}\n")
+        sys.exit(130)
+
     run_resource_genie()
     run_resource_mlflow()
     run_resource_model_endpoint()

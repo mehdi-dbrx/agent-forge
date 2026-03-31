@@ -21,6 +21,14 @@ sys.path.insert(0, str(ROOT))
 from dotenv import load_dotenv
 load_dotenv(ROOT / ".env.local")
 
+# ANSI
+R, G, Y, B, C, W = "\033[31m", "\033[32m", "\033[33m", "\033[34m", "\033[36m", "\033[0m"
+BOLD, DIM = "\033[1m", "\033[2m"
+OK  = f"{G}✓{W}"
+WARN = f"{Y}⚠{W}"
+FAIL = f"{R}✗{W}"
+ARR = f"{C}←{W}"
+
 DATABRICKS_YML_TEMPLATE = """\
 bundle:
   name: agent-forge
@@ -101,17 +109,19 @@ env:
 def init_databricks_yml(yml_path: Path, dry_run: bool) -> None:
     if yml_path.exists():
         return
-    print(f"databricks.yml not found — creating from template at {yml_path}")
+    print(f"  {WARN} {BOLD}databricks.yml{W} not found — creating from template")
     if not dry_run:
         yml_path.write_text(DATABRICKS_YML_TEMPLATE)
+        print(f"  {OK} Created {C}{yml_path}{W}")
 
 
 def init_app_yaml(app_yml: Path, dry_run: bool) -> None:
     if app_yml.exists():
         return
-    print(f"app.yaml not found — creating from template at {app_yml}")
+    print(f"  {WARN} {BOLD}app.yaml{W} not found — creating from template")
     if not dry_run:
         app_yml.write_text(APP_YAML_TEMPLATE)
+        print(f"  {OK} Created {C}{app_yml}{W}")
 
 
 def _find_production_target(content: str) -> str | None:
@@ -124,6 +134,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Sync databricks.yml from .env.local")
     parser.add_argument("--dry-run", action="store_true", help="Print changes without writing")
     args = parser.parse_args()
+
+    print(f"\n{BOLD}{B}╔══════════════════════════════════════════╗{W}")
+    print(f"{BOLD}{B}║  Sync databricks.yml / app.yaml          ║{W}")
+    print(f"{BOLD}{B}╚══════════════════════════════════════════╝{W}")
 
     yml_path = ROOT / "databricks.yml"
     app_yml = ROOT / "app.yaml"
@@ -149,7 +163,7 @@ def main() -> int:
                 content,
                 count=1,
             )
-            changes.append(f"  sql_warehouse.id <- DATABRICKS_WAREHOUSE_ID={wh_id}")
+            changes.append(("sql_warehouse.id", "DATABRICKS_WAREHOUSE_ID", wh_id))
 
     # genie_space.space_id <- PROJECT_GENIE_CHECKIN
     genie_id = os.environ.get("PROJECT_GENIE_CHECKIN", "").strip()
@@ -157,7 +171,7 @@ def main() -> int:
         m = re.search(r"genie_space:.*?space_id: '([^']*)'", content, re.DOTALL)
         if m and m.group(1) != genie_id:
             content = re.sub(r"space_id: '[^']*'", f"space_id: '{genie_id}'", content, count=1)
-            changes.append(f"  genie_space.space_id <- PROJECT_GENIE_CHECKIN={genie_id}")
+            changes.append(("genie_space.space_id", "PROJECT_GENIE_CHECKIN", genie_id))
 
     # serving_endpoint.name <- AGENT_MODEL_ENDPOINT
     endpoint = os.environ.get("AGENT_MODEL_ENDPOINT", "").strip()
@@ -170,7 +184,7 @@ def main() -> int:
                 content,
                 count=1,
             )
-            changes.append(f"  serving_endpoint.name <- AGENT_MODEL_ENDPOINT={endpoint}")
+            changes.append(("serving_endpoint.name", "AGENT_MODEL_ENDPOINT", endpoint))
 
     # production target app name <- DBX_APP_NAME
     app_name = os.environ.get("DBX_APP_NAME", "").strip()
@@ -188,7 +202,7 @@ def main() -> int:
                     count=1,
                     flags=re.DOTALL,
                 )
-                changes.append(f"  targets.{target} app name <- DBX_APP_NAME={app_name}")
+                changes.append((f"targets.{target} app name", "DBX_APP_NAME", app_name))
 
     # app.yaml: AGENT_MODEL_ENDPOINT, PROJECT_UNITY_CATALOG_SCHEMA, DATABRICKS_WAREHOUSE_ID
     if app_yml.exists():
@@ -212,25 +226,29 @@ def main() -> int:
                     count=1,
                 )
                 app_changed = True
-                changes.append(f"  app.yaml {env_name} <- {value}")
+                changes.append((f"app.yaml  {env_name}", None, value))
 
         if app_changed and not args.dry_run:
             app_yml.write_text(app_content)
 
     if not changes:
-        print("databricks.yml and app.yaml already in sync with .env.local")
+        print(f"  {OK} {G}databricks.yml{W} and {G}app.yaml{W} already in sync with {C}.env.local{W}")
         return 0
 
-    print("Syncing from .env.local:")
-    for c in changes:
-        print(c)
+    print(f"\n{BOLD}Syncing from {C}.env.local{W}{BOLD}:{W}\n")
+    for key, env_var, val in changes:
+        display_val = val if len(val) <= 60 else val[:57] + "..."
+        if env_var:
+            print(f"  {OK}  {BOLD}{key}{W}  {ARR}  {DIM}{env_var}{W}={C}{display_val}{W}")
+        else:
+            print(f"  {OK}  {BOLD}{key}{W}  {ARR}  {C}{display_val}{W}")
 
     if args.dry_run:
-        print("\n[--dry-run] Not writing files")
+        print(f"\n  {WARN} {DIM}--dry-run: files not written{W}")
         return 0
 
     yml_path.write_text(content)
-    print(f"\nUpdated {yml_path}")
+    print(f"\n  {OK} {G}Written:{W} {C}{yml_path.relative_to(ROOT)}{W}")
     return 0
 
 

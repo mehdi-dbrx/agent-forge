@@ -1,0 +1,24 @@
+command: ["uv", "run", "start-app"]
+# Databricks Apps listens by default on port 8000
+
+env:
+  - name: MLFLOW_TRACKING_URI
+    value: "databricks"
+  - name: MLFLOW_REGISTRY_URI
+    value: "databricks-uc"
+  - name: API_PROXY
+    value: "http://localhost:8000/invocations"
+  - name: CHAT_APP_PORT
+    value: "3000"
+  - name: TASK_EVENTS_URL
+    value: "http://127.0.0.1:3000"
+  - name: CHAT_PROXY_TIMEOUT_SECONDS
+    value: "300"
+  - name: MLFLOW_EXPERIMENT_ID
+    valueFrom: "experiment"
+  - name: AGENT_MODEL_ENDPOINT
+    value: "https://adb-984752964297111.11.azuredatabricks.net/serving-endpoints/databricks-claude-sonnet-4-6/invocations"
+  - name: PROJECT_UNITY_CATALOG_SCHEMA
+    value: "vibe.main"
+  - name: DATABRICKS_WAREHOUSE_ID
+    value: "faaf94be091e498f"
