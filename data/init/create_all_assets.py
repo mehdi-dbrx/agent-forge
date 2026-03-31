@@ -125,10 +125,10 @@ def verify_assets() -> bool:
     from dotenv import load_dotenv
 
     load_dotenv(ROOT / ".env.local", override=True)
-    spec = os.environ.get("AMADEUS_UNITY_CATALOG_SCHEMA", "").strip()
+    spec = os.environ.get("PROJECT_UNITY_CATALOG_SCHEMA", "").strip()
     if "." not in spec:
-        print(f"  {FAIL} AMADEUS_UNITY_CATALOG_SCHEMA not set{W}")
-        _log_plain("FAIL verify: AMADEUS_UNITY_CATALOG_SCHEMA not set")
+        print(f"  {FAIL} PROJECT_UNITY_CATALOG_SCHEMA not set{W}")
+        _log_plain("FAIL verify: PROJECT_UNITY_CATALOG_SCHEMA not set")
         return False
 
     catalog, schema = spec.split(".", 1)
@@ -173,7 +173,7 @@ def verify_assets() -> bool:
                 ok = False
 
         # Genie space (if env set)
-        space_id = os.environ.get("AMADEUS_GENIE_CHECKIN", "").strip()
+        space_id = os.environ.get("PROJECT_GENIE_CHECKIN", "").strip()
         if space_id:
             try:
                 space = w.genie.get_space(space_id=space_id)

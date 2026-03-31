@@ -788,12 +788,14 @@ def verify_app_grants() -> tuple[bool, list[str]]:
     """
     from tools.sql_executor import execute_query, get_warehouse
 
-    app_name = os.environ.get("DBX_APP_NAME", "agent-airops-checkin").strip()
+    app_name = os.environ.get("DBX_APP_NAME", "").strip()
     spec = os.environ.get("PROJECT_UNITY_CATALOG_SCHEMA", "").strip()
     wh_id = os.environ.get("DATABRICKS_WAREHOUSE_ID", "").strip()
 
     issues: list[str] = []
 
+    if not app_name:
+        return False, ["DBX_APP_NAME not set"]
     if "." not in spec:
         return False, ["PROJECT_UNITY_CATALOG_SCHEMA not set (need catalog.schema)"]
     catalog, schema_name = spec.split(".", 1)
@@ -807,7 +809,7 @@ def verify_app_grants() -> tuple[bool, list[str]]:
         try:
             app = w.apps.get(name=app_name)
         except Exception as e:
-            return False, [f"App '{app_name}' not found: {e}"]
+            return False, [f"App '{app_name}' not yet deployed — grants will be applied after deployment, then re-run to verify"]
 
         sp_id = getattr(app, "service_principal_client_id", None) or getattr(
             app, "oauth2_app_client_id", None
@@ -1169,7 +1171,7 @@ def run_check_only() -> None:
     grants_ok, grants_issues = verify_app_grants()
     grants_failed = not grants_ok
     if grants_ok:
-        app_name = os.environ.get("DBX_APP_NAME", "agent-airops-checkin").strip()
+        app_name = os.environ.get("DBX_APP_NAME", "").strip()
         print(f"  {OK} UC tables, routines, warehouse {C}({app_name}){W}")
     else:
         for issue in grants_issues:
@@ -1298,6 +1300,7 @@ def main() -> None:
 
     run_resource_genie()
     run_resource_mlflow()
+    run_resource("DBX_APP_NAME", "DBX_APP_NAME", lambda: (True, os.environ.get("DBX_APP_NAME", "")), "my-app-name")
 
     section("Done")
     print(f"  {OK} {G}Configuration saved to {ENV_FILE}{W}\n")

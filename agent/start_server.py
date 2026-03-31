@@ -19,9 +19,13 @@ from fastapi import HTTPException, Request
 from tools.get_current_time import get_next_time  # noqa: E402
 from tools.sql_executor import execute_query, get_warehouse  # noqa: E402
 
-ALLOWED_TABLES = frozenset(
-    ["checkin_metrics", "flights", "checkin_agents", "border_officers", "border_terminals"]
-)
+def _get_allowed_tables() -> frozenset[str]:
+    csv_dir = Path(__file__).resolve().parents[1] / "data" / "csv"
+    if not csv_dir.exists():
+        return frozenset()
+    return frozenset(p.stem.replace("-", "_") for p in csv_dir.glob("*.csv"))
+
+ALLOWED_TABLES = _get_allowed_tables()
 
 
 @app.get("/tables/{table_name}")
@@ -32,11 +36,11 @@ def get_table(table_name: str):
             status_code=400,
             detail={"error": "Table not allowed", "allowed": list(ALLOWED_TABLES)},
         )
-    schema_spec = os.environ.get("AMADEUS_UNITY_CATALOG_SCHEMA", "").strip()
+    schema_spec = os.environ.get("PROJECT_UNITY_CATALOG_SCHEMA", "").strip()
     if not schema_spec or "." not in schema_spec:
         raise HTTPException(
             status_code=502,
-            detail="AMADEUS_UNITY_CATALOG_SCHEMA not set (catalog.schema)",
+            detail="PROJECT_UNITY_CATALOG_SCHEMA not set (catalog.schema)",
         )
     catalog, schema = schema_spec.split(".", 1)
     full_table = (

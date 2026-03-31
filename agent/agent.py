@@ -48,7 +48,7 @@ sp_workspace_client = WorkspaceClient()
 def init_mcp_client(workspace_client: WorkspaceClient) -> DatabricksMultiServerMCPClient:
     host_name = get_databricks_host_from_env()
     servers = []
-    genie_checkin_id = os.environ.get("AMADEUS_GENIE_CHECKIN", "").strip()
+    genie_checkin_id = os.environ.get("PROJECT_GENIE_CHECKIN", "").strip()
     if genie_checkin_id:
         servers.append(
             DatabricksMCPServer(
