@@ -5,7 +5,7 @@ from mlflow.genai.agent_server import AgentServer, setup_mlflow_git_based_versio
 load_dotenv(dotenv_path=".env.local", override=True)
 
 # Need to import the agent to register the functions with the server
-import agent_server.agent  # noqa: E402
+import agent.agent  # noqa: E402
 
 server = AgentServer("ResponsesAgent", enable_chat_proxy=True)
 
@@ -88,4 +88,4 @@ setup_mlflow_git_based_version_tracking()
 
 
 def main():
-    server.run(app_import_string="agent_server.start_server:app")
+    server.run(app_import_string="agent.start_server:app")

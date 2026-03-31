@@ -14,8 +14,8 @@ from mlflow.types.responses import (
     to_chat_completions_input,
 )
 
-from agent_server.genie_capture import wrap_for_genie_capture
-from agent_server.utils import (
+from agent.genie_capture import wrap_for_genie_capture
+from agent.utils import (
     get_databricks_host_from_env,
     process_agent_astream_events,
 )

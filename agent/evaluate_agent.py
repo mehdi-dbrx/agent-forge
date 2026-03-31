@@ -10,7 +10,7 @@ from mlflow.types.responses import ResponsesAgentRequest, ResponsesAgentResponse
 load_dotenv(dotenv_path=".env.local", override=True)
 
 # need to import agent for our @invoke-registered function to be found
-from agent_server import agent  # noqa: F401
+from agent import agent  # noqa: F401
 
 # Create your evaluation dataset
 # Refer to documentation for evaluations:
