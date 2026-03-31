@@ -56,11 +56,17 @@ wait_for() {
 # Build Node server (ensures latest routes, e.g. /api/tables)
 (cd e2e-chatbot-app-next && npm run build:server) || true
 
+PYTHON="$ROOT/.venv/bin/python"
+if [[ ! -x "$PYTHON" ]]; then
+  echo "Error: .venv not found. Run 'python -m venv .venv && .venv/bin/pip install -e .' first."
+  exit 1
+fi
+
 # Verify backend imports before starting (fail fast on SyntaxError etc.)
-uv run python -c "from agent.start_server import app" || { echo "Backend import failed. Check backend.log or run: uv run python agent/start_server.py"; exit 1; }
+"$PYTHON" -c "from agent.start_server import app" || { echo "Backend import failed. Check backend.log."; exit 1; }
 
 # Start each process, capture the subshell PID
-uv run python -m uvicorn agent.start_server:app --host 0.0.0.0 --port 8000 --reload >> "$ROOT/backend.log" 2>&1 &
+"$PYTHON" -m uvicorn agent.start_server:app --host 0.0.0.0 --port 8000 --reload >> "$ROOT/backend.log" 2>&1 &
 BACKEND_PID=$!
 wait_for "http://127.0.0.1:8000/health" "Backend" || true
 

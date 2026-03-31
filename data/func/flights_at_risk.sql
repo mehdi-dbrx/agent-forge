@@ -1,0 +1,2 @@
+-- Flights at risk of delay: flights checking in through zone departing within time window. Params: {zone}, {time_start}, {time_end}
+SELECT `flight_number`, `departure_time` FROM __SCHEMA_QUALIFIED__.`flights` WHERE `zone` = '{zone}' AND `departure_time` >= TIMESTAMP('{time_start}') AND `departure_time` < TIMESTAMP('{time_end}') AND `flight_number` IS NOT NULL AND `departure_time` IS NOT NULL AND `zone` IS NOT NULL;
