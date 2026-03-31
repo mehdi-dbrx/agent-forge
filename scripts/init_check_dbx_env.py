@@ -225,17 +225,122 @@ def run_resource_warehouse() -> bool:
     return True
 
 
-def run_resource_genie() -> bool:
-    """Interactive config for AMADEUS_GENIE_CHECKIN with Genie space list as choices."""
+def run_resource_profile() -> bool:
+    """Interactive config for DATABRICKS_CONFIG_PROFILE with CLI profile list as choices."""
     from dotenv import load_dotenv
     load_dotenv(ENV_FILE, override=True)
 
-    key = "AMADEUS_GENIE_CHECKIN"
+    key = "DATABRICKS_CONFIG_PROFILE"
     active, inactive, _ = parse_env_file(ENV_FILE)
     cur = active.get(key, "").strip()
     inact = inactive.get(key, [])
 
-    section("AMADEUS_GENIE_CHECKIN")
+    section("DATABRICKS_CONFIG_PROFILE")
+
+    profiles = list_dbx_profiles()
+    if profiles:
+        for name, valid in profiles:
+            status = f"{G}[valid]{W}" if valid else f"{DIM}[invalid]{W}"
+            print(f"  {C}Available :{W} {name} {status}")
+    else:
+        print(f"  {DIM}No profiles found (databricks auth profiles){W}")
+
+    ok, msg = False, ""
+    if cur:
+        load_env_for_key(key, cur)
+        ok, msg = verify_host_token()
+        if ok:
+            print(f"  {OK} Active: {C}{cur}{W} {G}({msg}){W}")
+        else:
+            print(f"  {FAIL} Active: {C}{cur}{W} {R}({msg}){W}")
+    else:
+        print(f"  {WARN} Not configured{W}")
+
+    if inact:
+        print(f"  {DIM}Inactive:{W}")
+        for i, (_, val) in enumerate(inact, 1):
+            print(f"    {DIM}[{i}] {val}{W}")
+
+    choices: list[str] = []
+    if cur and ok:
+        choices.append("keep")
+    valid_profiles = [(n, v) for n, v in profiles if v]
+    invalid_profiles = [(n, v) for n, v in profiles if not v]
+    for name, _ in valid_profiles:
+        choices.append(f"[+] {name}")
+    for name, _ in invalid_profiles:
+        choices.append(f"[-] {name}")
+    choices.append("enter manually")
+    for i in range(1, len(inact) + 1):
+        choices.append(f"activate [{i}]")
+    if not choices:
+        choices = ["enter manually"]
+
+    while True:
+        print(f"\n  {C}Action?{W}")
+        for i, c in enumerate(choices, 1):
+            print(f"    {B}[{i}]{W} {c}")
+        try:
+            raw = input(f"  Choice (1-{len(choices)}): ").strip()
+            idx = int(raw)
+            if 1 <= idx <= len(choices):
+                choice = choices[idx - 1]
+                break
+        except (ValueError, EOFError):
+            pass
+        print(f"  {WARN} Invalid choice{W}")
+
+    if choice == "keep":
+        return True
+    if choice.startswith("activate ["):
+        num = int(choice.split("[")[1].rstrip("]"))
+        if 1 <= num <= len(inact):
+            line_idx = inact[num - 1][0]
+            comment_active_for_key(ENV_FILE, key)
+            uncomment_line(ENV_FILE, line_idx)
+            load_dotenv(ENV_FILE, override=True)
+            load_env_for_key(key, inact[num - 1][1])
+            ok, msg = verify_host_token()
+            if ok:
+                print(f"  {OK} Activated and verified: {msg}{W}")
+            else:
+                print(f"  {FAIL} Activated but verify failed: {msg}{W}")
+                abort_step()
+        return True
+
+    # Pick from profile list or enter manually
+    profile_choices = [f"[+] {n}" for n, _ in valid_profiles] + [f"[-] {n}" for n, _ in invalid_profiles]
+    if choice in profile_choices:
+        val = choice.split("] ", 1)[1]
+    else:
+        val = input(f"  Enter profile name: ").strip()
+    if not val:
+        return True
+    if cur:
+        comment_active_for_key(ENV_FILE, key)
+    write_env_entry(ENV_FILE, key, val)
+    load_dotenv(ENV_FILE, override=True)
+    load_env_for_key(key, val)
+    ok, msg = verify_host_token()
+    if ok:
+        print(f"  {OK} Set and verified: {msg}{W}")
+    else:
+        print(f"  {FAIL} Set but verify failed: {msg}{W}")
+        abort_step()
+    return True
+
+
+def run_resource_genie() -> bool:
+    """Interactive config for PROJECT_GENIE_CHECKIN with Genie space list as choices."""
+    from dotenv import load_dotenv
+    load_dotenv(ENV_FILE, override=True)
+
+    key = "PROJECT_GENIE_CHECKIN"
+    active, inactive, _ = parse_env_file(ENV_FILE)
+    cur = active.get(key, "").strip()
+    inact = inactive.get(key, [])
+
+    section("PROJECT_GENIE_CHECKIN")
 
     spaces = list_genie_spaces()
     if spaces:
@@ -384,6 +489,25 @@ def list_warehouses() -> list[tuple[str, str]]:
         return []
 
 
+def list_dbx_profiles() -> list[tuple[str, bool]]:
+    """Return [(name, valid), ...] from `databricks auth profiles`."""
+    try:
+        result = subprocess.run(
+            ["databricks", "auth", "profiles"],
+            capture_output=True, text=True, timeout=10,
+        )
+        profiles = []
+        for line in result.stdout.splitlines()[1:]:  # skip header
+            parts = line.split()
+            if len(parts) >= 3:
+                name = parts[0]
+                valid = parts[-1].upper() == "YES"
+                profiles.append((name, valid))
+        return profiles
+    except Exception:
+        return []
+
+
 def list_genie_spaces() -> list[tuple[str, str]]:
     """Return [(title, space_id), ...] for Genie spaces in workspace."""
     try:
@@ -392,7 +516,7 @@ def list_genie_spaces() -> list[tuple[str, str]]:
         r = w.genie.list_spaces()
         spaces = getattr(r, "spaces", []) or []
         return [
-            (getattr(s, "title", "") or "?", getattr(s, "space_id", None) or getattr(s, "id", ""))
+            (getattr(s, "title", "") or "?", str(getattr(s, "space_id", None) or getattr(s, "id", "") or ""))
             for s in spaces
         ]
     except Exception:
@@ -404,7 +528,7 @@ TABLES_TO_VERIFY = ["checkin_metrics", "flights", "checkin_agents", "border_offi
 
 def print_asset_checks() -> None:
     """Print catalog, schema, tables, volume checks (same as create_all_assets, excluding Genie)."""
-    spec = os.environ.get("AMADEUS_UNITY_CATALOG_SCHEMA", "").strip()
+    spec = os.environ.get("PROJECT_UNITY_CATALOG_SCHEMA", "").strip()
     if "." not in spec:
         return
     catalog, schema_name = spec.split(".", 1)
@@ -434,7 +558,7 @@ def print_asset_checks() -> None:
 
 
 def verify_schema() -> tuple[bool, str]:
-    spec = os.environ.get("AMADEUS_UNITY_CATALOG_SCHEMA", "").strip()
+    spec = os.environ.get("PROJECT_UNITY_CATALOG_SCHEMA", "").strip()
     if "." not in spec:
         return False, "need catalog.schema"
     try:
@@ -448,9 +572,9 @@ def verify_schema() -> tuple[bool, str]:
 
 def verify_tables() -> tuple[bool, str]:
     """Verify checkin_metrics, flights, checkin_agents, border_officers, border_terminals exist. Return (ok, msg)."""
-    spec = os.environ.get("AMADEUS_UNITY_CATALOG_SCHEMA", "").strip()
+    spec = os.environ.get("PROJECT_UNITY_CATALOG_SCHEMA", "").strip()
     if "." not in spec:
-        return False, "AMADEUS_UNITY_CATALOG_SCHEMA not set"
+        return False, "PROJECT_UNITY_CATALOG_SCHEMA not set"
     catalog, schema_name = spec.split(".", 1)
     full_schema = f"{catalog}.{schema_name}"
     tables = TABLES_TO_VERIFY
@@ -471,7 +595,7 @@ def verify_tables() -> tuple[bool, str]:
 
 
 def verify_genie() -> tuple[bool, str]:
-    sid = os.environ.get("AMADEUS_GENIE_CHECKIN", "").strip()
+    sid = os.environ.get("PROJECT_GENIE_CHECKIN", "").strip()
     if not sid:
         return False, "not set"
     try:
@@ -597,13 +721,13 @@ def verify_app_grants() -> tuple[bool, list[str]]:
     from tools.sql_executor import execute_query, get_warehouse
 
     app_name = os.environ.get("DBX_APP_NAME", "agent-airops-checkin").strip()
-    spec = os.environ.get("AMADEUS_UNITY_CATALOG_SCHEMA", "").strip()
+    spec = os.environ.get("PROJECT_UNITY_CATALOG_SCHEMA", "").strip()
     wh_id = os.environ.get("DATABRICKS_WAREHOUSE_ID", "").strip()
 
     issues: list[str] = []
 
     if "." not in spec:
-        return False, ["AMADEUS_UNITY_CATALOG_SCHEMA not set (need catalog.schema)"]
+        return False, ["PROJECT_UNITY_CATALOG_SCHEMA not set (need catalog.schema)"]
     catalog, schema_name = spec.split(".", 1)
 
     try:
@@ -711,7 +835,7 @@ def run_resource(
     inact = inactive.get(key, [])
 
     section(label)
-    if key == "AMADEUS_UNITY_CATALOG_SCHEMA":
+    if key == "PROJECT_UNITY_CATALOG_SCHEMA":
         load_env_for_key(key, cur or "")
         print_asset_checks()
     ok, msg = False, ""
@@ -735,28 +859,28 @@ def run_resource(
     KEEP_AND_CREATE_ASSETS = "keep + create all missing assets"
     choices: list[str] = []
     tables_ok = True
-    if key == "AMADEUS_UNITY_CATALOG_SCHEMA" and cur:
+    if key == "PROJECT_UNITY_CATALOG_SCHEMA" and cur:
         tables_ok, _ = verify_tables()
     if cur and ok:
-        if key == "AMADEUS_UNITY_CATALOG_SCHEMA":
+        if key == "PROJECT_UNITY_CATALOG_SCHEMA":
             choices = ["keep", ADD_NEW_CATALOG]
             if not tables_ok:
                 choices.insert(1, KEEP_AND_CREATE_ASSETS)
         else:
             choices = ["keep", "add new"]
-    elif cur and key == "AMADEUS_UNITY_CATALOG_SCHEMA":
+    elif cur and key == "PROJECT_UNITY_CATALOG_SCHEMA":
         choices = [CREATE_ASSETS_NOW, ADD_NEW_CATALOG]
     elif cur:
         choices = ["add new"]
     else:
-        choices = [ADD_NEW_CATALOG] if key == "AMADEUS_UNITY_CATALOG_SCHEMA" else ["enter new"]
+        choices = [ADD_NEW_CATALOG] if key == "PROJECT_UNITY_CATALOG_SCHEMA" else ["enter new"]
     for i, (_, val) in enumerate(inact, 1):
         choices.append(f"activate [{i}]")
     if not choices:
         choices = ["enter new"]
 
     # Schema invalid and only add-new-catalog (no cur) → run create_all_assets (mandatory)
-    if key == "AMADEUS_UNITY_CATALOG_SCHEMA" and choices == [ADD_NEW_CATALOG]:
+    if key == "PROJECT_UNITY_CATALOG_SCHEMA" and choices == [ADD_NEW_CATALOG]:
         hint = " (catalog.schema)"
         val = input(f"  Enter {key}{hint}: ").strip()
         if not val:
@@ -779,7 +903,7 @@ def run_resource(
         return True
 
     # Genie invalid and only "add new" → branch to asset creation dialog
-    ASSET_KEYS = ("AMADEUS_GENIE_CHECKIN",)
+    ASSET_KEYS = ("PROJECT_GENIE_CHECKIN",)
     if key in ASSET_KEYS and choices == ["add new"]:
         try:
             raw = input(f"  {C}Create project assets now? [y/N]: {W}").strip().lower()
@@ -805,7 +929,7 @@ def run_resource(
 
     if choice == "keep":
         return True
-    if choice == KEEP_AND_CREATE_ASSETS and key == "AMADEUS_UNITY_CATALOG_SCHEMA" and cur:
+    if choice == KEEP_AND_CREATE_ASSETS and key == "PROJECT_UNITY_CATALOG_SCHEMA" and cur:
         print(f"  {B}Creating tables, procedures, Genie ...{W}\n")
         rc = subprocess.call(
             ["uv", "run", "python", "data/init/create_all_assets.py"],
@@ -817,7 +941,7 @@ def run_resource(
             print(f"\n  {FAIL} Asset creation exited with {rc}{W}\n")
             abort_step()
         return True
-    if choice == CREATE_ASSETS_NOW and key == "AMADEUS_UNITY_CATALOG_SCHEMA" and cur:
+    if choice == CREATE_ASSETS_NOW and key == "PROJECT_UNITY_CATALOG_SCHEMA" and cur:
         print(f"  {B}Creating schema, tables, Genie ...{W}\n")
         rc = subprocess.call(
             ["uv", "run", "python", "data/init/create_all_assets.py"],
@@ -829,7 +953,7 @@ def run_resource(
             print(f"\n  {FAIL} Asset creation exited with {rc}{W}\n")
             abort_step()
         return True
-    if choice == ADD_NEW_CATALOG and key == "AMADEUS_UNITY_CATALOG_SCHEMA":
+    if choice == ADD_NEW_CATALOG and key == "PROJECT_UNITY_CATALOG_SCHEMA":
         hint = " (catalog.schema)"
         val = input(f"  Enter {key}{hint}: ").strip()
         if not val:
@@ -930,13 +1054,13 @@ def run_check_only() -> None:
     uc_failed = False
     section("Unity Catalog")
     ok, msg = verify_schema()
-    print(f"  {OK if ok else FAIL} AMADEUS_UNITY_CATALOG_SCHEMA {C}({msg}){W}")
+    print(f"  {OK if ok else FAIL} PROJECT_UNITY_CATALOG_SCHEMA {C}({msg}){W}")
     if not ok:
         all_ok = False
         uc_failed = True
 
     # Tables (tree format)
-    spec = os.environ.get("AMADEUS_UNITY_CATALOG_SCHEMA", "").strip()
+    spec = os.environ.get("PROJECT_UNITY_CATALOG_SCHEMA", "").strip()
     tables = ["checkin_metrics", "flights", "checkin_agents", "border_officers", "border_terminals"]
     if "." in spec:
         catalog, schema_name = spec.split(".", 1)
@@ -963,7 +1087,7 @@ def run_check_only() -> None:
 
     section("Genie")
     ok, msg = verify_genie()
-    print(f"  {OK if ok else FAIL} AMADEUS_GENIE_CHECKIN {C}({msg}){W}")
+    print(f"  {OK if ok else FAIL} PROJECT_GENIE_CHECKIN {C}({msg}){W}")
     if not ok:
         all_ok = False
 
@@ -1056,22 +1180,22 @@ def main() -> None:
     if token:
         run_resource("DATABRICKS_TOKEN", "DATABRICKS_TOKEN", lambda: verify_host_token(), "dapi...")
     elif profile:
-        run_resource("DATABRICKS_CONFIG_PROFILE", "DATABRICKS_CONFIG_PROFILE", lambda: verify_host_token(), "profile name")
+        run_resource_profile()
     else:
         choices = ["DATABRICKS_TOKEN", "DATABRICKS_CONFIG_PROFILE"]
         c = prompt_choice("Which auth?", choices)
         if "TOKEN" in c:
             run_resource("DATABRICKS_TOKEN", "DATABRICKS_TOKEN", lambda: verify_host_token(), "dapi...")
         else:
-            run_resource("DATABRICKS_CONFIG_PROFILE", "DATABRICKS_CONFIG_PROFILE", lambda: verify_host_token(), "profile name")
+            run_resource_profile()
 
     load_dotenv(ENV_FILE, override=True)
     run_resource_warehouse()
-    run_resource("AMADEUS_UNITY_CATALOG_SCHEMA", "AMADEUS_UNITY_CATALOG_SCHEMA", verify_schema, "catalog.schema")
+    run_resource("PROJECT_UNITY_CATALOG_SCHEMA", "PROJECT_UNITY_CATALOG_SCHEMA", verify_schema, "catalog.schema")
 
     # Tables check: if schema OK but tables missing → offer asset creation
     load_dotenv(ENV_FILE, override=True)
-    if os.environ.get("AMADEUS_UNITY_CATALOG_SCHEMA"):
+    if os.environ.get("PROJECT_UNITY_CATALOG_SCHEMA"):
         ok, msg = verify_tables()
         if not ok:
             section("Tables (checkin_metrics, flights, checkin_agents, border_officers, border_terminals)")
