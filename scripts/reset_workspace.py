@@ -161,7 +161,7 @@ def main() -> int:
             print(f"  {SKIP} Would delete Genie space: {genie_id}")
         else:
             try:
-                w.genie.delete_space(space_id=genie_id)
+                w.genie.trash_space(space_id=genie_id)
                 print(f"  {OK} Deleted Genie space: {C}{genie_id}{W}")
             except Exception as e:
                 print(f"  {FAIL} Genie space delete failed: {e}")
