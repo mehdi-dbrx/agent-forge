@@ -1,14 +1,17 @@
 import { useEffect, useState, useCallback } from 'react'
 import { ReactFlowProvider, type Node, type NodeMouseHandler } from '@xyflow/react'
+import { Settings2 } from 'lucide-react'
 import { ArchCanvas } from './components/ArchCanvas'
 import { Legend } from './components/Legend'
 import { NodeDetailPanel } from './components/NodeDetailPanel'
+import { EnvEditor } from './components/EnvEditor'
 import type { GraphResponse, ArchNode, ArchNodeData } from './types'
 
 export default function App() {
   const [graph, setGraph]         = useState<GraphResponse | null>(null)
   const [error, setError]         = useState<string | null>(null)
   const [selected, setSelected]   = useState<ArchNode | null>(null)
+  const [envOpen, setEnvOpen]     = useState(false)
 
   useEffect(() => {
     fetch('/api/graph')
@@ -21,10 +24,13 @@ export default function App() {
   }, [])
 
   const onNodeClick: NodeMouseHandler<Node<ArchNodeData>> = useCallback((_event, node) => {
+    setEnvOpen(false)
     setSelected(node as ArchNode)
   }, [])
 
   const closePanel = useCallback(() => setSelected(null), [])
+  const openEnv    = useCallback(() => { setSelected(null); setEnvOpen(true) }, [])
+  const closeEnv   = useCallback(() => setEnvOpen(false), [])
 
   if (error) {
     return (
@@ -52,9 +58,21 @@ export default function App() {
           <span className="text-sm font-semibold text-zinc-800">Agent Forge</span>
           <span className="text-xs text-zinc-400">— Architecture</span>
         </div>
-        <span className="text-[10px] text-zinc-400">
-          {graph.meta.projectRoot.split('/').slice(-1)[0]}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] text-zinc-400">
+            {graph.meta.projectRoot.split('/').slice(-1)[0]}
+          </span>
+          <button
+            onClick={envOpen ? closeEnv : openEnv}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors
+              ${envOpen
+                ? 'bg-blue-100 text-blue-700'
+                : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'}`}
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+            .env
+          </button>
+        </div>
       </div>
 
       {/* Canvas */}
@@ -71,6 +89,9 @@ export default function App() {
 
       {/* Detail panel */}
       <NodeDetailPanel node={selected} onClose={closePanel} />
+
+      {/* Env editor */}
+      <EnvEditor open={envOpen} onClose={closeEnv} />
     </div>
   )
 }

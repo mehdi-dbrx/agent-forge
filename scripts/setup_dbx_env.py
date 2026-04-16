@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
-"""Interactive init/check of Databricks resources in .env.local.
+"""Interactive setup & check of Databricks resources in .env.local.
 
 For each resource: if not configured, prompt to enter. If configured, verify and offer
 to keep, add new, or activate an inactive entry. Inactive (commented) entries are
 parsed and shown; user can activate [1], [2], etc.
 
 Usage:
-  uv run python scripts/init_check_dbx_env.py       # interactive init
-  uv run python scripts/init_check_dbx_env.py --check   # quick check only
+  uv run python scripts/setup_dbx_env.py         # interactive setup
+  uv run python scripts/setup_dbx_env.py --check # quick check only
 """
 import os
 import re
 import subprocess
 import sys
 from pathlib import Path
+
+from dotenv import load_dotenv
+from databricks.sdk import WorkspaceClient
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -25,9 +28,25 @@ ENV_FILE = ROOT / ".env.local"
 R, G, Y, B, M, C, W = "\033[31m", "\033[32m", "\033[33m", "\033[34m", "\033[35m", "\033[36m", "\033[0m"
 BOLD = "\033[1m"
 DIM = "\033[2m"
+ORANGE = "\033[38;5;214m"
+CONF = f"{BOLD}{ORANGE}"
 OK, FAIL, WARN = f"{G}✓{W}", f"{R}✗{W}", f"{Y}⚠{W}"
 
 FIX_FIRST_MSG = f"\n  {WARN} This needs to be fixed first before moving forward with the other configurations.{W}\n"
+
+FM_WORKSPACES = [
+    ("AWS field eng",   "http://e2-demo-field-eng.cloud.databricks.com"),
+    ("Azure field eng", "https://adb-984752964297111.11.azuredatabricks.net"),
+]
+FM_MODEL = "databricks-claude-sonnet-4-6"
+
+_SECRET_KEYS = {"DATABRICKS_TOKEN", "AGENT_MODEL_TOKEN"}
+
+def _redact(val: str) -> str:
+    """Mask a secret value for display: show first 6 + stars + last 4 chars."""
+    if len(val) > 10:
+        return val[:6] + "*" * (len(val) - 10) + val[-4:]
+    return "*" * len(val)
 
 
 def abort_step() -> None:
@@ -62,23 +81,16 @@ def parse_env_file(path: Path) -> tuple[dict[str, str], dict[str, list[tuple[int
     return active, inactive, lines
 
 
-def write_env_entry(path: Path, key: str, value: str, comment_active: bool = False) -> None:
-    """Set key=value. If comment_active, comment any existing active line and append new."""
+def write_env_entry(path: Path, key: str, value: str) -> None:
+    """Append key=value. Existing active lines for this key are left as-is (commented out first by the caller)."""
     lines = path.read_text().splitlines() if path.exists() else []
     new_lines: list[str] = []
     replaced = False
     for line in lines:
         m = re.match(r"^(\s*)(#?\s*)([A-Za-z_][A-Za-z0-9_]*)\s*=", line)
-        if m and m.group(3) == key:
-            if line.strip().startswith("#"):
-                new_lines.append(line)
-            elif comment_active:
-                new_lines.append("#" + line.lstrip())
-                new_lines.append(f"{key}={value}")
-                replaced = True
-            else:
-                new_lines.append(f"{key}={value}")
-                replaced = True
+        if m and m.group(3) == key and not line.strip().startswith("#"):
+            new_lines.append(f"{key}={value}")
+            replaced = True
             continue
         new_lines.append(line)
     if not replaced:
@@ -130,7 +142,7 @@ def _read_choice(prompt: str, n: int) -> int | None:
     try:
         tty.setraw(fd)
         while True:
-            ch = sys.stdin.read(1)
+            ch = os.read(fd, 1).decode("utf-8", errors="ignore")  # bypass Python IO buffer
             if ch == "\x1b":                    # ESC
                 print(f" {DIM}(cancelled){W}")
                 return None
@@ -154,6 +166,49 @@ def _read_choice(prompt: str, n: int) -> int | None:
         termios.tcsetattr(fd, termios.TCSADRAIN, old)
 
 
+def _read_line(prompt: str) -> str | None:
+    """Read a line of text from terminal with ESC-to-cancel support.
+
+    Returns the entered string, or None if ESC is pressed.
+    Falls back to input() when stdin is not a tty.
+    """
+    import termios
+    import tty
+
+    print(prompt, end="", flush=True)
+
+    if not sys.stdin.isatty():
+        try:
+            return input("").strip()
+        except (EOFError, KeyboardInterrupt):
+            return None
+
+    fd = sys.stdin.fileno()
+    old = termios.tcgetattr(fd)
+    buf = ""
+    try:
+        tty.setraw(fd)
+        while True:
+            ch = os.read(fd, 1).decode("utf-8", errors="ignore")
+            if ch == "\x1b":                    # ESC
+                print(f" {DIM}(cancelled){W}")
+                return None
+            if ch in ("\r", "\n"):              # Enter
+                print()
+                return buf
+            if ch in ("\x7f", "\x08"):          # Backspace
+                if buf:
+                    buf = buf[:-1]
+                    print("\b \b", end="", flush=True)
+            elif ch == "\x03":                  # Ctrl-C
+                raise KeyboardInterrupt
+            elif ch >= " ":                     # printable
+                buf += ch
+                print(ch, end="", flush=True)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old)
+
+
 def prompt_choice(prompt: str, choices: list[str]) -> str | None:
     """Return choice string, or None if ESC was pressed."""
     while True:
@@ -172,9 +227,44 @@ def prompt_choice(prompt: str, choices: list[str]) -> str | None:
         print(f"  {WARN} Invalid choice{W}")
 
 
+def _print_inactive(inact: list[tuple[int, str]], secret: bool = False) -> None:
+    """Print numbered inactive entries."""
+    if not inact:
+        return
+    print(f"  {DIM}Inactive:{W}")
+    for i, (_, val) in enumerate(inact, 1):
+        display = _redact(val) if secret else f"{val[:50]}{'...' if len(val) > 50 else ''}"
+        print(f"    {DIM}[{i}] {display}{W}")
+
+
+def _activate_entry(
+    key: str,
+    inact: list[tuple[int, str]],
+    num: int,
+    verify_fn,
+    on_ok=None,
+) -> None:
+    """Uncomment inactive entry num, verify, call on_ok() on success."""
+    if not (1 <= num <= len(inact)):
+        return
+    line_idx, val = inact[num - 1]
+    comment_active_for_key(ENV_FILE, key)
+    uncomment_line(ENV_FILE, line_idx)
+    load_dotenv(ENV_FILE, override=True)
+    load_env_for_key(key, val)
+    ok, msg = verify_fn()
+    if ok:
+        print(f"  {OK} Activated and verified: {msg}{W}")
+        print(f"\n  {CONF}✓  Entry activated.{W}")
+        if on_ok:
+            on_ok()
+    else:
+        print(f"  {FAIL} Activated but verify failed: {msg}{W}")
+        abort_step()
+
+
 def run_resource_warehouse() -> bool:
     """Interactive config for DATABRICKS_WAREHOUSE_ID with workspace list as choices."""
-    from dotenv import load_dotenv
     load_dotenv(ENV_FILE, override=True)
 
     key = "DATABRICKS_WAREHOUSE_ID"
@@ -200,10 +290,7 @@ def run_resource_warehouse() -> bool:
     else:
         print(f"  {WARN} Not configured{W}")
 
-    if inact:
-        print(f"  {DIM}Inactive:{W}")
-        for i, (_, val) in enumerate(inact, 1):
-            print(f"    {DIM}[{i}] {val[:50]}{'...' if len(val) > 50 else ''}{W}")
+    _print_inactive(inact)
 
     choices: list[str] = []
     if cur and ok:
@@ -221,6 +308,7 @@ def run_resource_warehouse() -> bool:
     if not choices:
         choices = ["enter new"]
 
+    wh_choices = [f"Available : {n} ({i})" for n, i in whs]
     while True:
         print(f"\n  {C}Action?{W}")
         for i, c in enumerate(choices, 1):
@@ -228,81 +316,68 @@ def run_resource_warehouse() -> bool:
         idx = _read_choice(f"  Choice (1-{len(choices)}): ", len(choices))
         if idx is None:
             return True
-        if 1 <= idx <= len(choices):
-            choice = choices[idx - 1]
-            break
-        print(f"  {WARN} Invalid choice{W}")
+        if not (1 <= idx <= len(choices)):
+            print(f"  {WARN} Invalid choice{W}")
+            continue
+        choice = choices[idx - 1]
 
-    if choice == "keep":
-        return True
-    if choice and choice.startswith("activate ["):
-        num = int(choice.split("[")[1].rstrip("]"))
-        if 1 <= num <= len(inact):
-            line_idx = inact[num - 1][0]
+        if choice == "keep":
+            return True
+        if choice and choice.startswith("activate ["):
+            num = int(choice.split("[")[1].rstrip("]"))
+            _activate_entry(key, inact, num, verify_warehouse)
+            return True
+
+        # Pick from list or manual
+        if choice in wh_choices:
+            val = whs[wh_choices.index(choice)][1]
+        else:
+            val = _read_line(f"Enter {key}: ")
+            if val is None:
+                continue   # ESC → back to menu
+        if not val:
+            return True
+        if cur:
             comment_active_for_key(ENV_FILE, key)
-            uncomment_line(ENV_FILE, line_idx)
-            load_dotenv(ENV_FILE, override=True)
-            load_env_for_key(key, inact[num - 1][1])
-            ok, msg = verify_warehouse()
-            if ok:
-                print(f"  {OK} Activated and verified: {msg}{W}")
-            else:
-                print(f"  {FAIL} Activated but verify failed: {msg}{W}")
-                abort_step()
-        return True
-
-    # Pick from list or manual
-    wh_choices = [f"Available : {n} ({i})" for n, i in whs]
-    if choice in wh_choices:
-        val = whs[wh_choices.index(choice)][1]
-    else:
-        val = input(f"  Enter {key}: ").strip()
-    if not val:
-        return True
-    if cur:
-        comment_active_for_key(ENV_FILE, key)
-    write_env_entry(ENV_FILE, key, val)
-    load_dotenv(ENV_FILE, override=True)
-    load_env_for_key(key, val)
-    ok, msg = verify_warehouse()
-    if ok:
-        print(f"  {OK} Set and verified: {msg}{W}")
-    else:
-        print(f"  {FAIL} Set but verify failed: {msg}{W}")
-        abort_step()
+        write_env_entry(ENV_FILE, key, val)
+        load_dotenv(ENV_FILE, override=True)
+        load_env_for_key(key, val)
+        ok, msg = verify_warehouse()
+        if ok:
+            print(f"  {OK} Set and verified: {msg}{W}")
+            print(f"\n  {CONF}✓  Warehouse configured.{W}")
+        else:
+            print(f"  {FAIL} Set but verify failed: {msg}{W}")
+            abort_step()
+        break
     return True
 
 
 def _offer_create_pat() -> None:
     """Offer to create a 7-day PAT for the current workspace and save as DATABRICKS_TOKEN."""
-    try:
-        raw = input(f"\n  {C}Create a 7-day PAT for this workspace and save as DATABRICKS_TOKEN? [y/N]: {W}").strip().lower()
-    except (EOFError, KeyboardInterrupt):
-        return
-    if raw not in ("y", "yes"):
+    raw = _read_line(f"\n  {C}Create a 7-day PAT for this workspace and save as DATABRICKS_TOKEN? [y/N]: {W}")
+    if raw is None or raw.lower() not in ("y", "yes"):
         print(f"  {DIM}Skipped{W}")
         return
     try:
-        from databricks.sdk import WorkspaceClient
         w = WorkspaceClient()
         response = w.tokens.create(comment="agent-forge init (7-day)", lifetime_seconds=604800)
         token_value = response.token_value
         if not token_value:
             print(f"  {FAIL} No token value returned{W}")
             return
-        from dotenv import load_dotenv
         comment_active_for_key(ENV_FILE, "DATABRICKS_TOKEN")
         write_env_entry(ENV_FILE, "DATABRICKS_TOKEN", token_value)
         load_dotenv(ENV_FILE, override=True)
         masked = _redact(token_value)
         print(f"  {OK} PAT created (7 days) and saved as DATABRICKS_TOKEN: {C}{masked}{W}")
+        print(f"\n  {CONF}✓  Token saved.{W}")
     except Exception as e:
         print(f"  {FAIL} Failed to create PAT: {e}{W}")
 
 
 def run_resource_profile() -> bool:
     """Interactive config for DATABRICKS_CONFIG_PROFILE with CLI profile list as choices."""
-    from dotenv import load_dotenv
     load_dotenv(ENV_FILE, override=True)
 
     key = "DATABRICKS_CONFIG_PROFILE"
@@ -331,10 +406,7 @@ def run_resource_profile() -> bool:
     else:
         print(f"  {WARN} Not configured{W}")
 
-    if inact:
-        print(f"  {DIM}Inactive:{W}")
-        for i, (_, val) in enumerate(inact, 1):
-            print(f"    {DIM}[{i}] {val}{W}")
+    _print_inactive(inact)
 
     choices: list[str] = []
     if cur and ok:
@@ -351,6 +423,7 @@ def run_resource_profile() -> bool:
     if not choices:
         choices = ["enter manually"]
 
+    profile_choices = [f"[+] {n}" for n, _ in valid_profiles] + [f"[-] {n}" for n, _ in invalid_profiles]
     while True:
         print(f"\n  {C}Action?{W}")
         for i, c in enumerate(choices, 1):
@@ -358,56 +431,46 @@ def run_resource_profile() -> bool:
         idx = _read_choice(f"  Choice (1-{len(choices)}): ", len(choices))
         if idx is None:
             return True
-        if 1 <= idx <= len(choices):
-            choice = choices[idx - 1]
-            break
-        print(f"  {WARN} Invalid choice{W}")
+        if not (1 <= idx <= len(choices)):
+            print(f"  {WARN} Invalid choice{W}")
+            continue
+        choice = choices[idx - 1]
 
-    if choice == "keep":
-        return True
-    if choice and choice.startswith("activate ["):
-        num = int(choice.split("[")[1].rstrip("]"))
-        if 1 <= num <= len(inact):
-            line_idx = inact[num - 1][0]
+        if choice == "keep":
+            return True
+        if choice and choice.startswith("activate ["):
+            num = int(choice.split("[")[1].rstrip("]"))
+            _activate_entry(key, inact, num, verify_host_token, on_ok=_offer_create_pat)
+            return True
+
+        # Pick from profile list or enter manually
+        if choice in profile_choices:
+            val = choice.split("] ", 1)[1]
+        else:
+            val = _read_line(f"Enter profile name: ")
+            if val is None:
+                continue   # ESC → back to menu
+        if not val:
+            return True
+        if cur:
             comment_active_for_key(ENV_FILE, key)
-            uncomment_line(ENV_FILE, line_idx)
-            load_dotenv(ENV_FILE, override=True)
-            load_env_for_key(key, inact[num - 1][1])
-            ok, msg = verify_host_token()
-            if ok:
-                print(f"  {OK} Activated and verified: {msg}{W}")
-                _offer_create_pat()
-            else:
-                print(f"  {FAIL} Activated but verify failed: {msg}{W}")
-                abort_step()
-        return True
-
-    # Pick from profile list or enter manually
-    profile_choices = [f"[+] {n}" for n, _ in valid_profiles] + [f"[-] {n}" for n, _ in invalid_profiles]
-    if choice in profile_choices:
-        val = choice.split("] ", 1)[1]
-    else:
-        val = input(f"  Enter profile name: ").strip()
-    if not val:
-        return True
-    if cur:
-        comment_active_for_key(ENV_FILE, key)
-    write_env_entry(ENV_FILE, key, val)
-    load_dotenv(ENV_FILE, override=True)
-    load_env_for_key(key, val)
-    ok, msg = verify_host_token()
-    if ok:
-        print(f"  {OK} Set and verified: {msg}{W}")
-        _offer_create_pat()
-    else:
-        print(f"  {FAIL} Set but verify failed: {msg}{W}")
-        abort_step()
+        write_env_entry(ENV_FILE, key, val)
+        load_dotenv(ENV_FILE, override=True)
+        load_env_for_key(key, val)
+        ok, msg = verify_host_token()
+        if ok:
+            print(f"  {OK} Set and verified: {msg}{W}")
+            _offer_create_pat()
+            print(f"\n  {CONF}✓  Profile configured.{W}")
+        else:
+            print(f"  {FAIL} Set but verify failed: {msg}{W}")
+            abort_step()
+        break
     return True
 
 
 def run_resource_genie() -> bool:
     """Interactive config for PROJECT_GENIE_CHECKIN with Genie space list as choices."""
-    from dotenv import load_dotenv
     load_dotenv(ENV_FILE, override=True)
 
     key = "PROJECT_GENIE_CHECKIN"
@@ -433,10 +496,7 @@ def run_resource_genie() -> bool:
     else:
         print(f"  {WARN} Not configured{W}")
 
-    if inact:
-        print(f"  {DIM}Inactive:{W}")
-        for i, (_, val) in enumerate(inact, 1):
-            print(f"    {DIM}[{i}] {val[:50]}{'...' if len(val) > 50 else ''}{W}")
+    _print_inactive(inact)
 
     choices: list[str] = []
     if cur and ok:
@@ -451,16 +511,19 @@ def run_resource_genie() -> bool:
 
     # When no spaces from API: still show choices (enter space ID, Create Genie Room)
     # Don't block - list_spaces can return empty due to permissions/API behavior
-    choice = prompt_choice("Action?", choices)
-    if choice is None:
-        print(f"  {DIM}Skipped{W}")
-        return True
+    space_choices = [f"Available : {t} ({i})" for t, i in spaces]
+    while True:
+        choice = prompt_choice("Action?", choices)
+        if choice is None:
+            print(f"  {DIM}Skipped{W}")
+            return True
 
-    if choice == "keep":
-        return True
-    if choice == "Create Genie Room":
-        try:
-            room_name = input(f"  {C}Genie room name: {W}").strip()
+        if choice == "keep":
+            return True
+        if choice == "Create Genie Room":
+            room_name = _read_line(f"Genie room name: ")
+            if room_name is None:
+                continue   # ESC → back to menu
             if not room_name:
                 print(f"  {WARN} No name entered. Skipped.{W}\n")
                 return True
@@ -476,55 +539,46 @@ def run_resource_genie() -> bool:
                 new_id = os.environ.get(key, "").strip()
                 if new_id:
                     print(f"\n  {OK} {G}Genie Room created: {new_id}{W}\n")
+                    print(f"  {CONF}✓  Genie Room created.{W}")
                 else:
                     print(f"\n  {OK} {G}Genie Room created. Re-run to verify.{W}\n")
+                    print(f"  {CONF}✓  Genie Room created.{W}")
             else:
                 print(f"\n  {FAIL} Genie creation exited with {rc}{W}\n")
                 abort_step()
-        except (EOFError, KeyboardInterrupt):
-            print(f"  {DIM}Skipped{W}\n")
-        return True
-    if choice and choice.startswith("activate ["):
-        num = int(choice.split("[")[1].rstrip("]"))
-        if 1 <= num <= len(inact):
-            line_idx = inact[num - 1][0]
-            comment_active_for_key(ENV_FILE, key)
-            uncomment_line(ENV_FILE, line_idx)
-            load_dotenv(ENV_FILE, override=True)
-            load_env_for_key(key, inact[num - 1][1])
-            ok, msg = verify_genie()
-            if ok:
-                print(f"  {OK} Activated and verified: {msg}{W}")
-            else:
-                print(f"  {FAIL} Activated but verify failed: {msg}{W}")
-                abort_step()
-        return True
+            return True
+        if choice and choice.startswith("activate ["):
+            num = int(choice.split("[")[1].rstrip("]"))
+            _activate_entry(key, inact, num, verify_genie)
+            return True
 
-    # Pick from list or manual
-    space_choices = [f"Available : {t} ({i})" for t, i in spaces]
-    if choice in space_choices:
-        val = spaces[space_choices.index(choice)][1]
-    else:
-        val = input(f"  Enter {key}: ").strip()
-    if not val:
-        return True
-    if cur:
-        comment_active_for_key(ENV_FILE, key)
-    write_env_entry(ENV_FILE, key, val)
-    load_dotenv(ENV_FILE, override=True)
-    load_env_for_key(key, val)
-    ok, msg = verify_genie()
-    if ok:
-        print(f"  {OK} Set and verified: {msg}{W}")
-    else:
-        print(f"  {FAIL} Set but verify failed: {msg}{W}")
-        abort_step()
+        # Pick from list or manual
+        if choice in space_choices:
+            val = spaces[space_choices.index(choice)][1]
+        else:
+            val = _read_line(f"Enter {key}: ")
+            if val is None:
+                continue   # ESC → back to menu
+        if not val:
+            return True
+        if cur:
+            comment_active_for_key(ENV_FILE, key)
+        write_env_entry(ENV_FILE, key, val)
+        load_dotenv(ENV_FILE, override=True)
+        load_env_for_key(key, val)
+        ok, msg = verify_genie()
+        if ok:
+            print(f"  {OK} Set and verified: {msg}{W}")
+            print(f"\n  {CONF}✓  Genie space configured.{W}")
+        else:
+            print(f"  {FAIL} Set but verify failed: {msg}{W}")
+            abort_step()
+        break
     return True
 
 
 def run_resource_host() -> bool:
     """Interactive config for DATABRICKS_HOST — lists available profiles as workspace options."""
-    from dotenv import load_dotenv
     load_dotenv(ENV_FILE, override=True)
 
     key = "DATABRICKS_HOST"
@@ -541,17 +595,21 @@ def run_resource_host() -> bool:
             print(f"  {OK} Active: {C}{cur}{W}")
         else:
             print(f"  {FAIL} Active: {C}{cur}{W} {R}({msg}){W}")
-        choices = ["keep", "change"]
+        choices = ["keep", "enter host URL manually"]
     else:
         print(f"  {WARN} Not configured{W}")
-        choices = ["enter manually"]
+        choices = ["enter host URL manually"]
 
     if profiles:
         print(f"\n  {DIM}Available workspaces (from Databricks CLI profiles):{W}")
         for name, valid in profiles:
             status = f"{G}[valid]{W}" if valid else f"{DIM}[invalid]{W}"
             print(f"    {C}•{W} {name} {status}")
-        choices = ["use profile workspace"] + choices
+        # Insert "use profile workspace" after "keep" if keep is present, else prepend
+        if "keep" in choices:
+            choices.insert(1, "use profile workspace")
+        else:
+            choices.insert(0, "use profile workspace")
 
     print(f"\n  {C}Action?{W}")
     for i, c in enumerate(choices, 1):
@@ -559,7 +617,9 @@ def run_resource_host() -> bool:
     idx = _read_choice(f"  Choice (1-{len(choices)}): ", len(choices))
     if idx is None:
         return True
-    choice = choices[idx - 1] if 1 <= idx <= len(choices) else choices[0]
+    if not (1 <= idx <= len(choices)):
+        return True
+    choice = choices[idx - 1]
 
     if choice == "keep":
         return True
@@ -576,35 +636,22 @@ def run_resource_host() -> bool:
         profile_name = profiles[pidx - 1][0]
 
         # Extract host from `databricks auth env --profile <name>`
+        host = ""
         try:
             result = subprocess.run(
                 ["databricks", "auth", "env", "--profile", profile_name],
                 capture_output=True, text=True,
             )
-            host = ""
             for line in result.stdout.splitlines():
                 if "DATABRICKS_HOST" in line:
                     host = line.split("=", 1)[-1].strip().strip('"').strip("'")
                     break
-            if not host:
-                # Fall back: parse from profiles output
-                for name, _ in profiles:
-                    if name == profile_name:
-                        # re-run profiles to get host
-                        r2 = subprocess.run(["databricks", "auth", "profiles"], capture_output=True, text=True)
-                        for pline in r2.stdout.splitlines():
-                            if pline.strip().startswith(profile_name):
-                                parts = pline.split()
-                                if len(parts) >= 2:
-                                    host = parts[1]
-                                break
-                        break
         except Exception:
             host = ""
 
         if not host:
             print(f"  {WARN} Could not extract host for profile {profile_name} — enter manually{W}")
-            host = input(f"  Enter DATABRICKS_HOST: ").strip()
+            host = _read_line(f"Enter DATABRICKS_HOST: ")
 
         if not host:
             return True
@@ -619,10 +666,11 @@ def run_resource_host() -> bool:
         load_env_for_key(key, host)
         print(f"  {OK} Host set: {C}{host}{W}")
         print(f"  {OK} Profile pre-set: {C}{profile_name}{W}")
+        print(f"\n  {CONF}✓  Workspace configured.{W}")
         return True
 
     # Manual entry
-    val = input(f"  Enter DATABRICKS_HOST (https://....databricks.com): ").strip()
+    val = _read_line(f"Enter DATABRICKS_HOST (https://....databricks.com): ")
     if not val:
         return True
     if cur:
@@ -633,6 +681,7 @@ def run_resource_host() -> bool:
     ok, msg = verify_host_only()
     if ok:
         print(f"  {OK} Set: {C}{val}{W}")
+        print(f"\n  {CONF}✓  Host configured.{W}")
     else:
         print(f"  {FAIL} {msg}{W}")
         abort_step()
@@ -676,7 +725,6 @@ def verify_host_token() -> tuple[bool, str]:
     elif profile:
         # Profile auth — use SDK (no token to test directly)
         try:
-            from databricks.sdk import WorkspaceClient
             w = WorkspaceClient(host=host, profile=profile)
             me = w.current_user.me()
             return True, f"OK → {host} ({me.user_name})"
@@ -691,7 +739,6 @@ def verify_warehouse() -> tuple[bool, str]:
     if not wh:
         return False, "not set"
     try:
-        from databricks.sdk import WorkspaceClient
         w = WorkspaceClient()
         wh_obj = w.warehouses.get(wh)
         return True, getattr(wh_obj, "name", wh)
@@ -702,7 +749,6 @@ def verify_warehouse() -> tuple[bool, str]:
 def list_warehouses() -> list[tuple[str, str]]:
     """Return [(name, id), ...] for warehouses in workspace."""
     try:
-        from databricks.sdk import WorkspaceClient
         w = WorkspaceClient()
         whs = list(w.warehouses.list())
         return [(getattr(wh, "name", "") or str(wh.id), str(wh.id)) for wh in whs]
@@ -729,10 +775,29 @@ def list_dbx_profiles() -> list[tuple[str, bool]]:
         return []
 
 
+def list_dbx_profiles_with_host() -> list[tuple[str, str, bool]]:
+    """Return [(name, host, valid), ...] from `databricks auth profiles` (includes host column)."""
+    try:
+        result = subprocess.run(
+            ["databricks", "auth", "profiles"],
+            capture_output=True, text=True, timeout=10,
+        )
+        profiles = []
+        for line in result.stdout.splitlines()[1:]:  # skip header
+            parts = line.split()
+            if len(parts) >= 3:
+                name = parts[0]
+                host = parts[1].rstrip("/")
+                valid = parts[-1].upper() == "YES"
+                profiles.append((name, host, valid))
+        return profiles
+    except Exception:
+        return []
+
+
 def list_genie_spaces() -> list[tuple[str, str]]:
     """Return [(title, space_id), ...] for Genie spaces in workspace."""
     try:
-        from databricks.sdk import WorkspaceClient
         w = WorkspaceClient()
         r = w.genie.list_spaces()
         spaces = getattr(r, "spaces", []) or []
@@ -747,7 +812,6 @@ def list_genie_spaces() -> list[tuple[str, str]]:
 def list_serving_endpoints() -> list[tuple[str, str]]:
     """Return [(name, ready_state), ...] for serving endpoints in workspace."""
     try:
-        from databricks.sdk import WorkspaceClient
         w = WorkspaceClient()
         endpoints = list(w.serving_endpoints.list())
         result = []
@@ -834,7 +898,6 @@ def print_asset_checks() -> None:
     catalog, schema_name = spec.split(".", 1)
     full_schema = f"{catalog}.{schema_name}"
     try:
-        from databricks.sdk import WorkspaceClient
         w = WorkspaceClient()
         try:
             w.catalogs.get(name=catalog)
@@ -862,7 +925,6 @@ def verify_schema() -> tuple[bool, str]:
     if "." not in spec:
         return False, "need catalog.schema"
     try:
-        from databricks.sdk import WorkspaceClient
         w = WorkspaceClient()
         w.schemas.get(full_name=spec)
         return True, spec
@@ -880,7 +942,6 @@ def verify_tables() -> tuple[bool, str]:
     tables = TABLES_TO_VERIFY
     missing = []
     try:
-        from databricks.sdk import WorkspaceClient
         w = WorkspaceClient()
         for name in tables:
             try:
@@ -899,7 +960,6 @@ def verify_genie() -> tuple[bool, str]:
     if not sid:
         return False, "not set"
     try:
-        from databricks.sdk import WorkspaceClient
         w = WorkspaceClient()
         sp = w.genie.get_space(space_id=sid)
         return True, getattr(sp, "title", sid)
@@ -915,7 +975,6 @@ def verify_model_endpoint() -> tuple[bool, str]:
         # Full URL — accept as-is, no SDK lookup possible
         return True, f"URL ({endpoint})"
     try:
-        from databricks.sdk import WorkspaceClient
         w = WorkspaceClient()
         ep = w.serving_endpoints.get(name=endpoint)
         state = getattr(ep, "state", None)
@@ -925,9 +984,29 @@ def verify_model_endpoint() -> tuple[bool, str]:
         return False, str(e)
 
 
+def _fm_invocations_url(base_host: str) -> str:
+    """Build the full invocations URL for the foundation model on a given workspace host."""
+    return f"{base_host.rstrip('/')}/serving-endpoints/{FM_MODEL}/invocations"
+
+
+def _save_endpoint_and_token(key: str, cur: str, endpoint_url: str, token_val: str) -> None:
+    """Save AGENT_MODEL_ENDPOINT and AGENT_MODEL_TOKEN to .env.local."""
+    if cur:
+        comment_active_for_key(ENV_FILE, key)
+    write_env_entry(ENV_FILE, key, endpoint_url)
+    comment_active_for_key(ENV_FILE, "AGENT_MODEL_TOKEN")
+    write_env_entry(ENV_FILE, "AGENT_MODEL_TOKEN", token_val)
+    load_dotenv(ENV_FILE, override=True)
+    load_env_for_key(key, endpoint_url)
+    load_env_for_key("AGENT_MODEL_TOKEN", token_val)
+    masked = _redact(token_val)
+    print(f"  {OK} AGENT_MODEL_ENDPOINT set: {C}{endpoint_url}{W}")
+    print(f"  {OK} AGENT_MODEL_TOKEN set:     {C}{masked}{W}")
+    print(f"\n  {CONF}✓  Model endpoint and token configured.{W}")
+
+
 def run_resource_model_endpoint() -> bool:
     """Interactive config for AGENT_MODEL_ENDPOINT with serving endpoint list as choices."""
-    from dotenv import load_dotenv
     load_dotenv(ENV_FILE, override=True)
 
     key = "AGENT_MODEL_ENDPOINT"
@@ -937,8 +1016,37 @@ def run_resource_model_endpoint() -> bool:
 
     section("AGENT_MODEL_ENDPOINT")
 
+    # fevm rate-limit warning
+    current_host = os.environ.get("DATABRICKS_HOST", "").strip()
+    if "fevm" in current_host.lower():
+        print(f"\n  {BOLD}{R}⚠  This workspace ({current_host}){W}")
+        print(f"  {BOLD}{R}   applies zero rate limits to foundation models.{W}")
+        print(f"  {BOLD}{R}   Endpoints listed below will NOT work.{W}")
+
+    # FM workspace guidance — always shown
+    print(f"\n  {C}Foundation model endpoints require one of these workspaces:{W}")
+    for label, fmhost in FM_WORKSPACES:
+        print(f"    {DIM}• {label}: {fmhost}{W}")
+
+    # Find matching CLI profiles
+    all_profiles = list_dbx_profiles_with_host()
+    fm_profiles: list[tuple[str, str, bool]] = []  # (name, host, valid)
+    for pname, phost, pvalid in all_profiles:
+        for _, fmhost in FM_WORKSPACES:
+            if fmhost.split("//")[1].rstrip("/") in phost.rstrip("/"):
+                fm_profiles.append((pname, phost, pvalid))
+                break
+    if fm_profiles:
+        print(f"\n  {G}Matching CLI profiles found:{W}")
+        for pname, phost, pvalid in fm_profiles:
+            status = f"{G}[valid]{W}" if pvalid else f"{DIM}[invalid]{W}"
+            print(f"    {C}[+]{W} {pname} → {DIM}{phost}{W} {status}")
+    else:
+        print(f"\n  {DIM}No matching CLI profiles — you can create one below.{W}")
+
     endpoints = list_serving_endpoints()
     if endpoints:
+        print()
         for name, state in endpoints:
             status = f"{G}[{state}]{W}" if state == "READY" else f"{DIM}[{state or '?'}]{W}"
             print(f"  {C}Available :{W} {name} {status}")
@@ -956,14 +1064,20 @@ def run_resource_model_endpoint() -> bool:
     else:
         print(f"  {WARN} Not configured{W}")
 
-    if inact:
-        print(f"  {DIM}Inactive:{W}")
-        for i, (_, val) in enumerate(inact, 1):
-            print(f"    {DIM}[{i}] {val[:60]}{'...' if len(val) > 60 else ''}{W}")
+    _print_inactive(inact)
 
+    # Build choices
     choices: list[str] = []
     if cur and ok:
         choices.append("keep")
+    # FM profile shortcuts
+    for pname, phost, _ in fm_profiles:
+        choices.append(f"use profile: {pname} ({phost})")
+    # FM workspace setup
+    for label, fmhost in FM_WORKSPACES:
+        short = fmhost.split("//")[1].split(".")[0]
+        choices.append(f"set up: {label} ({short})")
+    # Available endpoints from current workspace
     if endpoints:
         for name, _ in endpoints:
             choices.append(f"Available : {name}")
@@ -971,6 +1085,10 @@ def run_resource_model_endpoint() -> bool:
         choices.append(f"activate [{i}]")
 
     all_choices = choices + ["enter endpoint name or URL manually"]
+    ep_choices = [f"Available : {n}" for n, _ in endpoints]
+    use_profile_choices = [f"use profile: {pname} ({phost})" for pname, phost, _ in fm_profiles]
+    setup_choices = [f"set up: {label} ({fmhost.split('//')[1].split('.')[0]})" for label, fmhost in FM_WORKSPACES]
+
     while True:
         print(f"\n  {C}Action?{W}")
         for i, c in enumerate(choices, 1):
@@ -979,48 +1097,109 @@ def run_resource_model_endpoint() -> bool:
         idx = _read_choice(f"  Choice (1-{len(all_choices)}): ", len(all_choices))
         if idx is None:
             return True
-        if 1 <= idx <= len(all_choices):
-            choice = all_choices[idx - 1]
-            break
-        print(f"  {WARN} Invalid choice{W}")
+        if not (1 <= idx <= len(all_choices)):
+            print(f"  {WARN} Invalid choice{W}")
+            continue
+        choice = all_choices[idx - 1]
 
-    if choice == "keep":
-        return True
-    if choice and choice.startswith("activate ["):
-        num = int(choice.split("[")[1].rstrip("]"))
-        if 1 <= num <= len(inact):
-            line_idx = inact[num - 1][0]
+        if choice == "keep":
+            return True
+
+        if choice and choice.startswith("activate ["):
+            num = int(choice.split("[")[1].rstrip("]"))
+            _activate_entry(key, inact, num, verify_model_endpoint)
+            return True
+
+        # Use an existing matching CLI profile
+        if choice in use_profile_choices:
+            pidx = use_profile_choices.index(choice)
+            pname, phost, _ = fm_profiles[pidx]
+            endpoint_url = _fm_invocations_url(phost)
+            print(f"\n  {C}Generating 7-day PAT for profile {pname} ...{W}")
+            try:
+                w = WorkspaceClient(host=phost, profile=pname)
+                t = w.tokens.create(comment="agent-forge FM endpoint (7-day)", lifetime_seconds=604800)
+                if not t.token_value:
+                    raise ValueError("No token value returned")
+                _save_endpoint_and_token(key, cur, endpoint_url, t.token_value)
+            except Exception as e:
+                print(f"  {FAIL} Could not generate PAT: {e}{W}")
+                print(f"  {DIM}Enter a PAT manually instead:{W}")
+                pat = _read_line("PAT for this workspace: ")
+                if not pat:
+                    continue
+                _save_endpoint_and_token(key, cur, endpoint_url, pat)
+            return True
+
+        # Set up a new CLI profile for a FM workspace
+        if choice in setup_choices:
+            sidx = setup_choices.index(choice)
+            fm_label, fm_base_host = FM_WORKSPACES[sidx]
+            short = fm_base_host.split("//")[1].split(".")[0]
+            default_name = "fm-aws" if "field-eng" in short else "fm-azure"
+            print(f"\n  {C}Setting up CLI profile for {fm_label}{W}")
+            print(f"  {DIM}Host: {fm_base_host}{W}")
+
+            pname = _read_line(f"Profile name [{default_name}]: ")
+            if pname is None:
+                continue
+            if not pname:
+                pname = default_name
+
+            pat = _read_line(f"PAT for {fm_label}: ")
+            if pat is None:
+                continue
+            if not pat:
+                print(f"  {WARN} No PAT entered — skipped{W}")
+                continue
+
+            # Write to ~/.databrickscfg
+            import configparser
+            cfg_path = Path.home() / ".databrickscfg"
+            cfg = configparser.ConfigParser()
+            if cfg_path.exists():
+                cfg.read(cfg_path)
+            cfg[pname] = {"host": fm_base_host, "token": pat}
+            with open(cfg_path, "w") as fh:
+                cfg.write(fh)
+            print(f"  {OK} Profile '{pname}' written to ~/.databrickscfg{W}")
+
+            # Try to generate a 7-day PAT using the new profile
+            endpoint_url = _fm_invocations_url(fm_base_host)
+            print(f"\n  {C}Generating 7-day PAT for {fm_label} ...{W}")
+            try:
+                w = WorkspaceClient(host=fm_base_host, token=pat)
+                t = w.tokens.create(comment="agent-forge FM endpoint (7-day)", lifetime_seconds=604800)
+                token_val = t.token_value or pat
+            except Exception as e:
+                print(f"  {WARN} Could not generate 7-day PAT ({e}) — using entered PAT{W}")
+                token_val = pat
+
+            _save_endpoint_and_token(key, cur, endpoint_url, token_val)
+            return True
+
+        # Pick from available endpoints on current workspace
+        if choice in ep_choices:
+            val = endpoints[ep_choices.index(choice)][0]
+        else:
+            val = _read_line("Enter endpoint name or full URL: ")
+            if val is None:
+                continue
+        if not val:
+            return True
+        if cur:
             comment_active_for_key(ENV_FILE, key)
-            uncomment_line(ENV_FILE, line_idx)
-            load_dotenv(ENV_FILE, override=True)
-            load_env_for_key(key, inact[num - 1][1])
-            ok, msg = verify_model_endpoint()
-            if ok:
-                print(f"  {OK} Activated and verified: {msg}{W}")
-            else:
-                print(f"  {FAIL} Activated but verify failed: {msg}{W}")
-                abort_step()
-        return True
-
-    # Pick from list or enter manually
-    ep_choices = [f"Available : {n}" for n, _ in endpoints]
-    if choice in ep_choices:
-        val = endpoints[ep_choices.index(choice)][0]
-    else:
-        val = input(f"  Enter endpoint name or full URL: ").strip()
-    if not val:
-        return True
-    if cur:
-        comment_active_for_key(ENV_FILE, key)
-    write_env_entry(ENV_FILE, key, val)
-    load_dotenv(ENV_FILE, override=True)
-    load_env_for_key(key, val)
-    ok, msg = verify_model_endpoint()
-    if ok:
-        print(f"  {OK} Set and verified: {msg}{W}")
-    else:
-        print(f"  {FAIL} Set but verify failed: {msg}{W}")
-        abort_step()
+        write_env_entry(ENV_FILE, key, val)
+        load_dotenv(ENV_FILE, override=True)
+        load_env_for_key(key, val)
+        ok, msg = verify_model_endpoint()
+        if ok:
+            print(f"  {OK} Set and verified: {msg}{W}")
+            print(f"\n  {CONF}✓  Model endpoint configured.{W}")
+        else:
+            print(f"  {FAIL} Set but verify failed: {msg}{W}")
+            abort_step()
+        break
     return True
 
 
@@ -1032,7 +1211,6 @@ def _endpoint_is_url() -> bool:
 
 def run_resource_model_token() -> bool:
     """Interactive config for AGENT_MODEL_TOKEN (only relevant when endpoint is a cross-workspace URL)."""
-    from dotenv import load_dotenv
     load_dotenv(ENV_FILE, override=True)
 
     if not _endpoint_is_url():
@@ -1060,34 +1238,32 @@ def run_resource_model_token() -> bool:
         idx = _read_choice(f"  Choice (1-{len(choices)}): ", len(choices))
         if idx is None:
             return True
-        if 1 <= idx <= len(choices):
-            choice = choices[idx - 1]
-            break
-        print(f"  {WARN} Invalid choice{W}")
+        if not (1 <= idx <= len(choices)):
+            print(f"  {WARN} Invalid choice{W}")
+            continue
+        choice = choices[idx - 1]
 
-    if choice == "keep":
-        return True
+        if choice == "keep":
+            return True
 
-    try:
-        val = input(f"  Enter PAT for the endpoint workspace: ").strip()
-    except KeyboardInterrupt:
-        print(f"\n\n  {WARN} Interrupted — exiting.{W}\n")
-        sys.exit(130)
+        val = _read_line(f"Enter PAT for the endpoint workspace: ")
+        if val is None:
+            continue   # ESC → back to menu
+        if not val:
+            print(f"  {WARN} Skipped{W}")
+            return True
 
-    if not val:
-        print(f"  {WARN} Skipped{W}")
-        return True
-
-    comment_active_for_key(ENV_FILE, key)
-    write_env_entry(ENV_FILE, key, val)
-    load_dotenv(ENV_FILE, override=True)
-    print(f"  {OK} AGENT_MODEL_TOKEN set{W}")
+        comment_active_for_key(ENV_FILE, key)
+        write_env_entry(ENV_FILE, key, val)
+        load_dotenv(ENV_FILE, override=True)
+        print(f"  {OK} AGENT_MODEL_TOKEN set{W}")
+        print(f"\n  {CONF}✓  Cross-workspace token saved.{W}")
+        break
     return True
 
 
 def run_resource_mlflow() -> bool:
     """Interactive config for MLFLOW_EXPERIMENT_ID with keep, enter ID manually, create new experiment."""
-    from dotenv import load_dotenv
     load_dotenv(ENV_FILE, override=True)
 
     key = "MLFLOW_EXPERIMENT_ID"
@@ -1108,10 +1284,7 @@ def run_resource_mlflow() -> bool:
     else:
         print(f"  {WARN} Not configured{W}")
 
-    if inact:
-        print(f"  {DIM}Inactive:{W}")
-        for i, (_, val) in enumerate(inact, 1):
-            print(f"    {DIM}[{i}] {val[:50]}{'...' if len(val) > 50 else ''}{W}")
+    _print_inactive(inact)
 
     choices: list[str] = []
     if cur and ok:
@@ -1121,64 +1294,60 @@ def run_resource_mlflow() -> bool:
     for i in range(1, len(inact) + 1):
         choices.append(f"activate [{i}]")
 
-    choice = prompt_choice("Action?", choices)
-    if choice is None:
-        print(f"  {DIM}Skipped{W}")
-        return True
+    while True:
+        choice = prompt_choice("Action?", choices)
+        if choice is None:
+            print(f"  {DIM}Skipped{W}")
+            return True
 
-    if choice == "keep":
-        return True
-    if choice == "create new experiment":
-        try:
-            print(f"  {B}Creating MLflow experiment ...{W}\n")
-            rc = subprocess.call(
-                ["uv", "run", "python", "data/init/create_mlflow_experiment.py"],
-                cwd=ROOT,
-            )
-            if rc == 0:
-                load_dotenv(ENV_FILE, override=True)
-                new_id = os.environ.get(key, "").strip()
-                if new_id:
-                    print(f"\n  {OK} {G}MLflow experiment created: {new_id}{W}\n")
+        if choice == "keep":
+            return True
+        if choice == "create new experiment":
+            try:
+                print(f"  {B}Creating MLflow experiment ...{W}\n")
+                rc = subprocess.call(
+                    ["uv", "run", "python", "data/init/create_mlflow_experiment.py"],
+                    cwd=ROOT,
+                )
+                if rc == 0:
+                    load_dotenv(ENV_FILE, override=True)
+                    new_id = os.environ.get(key, "").strip()
+                    if new_id:
+                        print(f"\n  {OK} {G}MLflow experiment created: {new_id}{W}\n")
+                        print(f"  {CONF}✓  MLflow experiment created.{W}")
+                    else:
+                        print(f"\n  {OK} {G}MLflow experiment created. Re-run to verify.{W}\n")
+                        print(f"  {CONF}✓  MLflow experiment created.{W}")
                 else:
-                    print(f"\n  {OK} {G}MLflow experiment created. Re-run to verify.{W}\n")
-            else:
-                print(f"\n  {FAIL} MLflow creation exited with {rc}{W}\n")
-                abort_step()
-        except (EOFError, KeyboardInterrupt):
-            print(f"  {DIM}Skipped{W}\n")
-        return True
-    if choice and choice.startswith("activate ["):
-        num = int(choice.split("[")[1].rstrip("]"))
-        if 1 <= num <= len(inact):
-            line_idx = inact[num - 1][0]
-            comment_active_for_key(ENV_FILE, key)
-            uncomment_line(ENV_FILE, line_idx)
-            load_dotenv(ENV_FILE, override=True)
-            load_env_for_key(key, inact[num - 1][1])
-            ok, msg = verify_mlflow()
-            if ok:
-                print(f"  {OK} Activated and verified: {msg}{W}")
-            else:
-                print(f"  {FAIL} Activated but verify failed: {msg}{W}")
-                abort_step()
-        return True
+                    print(f"\n  {FAIL} MLflow creation exited with {rc}{W}\n")
+                    abort_step()
+            except (EOFError, KeyboardInterrupt):
+                print(f"  {DIM}Skipped{W}\n")
+            return True
+        if choice and choice.startswith("activate ["):
+            num = int(choice.split("[")[1].rstrip("]"))
+            _activate_entry(key, inact, num, verify_mlflow)
+            return True
 
-    # enter ID manually
-    val = input(f"  Enter {key}: ").strip()
-    if not val:
-        return True
-    if cur:
-        comment_active_for_key(ENV_FILE, key)
-    write_env_entry(ENV_FILE, key, val)
-    load_dotenv(ENV_FILE, override=True)
-    load_env_for_key(key, val)
-    ok, msg = verify_mlflow()
-    if ok:
-        print(f"  {OK} Set and verified: {msg}{W}")
-    else:
-        print(f"  {FAIL} Set but verify failed: {msg}{W}")
-        abort_step()
+        # enter ID manually
+        val = _read_line(f"Enter {key}: ")
+        if val is None:
+            continue  # ESC → back to menu
+        if not val:
+            return True
+        if cur:
+            comment_active_for_key(ENV_FILE, key)
+        write_env_entry(ENV_FILE, key, val)
+        load_dotenv(ENV_FILE, override=True)
+        load_env_for_key(key, val)
+        ok, msg = verify_mlflow()
+        if ok:
+            print(f"  {OK} Set and verified: {msg}{W}")
+            print(f"\n  {CONF}✓  MLflow experiment configured.{W}")
+        else:
+            print(f"  {FAIL} Set but verify failed: {msg}{W}")
+            abort_step()
+        break
     return True
 
 
@@ -1187,7 +1356,6 @@ def verify_mlflow() -> tuple[bool, str]:
     if not eid:
         return False, "not set"
     try:
-        from databricks.sdk import WorkspaceClient
         w = WorkspaceClient()
         exp = w.experiments.get_experiment(experiment_id=eid)
         return True, getattr(exp, "name", eid)
@@ -1214,7 +1382,6 @@ def verify_app_grants() -> tuple[bool, list[str]]:
     catalog, schema_name = spec.split(".", 1)
 
     try:
-        from databricks.sdk import WorkspaceClient
         w = WorkspaceClient()
         w_client, wh_id_sql = get_warehouse()
 
@@ -1302,15 +1469,6 @@ def load_env_for_key(key: str, value: str) -> None:
     os.environ[key] = value
 
 
-_SECRET_KEYS = {"DATABRICKS_TOKEN", "AGENT_MODEL_TOKEN"}
-
-def _redact(val: str) -> str:
-    """Mask a secret value for display: show first 6 + stars + last 4 chars."""
-    if len(val) > 10:
-        return val[:6] + "*" * (len(val) - 10) + val[-4:]
-    return "*" * len(val)
-
-
 def run_resource(
     key: str,
     label: str,
@@ -1319,7 +1477,6 @@ def run_resource(
     value_choices_fn=None,
 ) -> bool:
     """Interactive config for one resource. Returns True to continue."""
-    from dotenv import load_dotenv
     load_dotenv(ENV_FILE, override=True)
 
     active, inactive, _ = parse_env_file(ENV_FILE)
@@ -1369,8 +1526,7 @@ def run_resource(
         if "." in cur:
             _cat = cur.split(".", 1)[0]
             try:
-                from databricks.sdk import WorkspaceClient as _WC
-                _WC().catalogs.get(name=_cat)
+                WorkspaceClient().catalogs.get(name=_cat)
                 _catalog_accessible = True
             except Exception:
                 pass
@@ -1395,9 +1551,10 @@ def run_resource(
     # Schema invalid and only add-new-catalog (no cur) → run create_all_assets (mandatory)
     if key == "PROJECT_UNITY_CATALOG_SCHEMA" and choices == [ADD_NEW_CATALOG]:
         hint = " (catalog.schema)"
-        val = input(f"  Enter {key}{hint}: ").strip()
+        val = _read_line(f"Enter {key}{hint}: ")
         if not val:
             abort_step()
+        assert val  # guaranteed non-None after abort_step()
         if cur:
             comment_active_for_key(ENV_FILE, key)
         write_env_entry(ENV_FILE, key, val)
@@ -1438,73 +1595,153 @@ def run_resource(
             print(f"  {DIM}Skipped{W}\n")
             abort_step()
 
-    choice = prompt_choice("Action?" if prompt_hint else "Action?", choices)
-    if choice is None:
-        print(f"  {DIM}Skipped{W}")
-        return True
+    while True:
+        choice = prompt_choice("Action?" if prompt_hint else "Action?", choices)
+        if choice is None:
+            print(f"  {DIM}Skipped{W}")
+            return True
 
-    if choice == "keep":
-        return True
-    if choice == KEEP_AND_CREATE_ASSETS and key == "PROJECT_UNITY_CATALOG_SCHEMA" and cur:
-        print(f"  {B}Creating tables, procedures, Genie ...{W}\n")
-        rc = subprocess.call(
-            ["uv", "run", "python", "data/init/create_all_assets.py"],
-            cwd=ROOT,
-        )
-        if rc == 0:
-            print(f"\n  {OK} {G}Assets created. Re-run to verify.{W}\n")
-        else:
-            print(f"\n  {FAIL} Asset creation exited with {rc}{W}\n")
-            abort_step()
-        return True
-    if choice == CREATE_ASSETS_NOW and key == "PROJECT_UNITY_CATALOG_SCHEMA" and cur:
-        print(f"  {B}Creating schema, tables, Genie ...{W}\n")
-        rc = subprocess.call(
-            ["uv", "run", "python", "data/init/create_all_assets.py"],
-            cwd=ROOT,
-        )
-        if rc == 0:
-            print(f"\n  {OK} {G}Assets created. Re-run to verify.{W}\n")
-        else:
-            print(f"\n  {FAIL} Asset creation exited with {rc}{W}\n")
-            abort_step()
-        return True
-    if choice == USE_EXISTING_CATALOG and key == "PROJECT_UNITY_CATALOG_SCHEMA":
-        # List catalogs the user has access to and let them pick one
-        try:
-            from databricks.sdk import WorkspaceClient
-            w = WorkspaceClient()
-            catalogs = [c.name for c in w.catalogs.list() if c.name]
-        except Exception as e:
-            print(f"  {FAIL} Could not list catalogs: {e}{W}")
+        if choice == "keep":
             return True
-        if not catalogs:
-            print(f"  {WARN} No accessible catalogs found{W}")
+        if choice == KEEP_AND_CREATE_ASSETS and key == "PROJECT_UNITY_CATALOG_SCHEMA" and cur:
+            print(f"  {B}Creating tables, procedures, Genie ...{W}\n")
+            rc = subprocess.call(
+                ["uv", "run", "python", "data/init/create_all_assets.py"],
+                cwd=ROOT,
+            )
+            if rc == 0:
+                print(f"\n  {OK} {G}Assets created. Re-run to verify.{W}\n")
+                print(f"  {CONF}✓  Assets created.{W}")
+            else:
+                print(f"\n  {FAIL} Asset creation exited with {rc}{W}\n")
+                abort_step()
             return True
-        _, current_schema = (cur.split(".", 1) + ["main"])[:2] if cur else ("", "main")
-        print(f"\n  {C}Available catalogs:{W}")
-        for i, name in enumerate(catalogs, 1):
-            print(f"    {B}[{i}]{W} {name}")
-        idx = _read_choice(f"  Pick catalog (1-{len(catalogs)}): ", len(catalogs))
-        if idx is None or not (1 <= idx <= len(catalogs)):
+        if choice == CREATE_ASSETS_NOW and key == "PROJECT_UNITY_CATALOG_SCHEMA" and cur:
+            print(f"  {B}Creating schema, tables, Genie ...{W}\n")
+            rc = subprocess.call(
+                ["uv", "run", "python", "data/init/create_all_assets.py"],
+                cwd=ROOT,
+            )
+            if rc == 0:
+                print(f"\n  {OK} {G}Assets created. Re-run to verify.{W}\n")
+                print(f"  {CONF}✓  Assets created.{W}")
+            else:
+                print(f"\n  {FAIL} Asset creation exited with {rc}{W}\n")
+                abort_step()
             return True
-        new_catalog = catalogs[idx - 1]
-        new_val = f"{new_catalog}.{current_schema}"
-        print(f"  {C}→ Setting PROJECT_UNITY_CATALOG_SCHEMA = {new_val}{W}")
-        if cur:
-            comment_active_for_key(ENV_FILE, key)
-        write_env_entry(ENV_FILE, key, new_val)
-        load_dotenv(ENV_FILE, override=True)
-        load_env_for_key(key, new_val)
-        vok, vmsg = verify_fn()
-        if vok:
-            print(f"  {OK} {G}{vmsg}{W}")
+        if choice == USE_EXISTING_CATALOG and key == "PROJECT_UNITY_CATALOG_SCHEMA":
+            # List catalogs the user has access to and let them pick one
+            try:
+                w = WorkspaceClient()
+                catalogs = [c.name for c in w.catalogs.list() if c.name]
+            except Exception as e:
+                print(f"  {FAIL} Could not list catalogs: {e}{W}")
+                return True
+            if not catalogs:
+                print(f"  {WARN} No accessible catalogs found{W}")
+                return True
+            _, current_schema = (cur.split(".", 1) + ["main"])[:2] if cur else ("", "main")
+            print(f"\n  {C}Available catalogs:{W}")
+            for i, name in enumerate(catalogs, 1):
+                print(f"    {B}[{i}]{W} {name}")
+            idx = _read_choice(f"  Pick catalog (1-{len(catalogs)}): ", len(catalogs))
+            if idx is None or not (1 <= idx <= len(catalogs)):
+                return True
+            new_catalog = catalogs[idx - 1]
+            new_val = f"{new_catalog}.{current_schema}"
+            print(f"  {C}→ Setting PROJECT_UNITY_CATALOG_SCHEMA = {new_val}{W}")
+            if cur:
+                comment_active_for_key(ENV_FILE, key)
+            write_env_entry(ENV_FILE, key, new_val)
+            load_dotenv(ENV_FILE, override=True)
+            load_env_for_key(key, new_val)
+            vok, vmsg = verify_fn()
+            if vok:
+                print(f"  {OK} {G}{vmsg}{W}")
+                print(f"  {CONF}✓  Catalog selected.{W}")
+            else:
+                print(f"  {WARN} Schema not found yet ({vmsg}) — assets may need creating{W}")
+            return True
+        if choice == ADD_NEW_CATALOG and key == "PROJECT_UNITY_CATALOG_SCHEMA":
+            hint = " (catalog.schema)"
+            val = _read_line(f"Enter {key}{hint}: ")
+            if val is None:
+                continue   # ESC → back to menu
+            if not val:
+                return True
+            if cur:
+                comment_active_for_key(ENV_FILE, key)
+            write_env_entry(ENV_FILE, key, val)
+            load_dotenv(ENV_FILE, override=True)
+            load_env_for_key(key, val)
+            print(f"  {B}Creating schema, tables, volume, Genie ...{W}\n")
+            rc = subprocess.call(
+                ["uv", "run", "python", "data/init/create_all_assets.py"],
+                cwd=ROOT,
+            )
+            if rc == 0:
+                print(f"\n  {OK} {G}Assets created. Re-run to verify.{W}\n")
+                print(f"  {CONF}✓  Assets provisioned.{W}")
+            else:
+                print(f"\n  {FAIL} Asset creation exited with {rc}{W}\n")
+                abort_step()
+            return True
+        if choice and choice.startswith("activate ["):
+            num = int(choice.split("[")[1].rstrip("]"))
+            if 1 <= num <= len(inact):
+                line_idx = inact[num - 1][0]
+                comment_active_for_key(ENV_FILE, key)
+                uncomment_line(ENV_FILE, line_idx)
+                load_dotenv(ENV_FILE, override=True)
+                load_env_for_key(key, inact[num - 1][1])
+                ok, msg = verify_fn()
+                if ok:
+                    print(f"  {OK} Activated and verified: {msg}{W}")
+                else:
+                    print(f"  {FAIL} Activated but verify failed: {msg}{W}")
+                    abort_step()
+            return True
+        if choice == "generate 7-day PAT" and key == "DATABRICKS_TOKEN":
+            host = os.environ.get("DATABRICKS_HOST", "").strip()
+            profile = os.environ.get("DATABRICKS_CONFIG_PROFILE", "").strip()
+            if not host:
+                print(f"  {FAIL} DATABRICKS_HOST not set — cannot generate PAT{W}")
+                return True
+            try:
+                if profile:
+                    w = WorkspaceClient(host=host, profile=profile)
+                else:
+                    w = WorkspaceClient(host=host)
+                t = w.tokens.create(comment="agent-forge init (7-day)", lifetime_seconds=604800)
+                token_value = t.token_value
+                if not token_value:
+                    print(f"  {FAIL} No token value returned{W}")
+                    return True
+                if cur:
+                    comment_active_for_key(ENV_FILE, key)
+                write_env_entry(ENV_FILE, key, token_value)
+                load_dotenv(ENV_FILE, override=True)
+                load_env_for_key(key, token_value)
+                masked = _redact(token_value)
+                print(f"  {OK} PAT generated (7 days) and saved: {C}{masked}{W}")
+                vok, vmsg = verify_fn()
+                if vok:
+                    print(f"  {OK} {G}{vmsg}{W}")
+                    print(f"\n  {CONF}✓  Token configured and verified.{W}")
+                else:
+                    print(f"  {FAIL} Verify failed: {R}{vmsg}{W}")
+            except Exception as e:
+                print(f"  {FAIL} Failed to generate PAT: {e}{W}")
+            return True
+
+        # enter new / add new
+        if value_choices_fn:
+            val = value_choices_fn()
         else:
-            print(f"  {WARN} Schema not found yet ({vmsg}) — assets may need creating{W}")
-        return True
-    if choice == ADD_NEW_CATALOG and key == "PROJECT_UNITY_CATALOG_SCHEMA":
-        hint = " (catalog.schema)"
-        val = input(f"  Enter {key}{hint}: ").strip()
+            hint = f" ({prompt_hint})" if prompt_hint else ""
+            val = _read_line(f"Enter {key}{hint}: ")
+            if val is None:
+                continue   # ESC → back to menu
         if not val:
             return True
         if cur:
@@ -1512,96 +1749,24 @@ def run_resource(
         write_env_entry(ENV_FILE, key, val)
         load_dotenv(ENV_FILE, override=True)
         load_env_for_key(key, val)
-        print(f"  {B}Creating schema, tables, volume, Genie ...{W}\n")
-        rc = subprocess.call(
-            ["uv", "run", "python", "data/init/create_all_assets.py"],
-            cwd=ROOT,
-        )
-        if rc == 0:
-            print(f"\n  {OK} {G}Assets created. Re-run to verify.{W}\n")
+        ok, msg = verify_fn()
+        if ok:
+            print(f"  {OK} Set and verified: {msg}{W}")
+            print(f"\n  {CONF}✓  {label} configured.{W}")
         else:
-            print(f"\n  {FAIL} Asset creation exited with {rc}{W}\n")
+            print(f"  {FAIL} Set but verify failed: {msg}{W}")
             abort_step()
-        return True
-    if choice and choice.startswith("activate ["):
-        num = int(choice.split("[")[1].rstrip("]"))
-        if 1 <= num <= len(inact):
-            line_idx = inact[num - 1][0]
-            comment_active_for_key(ENV_FILE, key)
-            uncomment_line(ENV_FILE, line_idx)
-            load_dotenv(ENV_FILE, override=True)
-            load_env_for_key(key, inact[num - 1][1])
-            ok, msg = verify_fn()
-            if ok:
-                print(f"  {OK} Activated and verified: {msg}{W}")
-            else:
-                print(f"  {FAIL} Activated but verify failed: {msg}{W}")
-                abort_step()
-        return True
-    if choice == "generate 7-day PAT" and key == "DATABRICKS_TOKEN":
-        host = os.environ.get("DATABRICKS_HOST", "").strip()
-        profile = os.environ.get("DATABRICKS_CONFIG_PROFILE", "").strip()
-        if not host:
-            print(f"  {FAIL} DATABRICKS_HOST not set — cannot generate PAT{W}")
-            return True
-        try:
-            from databricks.sdk import WorkspaceClient
-            if profile:
-                w = WorkspaceClient(host=host, profile=profile)
-            else:
-                w = WorkspaceClient(host=host)
-            t = w.tokens.create(comment="agent-forge init (7-day)", lifetime_seconds=604800)
-            token_value = t.token_value
-            if not token_value:
-                print(f"  {FAIL} No token value returned{W}")
-                return True
-            if cur:
-                comment_active_for_key(ENV_FILE, key)
-            write_env_entry(ENV_FILE, key, token_value)
-            load_dotenv(ENV_FILE, override=True)
-            load_env_for_key(key, token_value)
-            masked = _redact(token_value)
-            print(f"  {OK} PAT generated (7 days) and saved: {C}{masked}{W}")
-            vok, vmsg = verify_fn()
-            if vok:
-                print(f"  {OK} {G}{vmsg}{W}")
-            else:
-                print(f"  {FAIL} Verify failed: {R}{vmsg}{W}")
-        except Exception as e:
-            print(f"  {FAIL} Failed to generate PAT: {e}{W}")
-        return True
-
-    # enter new / add new
-    if value_choices_fn:
-        val = value_choices_fn()
-    else:
-        hint = f" ({prompt_hint})" if prompt_hint else ""
-        val = input(f"  Enter {key}{hint}: ").strip()
-    if not val:
-        return True
-    if cur:
-        comment_active_for_key(ENV_FILE, key)
-    write_env_entry(ENV_FILE, key, val)
-    load_dotenv(ENV_FILE, override=True)
-    load_env_for_key(key, val)
-    ok, msg = verify_fn()
-    if ok:
-        print(f"  {OK} Set and verified: {msg}{W}")
-    else:
-        print(f"  {FAIL} Set but verify failed: {msg}{W}")
-        abort_step()
+        break
     return True
 
 
 def verify_ka() -> tuple[bool, str]:
     """Check that PROJECT_KA_PASSENGERS is set and the KA is ACTIVE."""
-    from dotenv import load_dotenv
     load_dotenv(ENV_FILE, override=True)
     endpoint_name = os.environ.get("PROJECT_KA_PASSENGERS", "").strip()
     if not endpoint_name:
         return False, "PROJECT_KA_PASSENGERS not set"
     try:
-        from databricks.sdk import WorkspaceClient
         w = WorkspaceClient()
         for ka in w.knowledge_assistants.list_knowledge_assistants():
             if (ka.endpoint_name or "") == endpoint_name:
@@ -1617,7 +1782,6 @@ def verify_ka() -> tuple[bool, str]:
 
 def run_resource_ka() -> bool:
     """Interactive setup for the passenger rights Knowledge Assistant."""
-    from dotenv import load_dotenv
     load_dotenv(ENV_FILE, override=True)
 
     section("Knowledge Assistants (data/pdf/)")
@@ -1636,18 +1800,64 @@ def run_resource_ka() -> bool:
         choices = ["keep", "recreate"]
     else:
         print(f"  {WARN} {msg}{W}")
-        choices = ["provision"]
+        choices = []
 
-    print(f"\n  {C}Action?{W}")
-    for i, c in enumerate(choices, 1):
-        print(f"    {B}[{i}]{W} {c}")
-    idx = _read_choice(f"  Choice (1-{len(choices)}): ", len(choices))
-    if idx is None:
-        return True
-    choice = choices[idx - 1] if 1 <= idx <= len(choices) else choices[0]
+    # List existing KAs from workspace so user can select one without reprovisioning
+    existing_kas: list[tuple[str, str, str]] = []  # (display_name, endpoint_name, state)
+    try:
+        w = WorkspaceClient()
+        for ka in w.knowledge_assistants.list_knowledge_assistants():
+            if ka.endpoint_name:
+                st = ka.state
+                raw = (st.value if hasattr(st, "value") else str(st)) if st else "UNKNOWN"
+                existing_kas.append((ka.display_name or ka.endpoint_name, ka.endpoint_name, raw))
+    except Exception:
+        pass
 
-    if choice == "keep":
-        return True
+    if existing_kas and not ok:
+        print(f"\n  {C}KAs available in workspace:{W}")
+        for name, ep, state in existing_kas:
+            status = G if state == "ACTIVE" else DIM
+            print(f"    {B}+{W} {name} {status}[{state}]{W} ({ep})")
+        for name, ep, state in existing_kas:
+            choices.append(f"use: {name} [{state}]")
+
+    choices.append("provision")
+
+    while True:
+        print(f"\n  {C}Action?{W}")
+        for i, c in enumerate(choices, 1):
+            print(f"    {B}[{i}]{W} {c}")
+        idx = _read_choice(f"  Choice (1-{len(choices)}): ", len(choices))
+        if idx is None:
+            return True
+        if not (1 <= idx <= len(choices)):
+            print(f"  {WARN} Invalid choice{W}")
+            continue
+        choice = choices[idx - 1]
+
+        if choice == "keep":
+            return True
+
+        if choice and choice.startswith("use: "):
+            # Find the matching KA and write its endpoint name to env
+            label = choice[len("use: "):]  # "name [STATE]"
+            for name, ep, state in existing_kas:
+                if label == f"{name} [{state}]":
+                    comment_active_for_key(ENV_FILE, "PROJECT_KA_PASSENGERS")
+                    write_env_entry(ENV_FILE, "PROJECT_KA_PASSENGERS", ep)
+                    load_dotenv(ENV_FILE, override=True)
+                    print(f"  {OK} PROJECT_KA_PASSENGERS set to {C}{ep}{W}")
+                    print(f"\n  {CONF}✓  Knowledge Assistant registered.{W}")
+                    vok, vmsg = verify_ka()
+                    if vok:
+                        print(f"  {OK} {G}{vmsg}{W}")
+                    else:
+                        print(f"  {WARN} {vmsg}{W}")
+                    return True
+            return True
+
+        break  # "provision" or "recreate" → fall through
 
     print(f"\n  {B}Provisioning Knowledge Assistant...{W}\n")
 
@@ -1667,6 +1877,7 @@ def run_resource_ka() -> bool:
     ok, msg = verify_ka()
     if ok:
         print(f"  {OK} {G}Knowledge Assistant ready: {msg}{W}\n")
+        print(f"  {CONF}✓  Knowledge Assistant ready.{W}")
     else:
         print(f"  {WARN} KA provisioned but verify returned: {msg}{W}\n")
     return True
@@ -1674,7 +1885,6 @@ def run_resource_ka() -> bool:
 
 def run_check_only() -> None:
     """Quick check of all resources (non-interactive)."""
-    from dotenv import load_dotenv
     load_dotenv(ENV_FILE, override=True)
 
     print(f"\n{BOLD}{M}╔══════════════════════════════════════════╗{W}")
@@ -1727,7 +1937,6 @@ def run_check_only() -> None:
         catalog, schema_name = spec.split(".", 1)
         full_schema = f"{catalog}.{schema_name}"
         try:
-            from databricks.sdk import WorkspaceClient
             w = WorkspaceClient()
             print(f"  Tables")
             for i, name in enumerate(tables):
@@ -1835,7 +2044,6 @@ def main() -> None:
         run_check_only()
         return
 
-    from dotenv import load_dotenv
     load_dotenv(ENV_FILE, override=True)
 
     print(f"\n{BOLD}{M}╔══════════════════════════════════════════════════╗{W}")
@@ -1959,6 +2167,13 @@ def main() -> None:
     run_resource_mlflow()
     run_resource_model_endpoint()
     run_resource_model_token()
+
+    section("Agent Model Test")
+    load_dotenv(ENV_FILE, override=True)
+    rc = subprocess.call(["uv", "run", "python", "scripts/test_agent_model.py"], cwd=ROOT)
+    if rc != 0:
+        print(f"  {WARN} Model test failed — see above for details.{W}")
+
     run_resource("DBX_APP_NAME", "DBX_APP_NAME", lambda: (True, os.environ.get("DBX_APP_NAME", "")), "my-app-name")
 
     section("Done")

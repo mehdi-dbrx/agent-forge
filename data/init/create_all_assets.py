@@ -49,7 +49,7 @@ def _get_tables_to_verify() -> list[str]:
 INIT_SQL = _get_init_sql()
 TABLES_TO_VERIFY = _get_tables_to_verify()
 
-# ANSI (same as init_check_dbx_env.py)
+# ANSI (same as setup_dbx_env.py)
 R, G, Y, B, M, C, W = "\033[31m", "\033[32m", "\033[33m", "\033[34m", "\033[35m", "\033[36m", "\033[0m"
 BOLD = "\033[1m"
 DIM = "\033[2m"

@@ -23,13 +23,13 @@ cp config/.env.example .env.local
 Then run the guided setup script — it walks through every required env var and provisions Databricks resources interactively:
 
 ```bash
-./scripts/init_check_dbx_env.sh
+./scripts/setup_dbx_env.sh
 ```
 
 To check current configuration status without making changes:
 
 ```bash
-./scripts/init_check_dbx_env.sh --check
+./scripts/setup_dbx_env.sh --check
 ```
 
 ### 3. Run locally

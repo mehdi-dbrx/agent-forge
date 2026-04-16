@@ -97,7 +97,7 @@ Full-stack chat application (npm monorepo).
 ### `scripts/`
 | Script | Purpose |
 |---|---|
-| `init_check_dbx_env.py` | Interactive setup — configures and verifies all Databricks resources |
+| `setup_dbx_env.py` | Interactive setup — configures and verifies all Databricks resources |
 | `start_local.sh` | Starts full local dev stack (backend + Node API + frontend) |
 
 ### `deploy/`
@@ -134,7 +134,7 @@ Architecture visualization tool (React Flow + GraphQL) for exploring the agent g
 
 ### 1. Initialize
 ```bash
-python scripts/init_check_dbx_env.py   # configure .env.local, verify resources
+python scripts/setup_dbx_env.py   # configure .env.local, verify resources
 python data/init/create_all_assets.py  # create UC schema, tables, Genie space, functions, procedures
 ```
 

@@ -7,7 +7,7 @@ import {
   type Node,
   type Edge,
   type NodeMouseHandler,
-  type NodeDragHandler,
+  type OnNodeDrag,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useEffect, useCallback, useRef } from 'react'
@@ -47,7 +47,7 @@ export function ArchCanvas({ nodes: initialNodes, edges, onNodeClick }: ArchCanv
     setNodes(initialNodes)
   }, [initialNodes, setNodes])
 
-  const onNodeDragStop: NodeDragHandler = useCallback(() => {
+  const onNodeDragStop: OnNodeDrag = useCallback(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
       setNodes((current) => { saveLayout(current); return current })
