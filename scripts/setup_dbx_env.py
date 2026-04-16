@@ -616,7 +616,7 @@ def run_resource_host() -> bool:
         else:
             choices.insert(0, "use profile workspace")
 
-    choices.append("set up new workspace (browser login + new profile)")
+    choices.append("set up a new workspace profile")
 
     while True:
         print(f"\n  {C}Action?{W}")
@@ -677,7 +677,7 @@ def run_resource_host() -> bool:
             print(f"\n  {CONF}✓  Workspace configured.{W}")
             return True
 
-        if choice.startswith("set up new workspace"):
+        if choice == "set up a new workspace profile":
             new_host = _read_line("Workspace URL (https://....databricks.com): ")
             if not new_host:
                 continue
