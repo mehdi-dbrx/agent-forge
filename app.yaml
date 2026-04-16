@@ -17,7 +17,7 @@ env:
   - name: MLFLOW_EXPERIMENT_ID
     valueFrom: "experiment"
   - name: AGENT_MODEL_ENDPOINT
-    value: "https://adb-984752964297111.11.azuredatabricks.net/serving-endpoints/databricks-claude-sonnet-4-6/invocations"
+    value: "https://e2-demo-field-eng.cloud.databricks.com/serving-endpoints/databricks-claude-sonnet-4-6/invocations"
   # Secret injected via DAB resource 'agent_model_token' (scope: agent-forge, key: AGENT_MODEL_TOKEN).
   # Managed by sync script. To push manually: databricks secrets put-secret agent-forge AGENT_MODEL_TOKEN --string-value <PAT>
   - name: AGENT_MODEL_TOKEN
