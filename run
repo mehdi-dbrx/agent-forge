@@ -29,7 +29,7 @@ case "$CMD" in
       printf '\n%s\nexport PATH="%s:$PATH"\n' "$MARKER" "$ROOT" >> "$SHELL_RC"
       echo "Added to $SHELL_RC"
     fi
-    echo "Restart your shell or run: source $SHELL_RC"
+    echo "Run: source $SHELL_RC"
     ;;
   setup)  exec "$ROOT/scripts/setup_dbx_env.sh" "$@" ;;
   deploy) exec "$ROOT/deploy/deploy.sh" "$@" ;;

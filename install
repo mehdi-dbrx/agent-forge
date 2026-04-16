@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Run as: . ./install
+# Adds repo root to PATH in shell config AND updates the current session.
+INSTALL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+"$INSTALL_ROOT/run" install
+export PATH="$INSTALL_ROOT:$PATH"
