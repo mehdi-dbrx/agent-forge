@@ -1204,6 +1204,15 @@ def run_resource_model_endpoint() -> bool:
         if choice in use_profile_choices:
             pidx = use_profile_choices.index(choice)
             pname, phost, _ = fm_profiles[pidx]
+            _fevm = os.environ.get("DATABRICKS_HOST", "").strip()
+            _fevm_azure = "azuredatabricks.net" in _fevm
+            _fm_azure = "azuredatabricks.net" in phost
+            if _fevm_azure != _fm_azure:
+                _fevm_flavor = "Azure" if _fevm_azure else "AWS"
+                _fm_flavor = "Azure" if _fm_azure else "AWS"
+                print(f"\n  {Y}{BOLD}⚠  Flavor mismatch:{W}")
+                print(f"  {Y}   Your fevm is {_fevm_flavor}-based but you selected an {_fm_flavor} FM workspace.{W}")
+                print(f"  {Y}   The FM workspace flavor should match your fevm to avoid IP ACL blocks.{W}")
             endpoint_url = _fm_invocations_url(phost)
             print(f"\n  {C}Generating 7-day PAT for profile {pname} ...{W}")
             try:
@@ -1225,6 +1234,15 @@ def run_resource_model_endpoint() -> bool:
         if choice in setup_choices:
             sidx = setup_choices.index(choice)
             fm_label, fm_base_host = FM_WORKSPACES[sidx]
+            _fevm = os.environ.get("DATABRICKS_HOST", "").strip()
+            _fevm_azure = "azuredatabricks.net" in _fevm
+            _fm_azure = "azuredatabricks.net" in fm_base_host
+            if _fevm_azure != _fm_azure:
+                _fevm_flavor = "Azure" if _fevm_azure else "AWS"
+                _fm_flavor = "Azure" if _fm_azure else "AWS"
+                print(f"\n  {Y}{BOLD}⚠  Flavor mismatch:{W}")
+                print(f"  {Y}   Your fevm is {_fevm_flavor}-based but you selected an {_fm_flavor} FM workspace.{W}")
+                print(f"  {Y}   The FM workspace flavor should match your fevm to avoid IP ACL blocks.{W}")
             default_name = "e2-demo-field-eng-aws" if sidx == 0 else "adb-field-eng-azure"
             print(f"\n  {C}Setting up CLI profile for {fm_label}{W}")
             print(f"  {DIM}Host: {fm_base_host}{W}")
