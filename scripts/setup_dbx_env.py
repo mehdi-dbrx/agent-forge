@@ -616,6 +616,8 @@ def run_resource_host() -> bool:
         else:
             choices.insert(0, "use profile workspace")
 
+    choices.append("set up new workspace (browser login + new profile)")
+
     while True:
         print(f"\n  {C}Action?{W}")
         for i, c in enumerate(choices, 1):
@@ -672,6 +674,41 @@ def run_resource_host() -> bool:
             load_env_for_key(key, host)
             print(f"  {OK} Host set: {C}{host}{W}")
             print(f"  {OK} Profile pre-set: {C}{profile_name}{W}")
+            print(f"\n  {CONF}✓  Workspace configured.{W}")
+            return True
+
+        if choice.startswith("set up new workspace"):
+            new_host = _read_line("Workspace URL (https://....databricks.com): ")
+            if not new_host:
+                continue
+            if not new_host.startswith("http"):
+                new_host = f"https://{new_host}"
+            default_pname = new_host.split("//")[-1].split(".")[0]
+            pname = _read_line(f"Profile name [{default_pname}]: ")
+            if pname is None:
+                continue
+            if not pname:
+                pname = default_pname
+            print(f"\n  {C}Running: databricks auth login --host {new_host} --profile {pname}{W}")
+            rc = subprocess.call(
+                ["databricks", "auth", "login", "--host", new_host, "--profile", pname],
+                cwd=ROOT,
+            )
+            if rc != 0:
+                print(f"  {FAIL} databricks auth login failed (exit {rc}){W}")
+                continue
+            raw = _read_line("Press Enter once browser login is complete, or ESC to cancel: ")
+            if raw is None:
+                continue
+            if cur:
+                comment_active_for_key(ENV_FILE, key)
+            write_env_entry(ENV_FILE, key, new_host)
+            comment_active_for_key(ENV_FILE, "DATABRICKS_CONFIG_PROFILE")
+            write_env_entry(ENV_FILE, "DATABRICKS_CONFIG_PROFILE", pname)
+            load_dotenv(ENV_FILE, override=True)
+            load_env_for_key(key, new_host)
+            print(f"  {OK} Host set: {C}{new_host}{W}")
+            print(f"  {OK} Profile set: {C}{pname}{W}")
             print(f"\n  {CONF}✓  Workspace configured.{W}")
             return True
 
