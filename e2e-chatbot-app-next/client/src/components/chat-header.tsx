@@ -47,9 +47,6 @@ export function ChatHeader({
         <div className="flex items-center gap-3">
           <SidebarToggle />
           <div className="flex items-center gap-1">
-            <span className="font-semibold tracking-tight text-blue-600">
-              AMADEUS
-            </span>
             <span className="font-semibold tracking-tight text-purple-600">
               AGENT FORGE
             </span>
