@@ -72,13 +72,14 @@ async def init_agent(workspace_client: Optional[WorkspaceClient] = None):
         token = os.environ.get("AGENT_MODEL_TOKEN", "").strip()
         if not token:
             raise ValueError("AGENT_MODEL_TOKEN must be set for cross-workspace endpoint")
-        # Temporarily remove OAuth env vars so the SDK uses only the PAT token.
-        # The Databricks Apps runtime injects DATABRICKS_CLIENT_ID/SECRET for the
-        # local workspace, but passing them alongside a PAT causes a "multiple auth
-        # methods" validation error on the remote workspace.
+        # Temporarily remove local-workspace env vars so the SDK uses only the
+        # explicitly passed remote host + token. Without this:
+        # - On Databricks Apps: CLIENT_ID/SECRET cause "multiple auth methods"
+        # - Locally: DATABRICKS_TOKEN (fevm PAT) overrides the remote PAT → "Invalid Token"
         _oauth_keys = [
             "DATABRICKS_CLIENT_ID", "DATABRICKS_CLIENT_SECRET",
-            "DATABRICKS_HOST", "DATABRICKS_WORKSPACE_ID",
+            "DATABRICKS_CONFIG_PROFILE",
+            "DATABRICKS_HOST", "DATABRICKS_TOKEN", "DATABRICKS_WORKSPACE_ID",
         ]
         _saved = {k: os.environ.pop(k) for k in _oauth_keys if k in os.environ}
         try:
