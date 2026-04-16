@@ -368,7 +368,7 @@ def _offer_create_pat() -> None:
         return
     try:
         w = WorkspaceClient()
-        response = w.tokens.create(comment="agent-forge init (7-day)", lifetime_seconds=604800)
+        response = w.tokens.create(comment="agent-forge-init", lifetime_seconds=604800)
         token_value = response.token_value
         if not token_value:
             print(f"  {FAIL} No token value returned{W}")
@@ -1192,7 +1192,7 @@ def run_resource_model_endpoint() -> bool:
             print(f"\n  {C}Generating 7-day PAT for profile {pname} ...{W}")
             try:
                 w = _isolated_client(pname)
-                t = w.tokens.create(comment="agent-forge FM endpoint (7-day)", lifetime_seconds=604800)
+                t = w.tokens.create(comment="agent-forge-fm-endpoint", lifetime_seconds=604800)
                 if not t.token_value:
                     raise ValueError("No token value returned")
                 _save_endpoint_and_token(key, cur, endpoint_url, t.token_value)
@@ -1239,7 +1239,7 @@ def run_resource_model_endpoint() -> bool:
             token_val: str | None = None
             try:
                 w = _isolated_client(pname)
-                t = w.tokens.create(comment="agent-forge FM endpoint (7-day)", lifetime_seconds=604800)
+                t = w.tokens.create(comment="agent-forge-fm-endpoint", lifetime_seconds=604800)
                 token_val = t.token_value
             except Exception as e:
                 print(f"  {FAIL} PAT generation failed ({type(e).__name__}: {e}){W}")
@@ -1782,7 +1782,7 @@ def run_resource(
                     w = WorkspaceClient(host=host, profile=profile)
                 else:
                     w = WorkspaceClient(host=host)
-                t = w.tokens.create(comment="agent-forge init (7-day)", lifetime_seconds=604800)
+                t = w.tokens.create(comment="agent-forge-init", lifetime_seconds=604800)
                 token_value = t.token_value
                 if not token_value:
                     print(f"  {FAIL} No token value returned{W}")
