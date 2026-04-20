@@ -6,6 +6,7 @@ Deletes:
   - MLflow experiment (MLFLOW_EXPERIMENT_ID)
   - Genie space (PROJECT_GENIE_CHECKIN)
   - UC Volume (derived from PROJECT_UNITY_CATALOG_SCHEMA)
+  - UC tables from data/init/create_*.sql
   - UC functions from data/func/*.sql
   - UC procedures from data/proc/*.sql
   - DAB bundle state (.databricks/bundle/)
@@ -47,6 +48,16 @@ def section(title: str) -> None:
     print(f"\n{BOLD}{B}═══ {title} ═══{W}")
 
 
+def _confirm(label: str) -> bool:
+    """Prompt the user to confirm deletion of a single asset. Returns True if confirmed."""
+    try:
+        ans = input(f"  Delete {label}? [y/N]: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print(f"\n  {SKIP} Cancelled")
+        sys.exit(0)
+    return ans in ("y", "yes")
+
+
 def _comment_key(env_path: Path, key: str) -> None:
     """Comment out all active occurrences of key in .env.local."""
     text = env_path.read_text(encoding="utf-8")
@@ -61,6 +72,22 @@ def _parse_sql_object_names(sql_dir: Path, kind: str) -> list[str]:
         return names
     pattern = re.compile(
         rf"CREATE\s+(?:OR\s+REPLACE\s+)?{kind}\s+(?:\w+\.)*(\w+)\s*\(",
+        re.IGNORECASE,
+    )
+    for sql_file in sorted(sql_dir.glob("*.sql")):
+        text = sql_file.read_text(encoding="utf-8")
+        for m in pattern.finditer(text):
+            names.append(m.group(1))
+    return names
+
+
+def _parse_sql_table_names(sql_dir: Path) -> list[str]:
+    """Extract bare table names from CREATE TABLE SQL files in data/init/."""
+    names: list[str] = []
+    if not sql_dir.exists():
+        return names
+    pattern = re.compile(
+        r"CREATE\s+(?:OR\s+REPLACE\s+)?TABLE\s+(?:\w+\.)*(\w+)\s*[\n(]",
         re.IGNORECASE,
     )
     for sql_file in sorted(sql_dir.glob("*.sql")):
@@ -85,16 +112,17 @@ def main() -> int:
         print(f"\n  {WARN} {BOLD}--dry-run: nothing will be deleted{W}")
 
     # ── Collect resource IDs from env ──────────────────────────────────────────
-    app_name   = os.environ.get("DBX_APP_NAME", "").strip()
-    exp_id     = os.environ.get("MLFLOW_EXPERIMENT_ID", "").strip()
-    genie_id   = os.environ.get("PROJECT_GENIE_CHECKIN", "").strip()
+    app_name    = os.environ.get("DBX_APP_NAME", "").strip()
+    exp_id      = os.environ.get("MLFLOW_EXPERIMENT_ID", "").strip()
+    genie_id    = os.environ.get("PROJECT_GENIE_CHECKIN", "").strip()
     schema_spec = os.environ.get("PROJECT_UNITY_CATALOG_SCHEMA", "").strip()
     catalog, schema = schema_spec.split(".", 1) if "." in schema_spec else ("", "")
     volume_name = "doc"  # convention from create_volume.py
 
-    func_names = _parse_sql_object_names(ROOT / "data" / "func", "FUNCTION")
-    proc_names = _parse_sql_object_names(ROOT / "data" / "proc", "PROCEDURE")
-    bundle_dir = ROOT / ".databricks" / "bundle"
+    table_names = _parse_sql_table_names(ROOT / "data" / "init")
+    func_names  = _parse_sql_object_names(ROOT / "data" / "func", "FUNCTION")
+    proc_names  = _parse_sql_object_names(ROOT / "data" / "proc", "PROCEDURE")
+    bundle_dir  = ROOT / ".databricks" / "bundle"
 
     # ── Preview ───────────────────────────────────────────────────────────────
     print(f"\n  {BOLD}Resources to delete:{W}")
@@ -103,6 +131,8 @@ def main() -> int:
     print(f"    {'Genie space':30s} {C}{genie_id or '(not set)'}{W}")
     if catalog and schema:
         print(f"    {'UC Volume':30s} {C}/Volumes/{catalog}/{schema}/{volume_name}{W}")
+    for tn in table_names:
+        print(f"    {'UC table':30s} {C}{catalog}.{schema}.{tn}{W}")
     for fn in func_names:
         print(f"    {'UC function':30s} {C}{catalog}.{schema}.{fn}{W}")
     for pn in proc_names:
@@ -111,15 +141,9 @@ def main() -> int:
         print(f"    {'DAB bundle state':30s} {C}{bundle_dir.relative_to(ROOT)}{W}")
     print(f"\n  {BOLD}Keeping:{W} Unity Catalog, Knowledge Assistants")
 
-    if not dry:
-        try:
-            confirm = input(f"\n  {R}{BOLD}Confirm deletion? [yes/N]: {W}").strip().lower()
-        except (EOFError, KeyboardInterrupt):
-            print(f"\n  {SKIP} Cancelled")
-            return 0
-        if confirm not in ("yes", "y"):
-            print(f"  {SKIP} Aborted")
-            return 0
+    if dry:
+        print(f"\n  {OK} {G}{BOLD}Dry-run complete — nothing deleted.{W}\n")
+        return 0
 
     from databricks.sdk import WorkspaceClient
     w = WorkspaceClient()
@@ -127,23 +151,21 @@ def main() -> int:
     # ── Databricks App ─────────────────────────────────────────────────────────
     section("Databricks App")
     if app_name:
-        if dry:
-            print(f"  {SKIP} Would delete app: {app_name}")
-        else:
+        if _confirm(f"app {C}{app_name}{W}"):
             try:
                 w.apps.delete(name=app_name)
                 print(f"  {OK} Deleted app: {C}{app_name}{W}")
             except Exception as e:
                 print(f"  {FAIL} App delete failed: {e}")
+        else:
+            print(f"  {SKIP} Skipped")
     else:
         print(f"  {SKIP} DBX_APP_NAME not set — skipped")
 
     # ── MLflow Experiment ──────────────────────────────────────────────────────
     section("MLflow Experiment")
     if exp_id:
-        if dry:
-            print(f"  {SKIP} Would delete experiment: {exp_id}")
-        else:
+        if _confirm(f"MLflow experiment {C}{exp_id}{W}"):
             try:
                 import mlflow
                 mlflow.set_tracking_uri("databricks")
@@ -151,20 +173,22 @@ def main() -> int:
                 print(f"  {OK} Deleted experiment: {C}{exp_id}{W}")
             except Exception as e:
                 print(f"  {FAIL} Experiment delete failed: {e}")
+        else:
+            print(f"  {SKIP} Skipped")
     else:
         print(f"  {SKIP} MLFLOW_EXPERIMENT_ID not set — skipped")
 
     # ── Genie Space ────────────────────────────────────────────────────────────
     section("Genie Space")
     if genie_id:
-        if dry:
-            print(f"  {SKIP} Would delete Genie space: {genie_id}")
-        else:
+        if _confirm(f"Genie space {C}{genie_id}{W}"):
             try:
                 w.genie.trash_space(space_id=genie_id)
                 print(f"  {OK} Deleted Genie space: {C}{genie_id}{W}")
             except Exception as e:
                 print(f"  {FAIL} Genie space delete failed: {e}")
+        else:
+            print(f"  {SKIP} Skipped")
     else:
         print(f"  {SKIP} PROJECT_GENIE_CHECKIN not set — skipped")
 
@@ -172,16 +196,40 @@ def main() -> int:
     section("UC Volume")
     if catalog and schema:
         full_volume = f"{catalog}.{schema}.{volume_name}"
-        if dry:
-            print(f"  {SKIP} Would delete volume: {full_volume}")
-        else:
+        if _confirm(f"UC volume {C}{full_volume}{W}"):
             try:
                 w.volumes.delete(name=full_volume)
                 print(f"  {OK} Deleted volume: {C}{full_volume}{W}")
             except Exception as e:
                 print(f"  {FAIL} Volume delete failed: {e}")
+        else:
+            print(f"  {SKIP} Skipped")
     else:
         print(f"  {SKIP} PROJECT_UNITY_CATALOG_SCHEMA not set — skipped")
+
+    # ── UC Tables ─────────────────────────────────────────────────────────────
+    section("UC Tables")
+    if table_names and catalog and schema:
+        wh_id = os.environ.get("DATABRICKS_WAREHOUSE_ID", "").strip()
+        if not wh_id:
+            print(f"  {WARN} DATABRICKS_WAREHOUSE_ID not set — cannot drop tables")
+        else:
+            for tn in table_names:
+                full = f"{catalog}.{schema}.{tn}"
+                if _confirm(f"UC table {C}{full}{W}"):
+                    try:
+                        w.statement_execution.execute_statement(
+                            warehouse_id=wh_id,
+                            statement=f"DROP TABLE IF EXISTS {full}",
+                            wait_timeout="30s",
+                        )
+                        print(f"  {OK} Dropped table: {C}{full}{W}")
+                    except Exception as e:
+                        print(f"  {FAIL} Drop table {full} failed: {e}")
+                else:
+                    print(f"  {SKIP} Skipped")
+    else:
+        print(f"  {SKIP} No tables found in data/init/" if not table_names else f"  {SKIP} Schema not set")
 
     # ── UC Functions ───────────────────────────────────────────────────────────
     section("UC Functions")
@@ -192,9 +240,7 @@ def main() -> int:
         else:
             for fn in func_names:
                 full = f"{catalog}.{schema}.{fn}"
-                if dry:
-                    print(f"  {SKIP} Would drop function: {full}")
-                else:
+                if _confirm(f"UC function {C}{full}{W}"):
                     try:
                         w.statement_execution.execute_statement(
                             warehouse_id=wh_id,
@@ -204,6 +250,8 @@ def main() -> int:
                         print(f"  {OK} Dropped function: {C}{full}{W}")
                     except Exception as e:
                         print(f"  {FAIL} Drop function {full} failed: {e}")
+                else:
+                    print(f"  {SKIP} Skipped")
     else:
         print(f"  {SKIP} No functions found in data/func/" if not func_names else f"  {SKIP} Schema not set")
 
@@ -216,9 +264,7 @@ def main() -> int:
         else:
             for pn in proc_names:
                 full = f"{catalog}.{schema}.{pn}"
-                if dry:
-                    print(f"  {SKIP} Would drop procedure: {full}")
-                else:
+                if _confirm(f"UC procedure {C}{full}{W}"):
                     try:
                         w.statement_execution.execute_statement(
                             warehouse_id=wh_id,
@@ -228,17 +274,19 @@ def main() -> int:
                         print(f"  {OK} Dropped procedure: {C}{full}{W}")
                     except Exception as e:
                         print(f"  {FAIL} Drop procedure {full} failed: {e}")
+                else:
+                    print(f"  {SKIP} Skipped")
     else:
         print(f"  {SKIP} No procedures found in data/proc/" if not proc_names else f"  {SKIP} Schema not set")
 
     # ── DAB Bundle State ───────────────────────────────────────────────────────
     section("DAB Bundle State")
     if bundle_dir.exists():
-        if dry:
-            print(f"  {SKIP} Would delete: {bundle_dir.relative_to(ROOT)}")
-        else:
+        if _confirm(f"DAB bundle state {C}{bundle_dir.relative_to(ROOT)}{W}"):
             shutil.rmtree(bundle_dir)
             print(f"  {OK} Deleted: {C}{bundle_dir.relative_to(ROOT)}{W}")
+        else:
+            print(f"  {SKIP} Skipped")
     else:
         print(f"  {SKIP} .databricks/bundle/ not found — skipped")
 
@@ -248,11 +296,11 @@ def main() -> int:
     for key in ("PROJECT_GENIE_CHECKIN", "MLFLOW_EXPERIMENT_ID"):
         val = os.environ.get(key, "").strip()
         if val:
-            if dry:
-                print(f"  {SKIP} Would comment out {key}")
-            else:
+            if _confirm(f"comment out {C}{key}{W} in .env.local"):
                 _comment_key(env_path, key)
                 print(f"  {OK} Commented out {C}{key}{W}")
+            else:
+                print(f"  {SKIP} Skipped")
         else:
             print(f"  {SKIP} {key} not set — skipped")
 
