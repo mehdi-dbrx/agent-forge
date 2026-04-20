@@ -8,7 +8,7 @@ and uploads all 13 records.
 All configuration from .env.local — no hardcoded workspace paths or profile names.
 
 Usage:
-  uv run python scripts/create_eval_dataset.py
+  uv run python scripts/py/create_eval_dataset.py
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import json
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from dotenv import load_dotenv

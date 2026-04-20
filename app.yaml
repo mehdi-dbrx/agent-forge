@@ -23,6 +23,6 @@ env:
   - name: AGENT_MODEL_TOKEN
     valueFrom: "agent_model_token"
   - name: PROJECT_UNITY_CATALOG_SCHEMA
-    value: "agent_forge_catalog.main"
+    value: "airties.main"
   - name: DATABRICKS_WAREHOUSE_ID
-    value: "8ba51d8cad2a3d9a"
+    value: "ab0ed8896b7bdebe"

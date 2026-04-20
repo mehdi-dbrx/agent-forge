@@ -32,9 +32,9 @@ case "$CMD" in
     fi
     echo "Run: source $SHELL_RC"
     ;;
-  setup)    exec "$ROOT/scripts/setup_dbx_env.sh" "$@" ;;
+  setup)    exec "$ROOT/scripts/sh/setup_dbx_env.sh" "$@" ;;
   deploy)   exec "$ROOT/deploy/deploy.sh" "$@" ;;
-  reset-workspace) exec uv run python "$ROOT/scripts/reset_workspace.py" "$@" ;;
+  reset-workspace) exec uv run python "$ROOT/scripts/py/reset_workspace.py" "$@" ;;
   "")
     echo "Usage: ./run <command>"
     echo ""

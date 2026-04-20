@@ -17,8 +17,8 @@ Keeps:
   - Knowledge Assistants
 
 Usage:
-  uv run python scripts/reset_workspace.py
-  uv run python scripts/reset_workspace.py --dry-run
+  uv run python scripts/py/reset_workspace.py
+  uv run python scripts/py/reset_workspace.py --dry-run
 """
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ import shutil
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from dotenv import load_dotenv
@@ -46,6 +46,15 @@ SKIP = f"{DIM}[-]{W}"
 
 def section(title: str) -> None:
     print(f"\n{BOLD}{B}═══ {title} ═══{W}")
+
+
+def _setup_interrupt_handler() -> None:
+    """Erase the ^C echo and exit cleanly on Ctrl+C."""
+    import signal as _signal
+    def _handler(*_):
+        print(f"\033[2K\r\n  {DIM}Cancelled.{W}\n", flush=True)
+        sys.exit(130)
+    _signal.signal(_signal.SIGINT, _handler)
 
 
 def _confirm(label: str) -> bool:
@@ -103,6 +112,7 @@ def main() -> int:
     args = parser.parse_args()
 
     dry = args.dry_run
+    _setup_interrupt_handler()
 
     print(f"\n{BOLD}{R}╔══════════════════════════════════════════╗{W}")
     print(f"{BOLD}{R}║  Agent Forge  —  Reset Workspace         ║{W}")
@@ -312,5 +322,5 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except KeyboardInterrupt:
-        print(f"\n  {SKIP} Interrupted")
+        print(f"\n  {DIM}Cancelled.{W}\n")
         sys.exit(130)

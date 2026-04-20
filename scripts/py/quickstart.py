@@ -562,7 +562,7 @@ Examples:
 
         summary += """
 
-Next step: Run 'uv run start-app' to start the agent locally (or './scripts/start_local.sh' for full dev stack with live reload)
+Next step: Run 'uv run start-app' to start the agent locally (or './scripts/sh/start_local.sh' for full dev stack with live reload)
 """
         print(summary)
 

@@ -20,12 +20,22 @@ load_dotenv(ROOT / ".env.local", override=True)
 import requests
 from mlflow.genai.scorers import scorer
 
-# ── External FE workspace endpoint ──────────────────────────────────────────
+# ── Model endpoint — same-workspace fallback ─────────────────────────────────
 _ENDPOINT_URL = os.environ.get("AGENT_MODEL_ENDPOINT", "").strip()
-_ENDPOINT_TOKEN = os.environ.get("AGENT_MODEL_TOKEN", "").strip()
+_DATABRICKS_HOST = os.environ.get("DATABRICKS_HOST", "").strip().rstrip("/")
 
-if not _ENDPOINT_URL or not _ENDPOINT_TOKEN:
-    raise EnvironmentError("AGENT_MODEL_ENDPOINT and AGENT_MODEL_TOKEN must be set in .env.local")
+if not _ENDPOINT_URL:
+    if not _DATABRICKS_HOST:
+        raise EnvironmentError("AGENT_MODEL_ENDPOINT not set and DATABRICKS_HOST not set")
+    _ENDPOINT_URL = f"{_DATABRICKS_HOST}/serving-endpoints/databricks-claude-sonnet-4-6/invocations"
+
+# Use AGENT_MODEL_TOKEN for cross-workspace; fall back to DATABRICKS_TOKEN for same-workspace
+_ENDPOINT_TOKEN = (
+    os.environ.get("AGENT_MODEL_TOKEN", "").strip()
+    or os.environ.get("DATABRICKS_TOKEN", "").strip()
+)
+if not _ENDPOINT_TOKEN:
+    raise EnvironmentError("No auth token found — set AGENT_MODEL_TOKEN or DATABRICKS_TOKEN")
 
 _JUDGE_PROMPT = """\
 You are evaluating a response from an aviation passenger-rights knowledge assistant.

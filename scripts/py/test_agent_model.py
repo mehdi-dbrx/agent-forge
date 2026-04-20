@@ -2,13 +2,13 @@
 """Test AGENT_MODEL_ENDPOINT by sending a simple message and confirming the model responds.
 
 Usage:
-  uv run python scripts/test_agent_model.py
+  uv run python scripts/py/test_agent_model.py
 """
 import os
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from dotenv import load_dotenv
@@ -20,15 +20,19 @@ R, G, Y, W = "\033[31m", "\033[32m", "\033[33m", "\033[0m"
 BOLD = "\033[1m"
 
 endpoint = os.environ.get("AGENT_MODEL_ENDPOINT", "").strip()
+databricks_host = os.environ.get("DATABRICKS_HOST", "").strip().rstrip("/")
+
+if not endpoint:
+    if not databricks_host:
+        print(f"{BOLD}{R}FAIL{W} AGENT_MODEL_ENDPOINT not set and DATABRICKS_HOST not set.")
+        sys.exit(1)
+    endpoint = f"{databricks_host}/serving-endpoints/databricks-claude-sonnet-4-6/invocations"
+    print(f"{BOLD}{Y}INFO{W} AGENT_MODEL_ENDPOINT not set — using same-workspace fallback.")
+
 token = (
     os.environ.get("AGENT_MODEL_TOKEN", "").strip()
     or os.environ.get("DATABRICKS_TOKEN", "").strip()
 )
-
-if not endpoint:
-    print(f"{BOLD}{R}FAIL{W} AGENT_MODEL_ENDPOINT is not set.")
-    print(f"  → Run the init script and configure the model endpoint.")
-    sys.exit(1)
 
 if not token:
     print(f"{BOLD}{Y}WARN{W} No token found (AGENT_MODEL_TOKEN or DATABRICKS_TOKEN).")

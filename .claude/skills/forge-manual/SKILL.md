@@ -37,7 +37,7 @@ Loads the project docs into context so you have a full picture of what Agent For
 ./run setup            # interactive env setup
 ./run deploy           # full deploy pipeline
 ./run reset-workspace  # reset without losing catalog/KA
-bash scripts/start_local.sh              # local dev (ports 8000/3001/3000)
+bash scripts/sh/start_local.sh              # local dev (ports 8000/3001/3000)
 uv run python data/init/create_all_assets.py  # provision data layer
 ```
 

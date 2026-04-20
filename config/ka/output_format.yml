@@ -1,6 +1,6 @@
 # Shared output formatting for all Knowledge Assistants.
 # Merged ahead of each agent's own knowledge_assistant.instructions by:
-#   scripts/ka/create_kas_from_yml.py
+#   scripts/py/ka/create_kas_from_yml.py
 #
 # Edit this file to change global answer structure (citations, tone) for every KA at once.
 output:

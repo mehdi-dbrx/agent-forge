@@ -103,7 +103,7 @@ done
 if [[ ${#missing[@]} -gt 0 ]]; then
   echo ""
   for var in "${missing[@]}"; do fail "${R}${var}${W} not set in .env.local"; done
-  abort "Run ./scripts/setup_dbx_env.sh to configure missing values"
+  abort "Run ./scripts/sh/setup_dbx_env.sh to configure missing values"
 fi
 
 # Auth — need token or profile

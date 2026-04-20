@@ -62,15 +62,27 @@ async def init_agent(workspace_client: Optional[WorkspaceClient] = None):
         query_checkin_metrics,
     ]
     endpoint = os.environ.get("AGENT_MODEL_ENDPOINT", "").strip()
+    databricks_host = os.environ.get("DATABRICKS_HOST", "").strip().rstrip("/")
+
+    # If not set, derive from project workspace (same-workspace mode)
     if not endpoint:
-        raise ValueError("AGENT_MODEL_ENDPOINT must be set (endpoint name or full invocations URL)")
+        if not databricks_host:
+            raise ValueError("AGENT_MODEL_ENDPOINT not set and DATABRICKS_HOST not set")
+        endpoint = f"{databricks_host}/serving-endpoints/databricks-claude-sonnet-4-6/invocations"
+
     if endpoint.startswith("http://") or endpoint.startswith("https://"):
-        # Cross-workspace endpoint: build a WorkspaceClient for the remote host
         m = re.search(r"/serving-endpoints/([^/]+)/invocations", endpoint)
         if not m:
             raise ValueError(f"Cannot parse endpoint name from URL: {endpoint}")
         name = m.group(1)
-        host = endpoint[: m.start()]  # everything before /serving-endpoints/...
+        host = endpoint[: m.start()].rstrip("/")
+
+        if host == databricks_host:
+            # Same workspace — use local auth, no remote client needed
+            llm = ChatDatabricks(endpoint=name)
+            return create_agent(tools=tools, model=llm), True
+
+        # Cross-workspace endpoint: build a WorkspaceClient for the remote host
         token = os.environ.get("AGENT_MODEL_TOKEN", "").strip()
         if not token:
             raise ValueError("AGENT_MODEL_TOKEN must be set for cross-workspace endpoint")
@@ -91,6 +103,7 @@ async def init_agent(workspace_client: Optional[WorkspaceClient] = None):
         llm = ChatDatabricks(endpoint=name, workspace_client=remote_client)
         return create_agent(tools=tools, model=llm), False
     else:
+        # Local endpoint name — same workspace
         llm = ChatDatabricks(endpoint=endpoint)
         return create_agent(tools=tools, model=llm), True
 

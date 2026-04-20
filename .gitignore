@@ -28,3 +28,7 @@ logs/*
 
 # OS
 .DS_Store
+
+# FEVM session cookies (contains auth tokens, never commit)
+internal/fevm/session_cookies.json
+e2e-chatbot-app-next/client/dist/

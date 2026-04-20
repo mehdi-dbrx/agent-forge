@@ -7,8 +7,8 @@ Volume path is derived from PROJECT_UNITY_CATALOG_SCHEMA in .env.local:
 Skips creation if the volume already exists.
 
 Usage:
-  uv run python scripts/ka/create_volume.py
-  uv run python scripts/ka/create_volume.py --dry-run
+  uv run python scripts/py/ka/create_volume.py
+  uv run python scripts/py/ka/create_volume.py --dry-run
 """
 from __future__ import annotations
 

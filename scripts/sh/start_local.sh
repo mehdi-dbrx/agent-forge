@@ -2,7 +2,7 @@
 # Run full stack locally: backend (8000) + Node API (3001) + Vite frontend (3000).
 # Kills any process on 8000, 3000, 3001 at start. Env from .env.local.
 set -e
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
 if [[ ! -d e2e-chatbot-app-next ]]; then

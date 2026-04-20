@@ -8,10 +8,10 @@ After a KA reaches ACTIVE, its endpoint name is written to PROJECT_KA_PASSENGERS
 (or PROJECT_KA_<DISPLAY_NAME_UPPER>) in .env.local for use by other scripts.
 
 Usage:
-  uv run python scripts/ka/create_kas_from_yml.py
-  uv run python scripts/ka/create_kas_from_yml.py --dry-run
-  uv run python scripts/ka/create_kas_from_yml.py --skip-existing
-  uv run python scripts/ka/create_kas_from_yml.py --no-wait
+  uv run python scripts/py/ka/create_kas_from_yml.py
+  uv run python scripts/py/ka/create_kas_from_yml.py --dry-run
+  uv run python scripts/py/ka/create_kas_from_yml.py --skip-existing
+  uv run python scripts/py/ka/create_kas_from_yml.py --no-wait
 """
 from __future__ import annotations
 
@@ -26,8 +26,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from scripts.ka.ka_instructions_merger import load_shared_output_format, merge_instructions
+from ka_instructions_merger import load_shared_output_format, merge_instructions
 
 CONFIG_DIR = ROOT / "config" / "ka"
 ENV_FILE = ROOT / ".env.local"
@@ -165,7 +166,7 @@ def wait_for_ka_ready(w, ka_name: str, timeout_sec: int = 600, poll_interval: in
 
     Shows an animated progress bar while waiting.
     Press ESC at any time to detach — provisioning continues in Databricks;
-    check status later with: uv run python scripts/ka/list_ka_states.py
+    check status later with: uv run python scripts/py/ka/list_ka_states.py
     """
     global _bar_start
     _bar_start = time.monotonic()
@@ -305,10 +306,10 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  uv run python scripts/ka/create_kas_from_yml.py
-  uv run python scripts/ka/create_kas_from_yml.py config/ka/ka_passengers.yml --no-wait
-  uv run python scripts/ka/create_kas_from_yml.py --dry-run
-  uv run python scripts/ka/create_kas_from_yml.py --skip-existing
+  uv run python scripts/py/ka/create_kas_from_yml.py
+  uv run python scripts/py/ka/create_kas_from_yml.py config/ka/ka_passengers.yml --no-wait
+  uv run python scripts/py/ka/create_kas_from_yml.py --dry-run
+  uv run python scripts/py/ka/create_kas_from_yml.py --skip-existing
         """,
     )
     parser.add_argument("configs", nargs="*", metavar="CONFIG", help="Specific YAML file(s). If omitted, all ka_*.yml in config/ka/.")
@@ -448,7 +449,7 @@ Examples:
             )
             _info("Knowledge source added; waiting for endpoint to provision...")
             print(f"       {DIM}Press ESC at any time to detach — provisioning continues in Databricks.{W}")
-            print(f"       {DIM}Check status later: uv run python scripts/ka/list_ka_states.py{W}\n")
+            print(f"       {DIM}Check status later: uv run python scripts/py/ka/list_ka_states.py{W}\n")
 
             if args.no_wait:
                 _success("Created (skipping wait)")
@@ -458,8 +459,8 @@ Examples:
                 if final_state == "DETACHED":
                     print()
                     _warn("Detached — provisioning continues in Databricks.")
-                    _info(f"Check status: uv run python scripts/ka/list_ka_states.py")
-                    _info(f"When ACTIVE, run: uv run python scripts/ka/create_kas_from_yml.py --skip-existing")
+                    _info(f"Check status: uv run python scripts/py/ka/list_ka_states.py")
+                    _info(f"When ACTIVE, run: uv run python scripts/py/ka/create_kas_from_yml.py --skip-existing")
                     _info(f"  (re-run will save {env_key} to .env.local once endpoint is up)")
                     created += 1  # count as created since KA was submitted
                 elif final_state == "ACTIVE":

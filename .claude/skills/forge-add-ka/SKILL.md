@@ -12,9 +12,9 @@ Guides through creating a new KA agent: write the YAML config, deploy it, and ve
 - `config/ka/ka_<name>.yml` — per-KA definition (display_name, description, instructions, knowledge_sources)
 - `config/ka/output_format.yml` — shared output format prepended to every KA's instructions automatically
 - `config/ka/ka_passengers.yml` — reference example
-- `scripts/ka/create_kas_from_yml.py` — creates KAs in Databricks from YAML configs
-- `scripts/ka/list_ka_states.py` — lists all KAs with state (ACTIVE / FAILED / CREATING)
-- `scripts/ka/ka_instructions_merger.py` — merges shared output_format + per-KA instructions
+- `scripts/py/ka/create_kas_from_yml.py` — creates KAs in Databricks from YAML configs
+- `scripts/py/ka/list_ka_states.py` — lists all KAs with state (ACTIVE / FAILED / CREATING)
+- `scripts/py/ka/ka_instructions_merger.py` — merges shared output_format + per-KA instructions
 
 ## YAML Schema
 
@@ -71,7 +71,7 @@ Then write `config/ka/ka_<slug>.yml` following the schema above. Use `config/ka/
 ### Step 2 — Dry-run validate
 
 ```bash
-uv run python scripts/ka/create_kas_from_yml.py config/ka/ka_<slug>.yml --dry-run
+uv run python scripts/py/ka/create_kas_from_yml.py config/ka/ka_<slug>.yml --dry-run
 ```
 
 Confirm: config loaded, volume path resolved, env key shown. Fix any errors before proceeding.
@@ -79,7 +79,7 @@ Confirm: config loaded, volume path resolved, env key shown. Fix any errors befo
 ### Step 3 — Create the KA
 
 ```bash
-uv run python scripts/ka/create_kas_from_yml.py config/ka/ka_<slug>.yml
+uv run python scripts/py/ka/create_kas_from_yml.py config/ka/ka_<slug>.yml
 ```
 
 - Waits for ACTIVE state (up to 10 min). Press ESC to detach and check later.
@@ -88,7 +88,7 @@ uv run python scripts/ka/create_kas_from_yml.py config/ka/ka_<slug>.yml
 ### Step 4 — Verify
 
 ```bash
-uv run python scripts/ka/list_ka_states.py
+uv run python scripts/py/ka/list_ka_states.py
 ```
 
 Confirm the new KA shows ACTIVE. If FAILED, read the error line — usually a bad volume path or missing PDF.
@@ -102,13 +102,13 @@ grep PROJECT_KA .env.local
 
 ### Step 6 — Register in setup script (optional)
 
-If the new KA needs a setup menu entry, look for `run_resource_ka_*` functions in `scripts/setup_dbx_env.py` and add a corresponding one following the existing pattern.
+If the new KA needs a setup menu entry, look for `run_resource_ka_*` functions in `scripts/py/setup_dbx_env.py` and add a corresponding one following the existing pattern.
 
 ## Common Errors
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| `FAILED` state | Bad volume path or no PDFs uploaded | Upload PDFs first: `uv run python scripts/ka/upload_pdfs.py` |
+| `FAILED` state | Bad volume path or no PDFs uploaded | Upload PDFs first: `uv run python scripts/py/ka/upload_pdfs.py` |
 | `PROJECT_UNITY_CATALOG_SCHEMA not set` | Missing env var | Run `./run setup` and configure schema |
 | Duplicate display_name | KA already exists | Use `--skip-existing` or delete old KA first |
 | `{volume_path}` in output | Placeholder not resolved | Ensure `PROJECT_UNITY_CATALOG_SCHEMA` is set in `.env.local` |
@@ -117,17 +117,17 @@ If the new KA needs a setup menu entry, look for `run_resource_ka_*` functions i
 
 ```bash
 # List all KAs and their states
-uv run python scripts/ka/list_ka_states.py
+uv run python scripts/py/ka/list_ka_states.py
 
 # Delete KAs by display name
-uv run python scripts/ka/delete_kas_by_display_name.py "agent-forge-<slug>"
+uv run python scripts/py/ka/delete_kas_by_display_name.py "agent-forge-<slug>"
 
 # Upload PDFs to the volume before creating a KA
-uv run python scripts/ka/upload_pdfs.py
+uv run python scripts/py/ka/upload_pdfs.py
 
 # Re-run creation skipping already-existing KAs
-uv run python scripts/ka/create_kas_from_yml.py --skip-existing
+uv run python scripts/py/ka/create_kas_from_yml.py --skip-existing
 
 # Create without waiting for ACTIVE
-uv run python scripts/ka/create_kas_from_yml.py config/ka/ka_<slug>.yml --no-wait
+uv run python scripts/py/ka/create_kas_from_yml.py config/ka/ka_<slug>.yml --no-wait
 ```

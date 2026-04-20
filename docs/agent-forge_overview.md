@@ -115,12 +115,12 @@ Configuration files shared across the framework.
 ### `scripts/`
 | Script | Purpose |
 |---|---|
-| `setup_dbx_env.py` / `setup_dbx_env.sh` | Interactive setup — configures and verifies all Databricks resources; warns on FM workspace flavor mismatch |
-| `start_local.sh` | Starts full local dev stack (backend + Node API + frontend) |
-| `reset_workspace.py` / `reset_workspace.sh` | Deletes workspace resources (Genie space, tables, procedures, functions, MLflow experiment) while keeping Unity Catalog and Knowledge Assistants |
-| `create_eval_dataset.py` | Pushes the EC 261/2004 eval dataset to Databricks MLflow |
+| `scripts/py/setup_dbx_env.py` / `scripts/sh/setup_dbx_env.sh` | Interactive setup — configures and verifies all Databricks resources; warns on FM workspace flavor mismatch |
+| `scripts/sh/start_local.sh` | Starts full local dev stack (backend + Node API + frontend) |
+| `scripts/py/reset_workspace.py` / `scripts/sh/reset_workspace.sh` | Deletes workspace resources (Genie space, tables, procedures, functions, MLflow experiment) while keeping Unity Catalog and Knowledge Assistants |
+| `scripts/py/create_eval_dataset.py` | Pushes the EC 261/2004 eval dataset to Databricks MLflow |
 
-### `scripts/ka/`
+### `scripts/py/ka/`
 Utilities for creating and managing Databricks Knowledge Assistants.
 
 | Script | Purpose |
@@ -194,7 +194,7 @@ uv run python data/init/create_all_assets.py   # create UC schema, tables, Genie
 
 ### 2. Develop locally
 ```bash
-bash scripts/start_local.sh    # boots backend (8000) + Node API (3001) + frontend (3000)
+bash scripts/sh/start_local.sh    # boots backend (8000) + Node API (3001) + frontend (3000)
 ```
 
 ### 3. Deploy to Databricks
@@ -218,9 +218,9 @@ The deployed app builds the React client at startup — no pre-build step needed
 | Command | What it does |
 |---|---|
 | `./run install` | Adds repo root to PATH in shell config (run once after cloning) |
-| `./run setup` | Interactive Databricks env setup (`scripts/setup_dbx_env.sh`) |
+| `./run setup` | Interactive Databricks env setup (`scripts/sh/setup_dbx_env.sh`) |
 | `./run deploy [--dry-run]` | Full deploy pipeline (`deploy/deploy.sh`) |
-| `./run reset-workspace` | Delete workspace resources, keep UC catalog + KA (`scripts/reset_workspace.py`) |
+| `./run reset-workspace` | Delete workspace resources, keep UC catalog + KA (`scripts/py/reset_workspace.py`) |
 
 ---
 
@@ -247,7 +247,7 @@ Agent Forge is a template. To build your own agent:
 3. **Update prompts** — edit `prompt/main.prompt` and `prompt/knowledge.base` for your domain
 4. **Extend the data layer** — use the `forge-add-data` skill or add SQL functions/procedures in `data/func/` and `data/proc/`
 5. **Customize the UI** — the chat app is a generic streaming UI; extend as needed
-6. **Add a Knowledge Assistant** — use the `forge-add-ka` skill: create a YAML in `config/ka/`, upload PDFs via `scripts/ka/`, run `create_kas_from_yml.py`
+6. **Add a Knowledge Assistant** — use the `forge-add-ka` skill: create a YAML in `config/ka/`, upload PDFs via `scripts/py/ka/`, run `create_kas_from_yml.py`
 7. **Wire a KA as an agent tool** — use the `forge-add-tool` skill (KA tool pattern) to call a KA endpoint from the agent
 8. **Evaluate and improve** — write test questions in `eval/data/`, run `eval/run_eval.py` to compare runs in MLflow
 

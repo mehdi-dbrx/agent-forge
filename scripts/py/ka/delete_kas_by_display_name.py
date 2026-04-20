@@ -4,8 +4,8 @@
 Without --yes, only prints what would be deleted (dry-run).
 
 Usage:
-  uv run python scripts/ka/delete_kas_by_display_name.py --dry-run "agent-forge-passenger-rights"
-  uv run python scripts/ka/delete_kas_by_display_name.py --yes "agent-forge-passenger-rights"
+  uv run python scripts/py/ka/delete_kas_by_display_name.py --dry-run "agent-forge-passenger-rights"
+  uv run python scripts/py/ka/delete_kas_by_display_name.py --yes "agent-forge-passenger-rights"
 """
 from __future__ import annotations
 

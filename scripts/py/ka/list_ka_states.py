@@ -4,8 +4,8 @@
 Fetches full details per KA (one API call each). Prints progress as it goes.
 
 Usage:
-  uv run python scripts/ka/list_ka_states.py
-  uv run python scripts/ka/list_ka_states.py --no-errors   # hide FAILED error lines
+  uv run python scripts/py/ka/list_ka_states.py
+  uv run python scripts/py/ka/list_ka_states.py --no-errors   # hide FAILED error lines
 """
 from __future__ import annotations
 

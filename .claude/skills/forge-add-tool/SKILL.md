@@ -121,7 +121,7 @@ tools = list(wrapped_tools) + [
 
 ```bash
 # Restart local stack
-bash scripts/start_local.sh
+bash scripts/sh/start_local.sh
 
 # Or quick smoke test without full stack:
 uv run python -c "from tools.<tool_name> import <tool_name>; print(<tool_name>.name)"

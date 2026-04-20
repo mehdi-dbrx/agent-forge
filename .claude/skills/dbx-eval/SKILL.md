@@ -16,7 +16,7 @@ Runs MLflow GenAI evaluation of the passenger-rights Knowledge Assistant using a
 | `eval/scorer.py` | Claude judge via `AGENT_MODEL_ENDPOINT` |
 | `eval/eval_dataset.py` | 13 EC 261/2004 test questions |
 | `eval/data/ec261_eval_dataset.jsonl` | JSONL source of truth |
-| `scripts/create_eval_dataset.py` | Push dataset to MLflow UI |
+| `scripts/py/create_eval_dataset.py` | Push dataset to MLflow UI |
 
 ## Required Env Vars (`.env.local`)
 
@@ -41,7 +41,7 @@ Runs MLflow GenAI evaluation of the passenger-rights Knowledge Assistant using a
 ### Phase 2: (Optional) Push dataset to MLflow
 If the user wants to view the dataset in the MLflow UI:
 ```bash
-uv run python scripts/create_eval_dataset.py
+uv run python scripts/py/create_eval_dataset.py
 ```
 
 ### Phase 3: Run 1 — Baseline
@@ -78,7 +78,7 @@ w.knowledge_assistants.update_knowledge_assistant(
 
 To find the KA ID:
 ```bash
-uv run python scripts/ka/list_ka_states.py
+uv run python scripts/py/ka/list_ka_states.py
 ```
 
 ### Phase 5: Run 2 — After guideline

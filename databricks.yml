@@ -19,12 +19,12 @@ resources:
             permission: 'CAN_MANAGE'
         - name: 'sql_warehouse'
           sql_warehouse:
-            id: '8ba51d8cad2a3d9a'
+            id: 'ab0ed8896b7bdebe'
             permission: 'CAN_USE'
         - name: 'genie_space'
           genie_space:
             name: 'agent-forge-checkin'
-            space_id: '01f139de15a5156fb140cf83b40ed88f'
+            space_id: '01f13cec584b100499621278c4975089'
             permission: 'CAN_RUN'
         - name: 'agent_model_token'
           secret:
@@ -44,4 +44,4 @@ targets:
     resources:
       apps:
         agent_app:
-          name: 'agent-vibe-app-no-dist'
+          name: 'agent-airties'

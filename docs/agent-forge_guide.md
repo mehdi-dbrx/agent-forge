@@ -102,8 +102,8 @@ Each tool is one `@tool`-decorated function in `tools/<tool_name>.py`. Register 
 Use the `forge-add-ka` skill:
 
 1. Write `config/ka/ka_<slug>.yml` â€” display name, instructions, knowledge sources (PDF files in a UC Volume)
-2. Dry-run validate: `uv run python scripts/ka/create_kas_from_yml.py config/ka/ka_<slug>.yml --dry-run`
-3. Deploy and wait for ACTIVE: `uv run python scripts/ka/create_kas_from_yml.py config/ka/ka_<slug>.yml`
+2. Dry-run validate: `uv run python scripts/py/ka/create_kas_from_yml.py config/ka/ka_<slug>.yml --dry-run`
+3. Deploy and wait for ACTIVE: `uv run python scripts/py/ka/create_kas_from_yml.py config/ka/ka_<slug>.yml`
 4. The endpoint is written to `.env.local` automatically as `PROJECT_KA_<SLUG>`
 5. Wire it as an agent tool using the KA tool pattern in `forge-add-tool`
 
@@ -133,7 +133,7 @@ Drops tables, stored procedures, functions, Genie space, and MLflow experiment â
 | `./run setup` | Interactive Databricks env setup |
 | `./run deploy [--dry-run]` | Full deploy pipeline |
 | `./run reset-workspace` | Delete workspace resources, keep catalog + KA |
-| `bash scripts/start_local.sh` | Start full local dev stack (ports 8000 / 3001 / 3000) |
+| `bash scripts/sh/start_local.sh` | Start full local dev stack (ports 8000 / 3001 / 3000) |
 | `uv run python data/init/create_all_assets.py` | Provision all data layer resources |
 
 ---

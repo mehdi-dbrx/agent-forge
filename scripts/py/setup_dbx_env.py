@@ -6,8 +6,8 @@ to keep, add new, or activate an inactive entry. Inactive (commented) entries ar
 parsed and shown; user can activate [1], [2], etc.
 
 Usage:
-  uv run python scripts/setup_dbx_env.py         # interactive setup
-  uv run python scripts/setup_dbx_env.py --check # quick check only
+  uv run python scripts/py/setup_dbx_env.py         # interactive setup
+  uv run python scripts/py/setup_dbx_env.py --check # quick check only
 """
 import os
 import re
@@ -18,7 +18,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from databricks.sdk import WorkspaceClient
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 os.chdir(ROOT)
 
@@ -196,7 +196,7 @@ def _read_line(prompt: str) -> str | None:
     if not sys.stdin.isatty():
         try:
             return input("").strip()
-        except (EOFError, KeyboardInterrupt):
+        except EOFError:
             return None
 
     fd = sys.stdin.fileno()
@@ -237,7 +237,7 @@ def prompt_choice(prompt: str, choices: list[str]) -> str | None:
         try:
             idx = _read_choice(f"  Choice (1-{len(choices)}): ", len(choices))
         except KeyboardInterrupt:
-            print(f"\n\n  {WARN} Interrupted — exiting.{W}\n")
+            print(f"\n  {DIM}Cancelled.{W}\n")
             sys.exit(130)
         if idx is None:
             return None
@@ -397,96 +397,39 @@ def _offer_create_pat() -> None:
 
 
 def run_resource_profile() -> bool:
-    """Interactive config for DATABRICKS_CONFIG_PROFILE with CLI profile list as choices."""
+    """Verify auth via auto-detected CLI profile matching DATABRICKS_HOST."""
     load_dotenv(ENV_FILE, override=True)
 
-    key = "DATABRICKS_CONFIG_PROFILE"
-    active, inactive, _ = parse_env_file(ENV_FILE)
-    cur = active.get(key, "").strip()
-    inact = inactive.get(key, [])
+    section("CLI Profile Auth")
 
-    section("DATABRICKS_CONFIG_PROFILE")
+    host = os.environ.get("DATABRICKS_HOST", "").strip().rstrip("/")
+    if not host:
+        print(f"  {FAIL} DATABRICKS_HOST not set — cannot auto-detect profile{W}")
+        return False
 
-    profiles = list_dbx_profiles()
-    if profiles:
-        for name, valid in profiles:
-            status = f"{G}[valid]{W}" if valid else f"{DIM}[invalid]{W}"
-            print(f"  {C}Available :{W} {name} {status}")
+    profile = _profile_for_host(host)
+    if not profile:
+        profiles = list_dbx_profiles_with_host()
+        if profiles:
+            print(f"  {WARN} No valid CLI profile found for {C}{host}{W}")
+            print(f"  {DIM}Available profiles:{W}")
+            for name, phost, valid in profiles:
+                status = f"{G}[valid]{W}" if valid else f"{DIM}[invalid]{W}"
+                print(f"    {name}  {DIM}{phost}{W}  {status}")
+            print(f"  {DIM}Run: databricks auth login --host {host}{W}")
+        else:
+            print(f"  {WARN} No CLI profiles found. Run: databricks auth login --host {host}{W}")
+        return False
+
+    print(f"  {OK} Auto-detected profile: {C}{profile}{W}")
+    ok, msg = verify_host_token()
+    if ok:
+        print(f"  {OK} Verified: {G}{msg}{W}")
+        _offer_create_pat()
+        print(f"\n  {CONF}✓  Profile auth verified.{W}")
     else:
-        print(f"  {DIM}No profiles found (databricks auth profiles){W}")
-
-    ok, msg = False, ""
-    if cur:
-        load_env_for_key(key, cur)
-        ok, msg = verify_host_token()
-        if ok:
-            print(f"  {OK} Active: {C}{cur}{W} {G}({msg}){W}")
-        else:
-            print(f"  {FAIL} Active: {C}{cur}{W} {R}({msg}){W}")
-    else:
-        print(f"  {WARN} Not configured{W}")
-
-    _print_inactive(inact)
-
-    choices: list[str] = []
-    if cur and ok:
-        choices.append("keep")
-    valid_profiles = [(n, v) for n, v in profiles if v]
-    invalid_profiles = [(n, v) for n, v in profiles if not v]
-    for name, _ in valid_profiles:
-        choices.append(f"[+] {name}")
-    for name, _ in invalid_profiles:
-        choices.append(f"[-] {name}")
-    choices.append("enter manually")
-    for i in range(1, len(inact) + 1):
-        choices.append(f"activate [{i}]")
-    if not choices:
-        choices = ["enter manually"]
-
-    profile_choices = [f"[+] {n}" for n, _ in valid_profiles] + [f"[-] {n}" for n, _ in invalid_profiles]
-    while True:
-        print(f"\n  {C}Action?{W}")
-        for i, c in enumerate(choices, 1):
-            display = c.replace("Available : ", f"{G}Available :{W} ", 1) if c.startswith("Available : ") else c
-            print(f"    {B}[{i}]{W} {display}")
-        idx = _read_choice(f"  Choice (1-{len(choices)}): ", len(choices))
-        if idx is None:
-            continue
-        if not (1 <= idx <= len(choices)):
-            print(f"  {WARN} Invalid choice{W}")
-            continue
-        choice = choices[idx - 1]
-
-        if choice == "keep":
-            return True
-        if choice and choice.startswith("activate ["):
-            num = int(choice.split("[")[1].rstrip("]"))
-            _activate_entry(key, inact, num, verify_host_token, on_ok=_offer_create_pat)
-            return True
-
-        # Pick from profile list or enter manually
-        if choice in profile_choices:
-            val = choice.split("] ", 1)[1]
-        else:
-            val = _read_line(f"Enter profile name: ")
-            if val is None:
-                continue   # ESC → back to menu
-        if not val:
-            return True
-        if cur:
-            comment_active_for_key(ENV_FILE, key)
-        write_env_entry(ENV_FILE, key, val)
-        load_dotenv(ENV_FILE, override=True)
-        load_env_for_key(key, val)
-        ok, msg = verify_host_token()
-        if ok:
-            print(f"  {OK} Set and verified: {msg}{W}")
-            _offer_create_pat()
-            print(f"\n  {CONF}✓  Profile configured.{W}")
-        else:
-            print(f"  {FAIL} Set but verify failed: {msg}{W}")
-            abort_step()
-        break
+        print(f"  {FAIL} Verify failed: {R}{msg}{W}")
+        abort_step()
     return True
 
 
@@ -768,7 +711,6 @@ def verify_host_token() -> tuple[bool, str]:
     import urllib.request
     host = os.environ.get("DATABRICKS_HOST", "").strip().rstrip("/")
     token = os.environ.get("DATABRICKS_TOKEN", "").strip()
-    profile = os.environ.get("DATABRICKS_CONFIG_PROFILE", "").strip()
     if not host:
         return False, "DATABRICKS_HOST not set"
     if token:
@@ -785,16 +727,16 @@ def verify_host_token() -> tuple[bool, str]:
             return False, f"HTTP {e.code} — token invalid or wrong workspace"
         except Exception as e:
             return False, str(e)
-    elif profile:
-        # Profile auth — use SDK (no token to test directly)
-        try:
-            w = WorkspaceClient(host=host, profile=profile)
-            me = w.current_user.me()
-            return True, f"OK → {host} ({me.user_name})"
-        except Exception as e:
-            return False, str(e)
     else:
-        return False, "Need DATABRICKS_TOKEN or DATABRICKS_CONFIG_PROFILE"
+        profile = _profile_for_host(host)
+        if profile:
+            try:
+                w = WorkspaceClient(host=host, profile=profile)
+                me = w.current_user.me()
+                return True, f"OK → {host} ({me.user_name})"
+            except Exception as e:
+                return False, str(e)
+        return False, "Need DATABRICKS_TOKEN or a valid CLI profile for this host"
 
 
 def verify_warehouse() -> tuple[bool, str]:
@@ -875,6 +817,15 @@ def list_dbx_profiles_with_host() -> list[tuple[str, str, bool]]:
         return profiles
     except Exception:
         return []
+
+
+def _profile_for_host(host: str) -> str | None:
+    """Return the first valid CLI profile whose host matches, or None."""
+    host = host.rstrip("/")
+    for name, phost, valid in list_dbx_profiles_with_host():
+        if valid and phost.rstrip("/") == host:
+            return name
+    return None
 
 
 def list_genie_spaces() -> list[tuple[str, str]]:
@@ -1051,7 +1002,10 @@ def verify_genie() -> tuple[bool, str]:
 
 def verify_model_endpoint() -> tuple[bool, str]:
     endpoint = os.environ.get("AGENT_MODEL_ENDPOINT", "").strip()
+    host = os.environ.get("DATABRICKS_HOST", "").strip().rstrip("/")
     if not endpoint:
+        if host:
+            return True, f"same-workspace fallback → {_fm_invocations_url(host)}"
         return False, "not set"
     if endpoint.startswith("http://") or endpoint.startswith("https://"):
         # Full URL — accept as-is, no SDK lookup possible
@@ -1103,6 +1057,30 @@ def run_resource_model_endpoint() -> bool:
 
     section("AGENT_MODEL_ENDPOINT")
 
+    # ── Same workspace? ───────────────────────────────────────────────────────
+    current_host = os.environ.get("DATABRICKS_HOST", "").strip().rstrip("/")
+    print(f"\n  Is your Foundation Model hosted in {B}this{W} workspace?")
+    if current_host:
+        print(f"  {DIM}{current_host}{W}")
+    print(f"    {B}[1]{W} Yes — same workspace (no endpoint config needed)")
+    print(f"    {B}[2]{W} No  — Foundation Model is on another workspace")
+    gate = _read_choice("  Choice (1-2): ", 2)
+    if gate == 1:
+        # Same-workspace mode: clear any stored endpoint/token
+        if cur:
+            comment_active_for_key(ENV_FILE, key)
+            load_dotenv(ENV_FILE, override=True)
+        cur_token = active.get("AGENT_MODEL_TOKEN", "").strip()
+        if cur_token:
+            comment_active_for_key(ENV_FILE, "AGENT_MODEL_TOKEN")
+            load_dotenv(ENV_FILE, override=True)
+        fallback = _fm_invocations_url(current_host) if current_host else f"{{DATABRICKS_HOST}}/serving-endpoints/{FM_MODEL}/invocations"
+        print(f"\n  {OK} Same-workspace mode set")
+        print(f"  {DIM}Endpoint derived at runtime: {fallback}{W}")
+        print(f"\n  {CONF}✓  Foundation Model uses this workspace's auth.{W}")
+        return True
+
+    # ── Cross-workspace flow ──────────────────────────────────────────────────
     # fevm detection
     current_host = os.environ.get("DATABRICKS_HOST", "").strip()
     is_fevm = "fevm" in current_host.lower()
@@ -1316,9 +1294,13 @@ def run_resource_model_endpoint() -> bool:
 
 
 def _endpoint_is_url() -> bool:
-    """Return True if AGENT_MODEL_ENDPOINT is currently set to a full URL."""
+    """Return True if AGENT_MODEL_ENDPOINT is a cross-workspace URL (host differs from DATABRICKS_HOST)."""
     ep = os.environ.get("AGENT_MODEL_ENDPOINT", "").strip()
-    return ep.startswith("http://") or ep.startswith("https://")
+    if not ep or not (ep.startswith("http://") or ep.startswith("https://")):
+        return False
+    m = re.search(r"/serving-endpoints/", ep)
+    host = ep[: m.start()].rstrip("/") if m else ep
+    return host.rstrip("/") != os.environ.get("DATABRICKS_HOST", "").strip().rstrip("/")
 
 
 def run_resource_model_token() -> bool:
@@ -1326,7 +1308,11 @@ def run_resource_model_token() -> bool:
     load_dotenv(ENV_FILE, override=True)
 
     if not _endpoint_is_url():
-        return True  # local endpoint name — token not needed
+        ep = os.environ.get("AGENT_MODEL_ENDPOINT", "").strip()
+        if not ep:
+            section("AGENT_MODEL_TOKEN")
+            print(f"  {DIM}[-] Same-workspace mode — DATABRICKS_TOKEN used, no AGENT_MODEL_TOKEN needed{W}")
+        return True  # same workspace or local endpoint name — token not needed
 
     key = "AGENT_MODEL_TOKEN"
     active, _, _ = parse_env_file(ENV_FILE)
@@ -1434,7 +1420,7 @@ def run_resource_mlflow() -> bool:
                 else:
                     print(f"\n  {FAIL} MLflow creation exited with {rc}{W}\n")
                     abort_step()
-            except (EOFError, KeyboardInterrupt):
+            except EOFError:
                 print(f"  {DIM}Skipped{W}\n")
             return True
         if choice and choice.startswith("activate ["):
@@ -1704,7 +1690,7 @@ def run_resource(
             else:
                 print(f"  {DIM}Skipped{W}\n")
                 abort_step()
-        except (EOFError, KeyboardInterrupt):
+        except EOFError:
             print(f"  {DIM}Skipped{W}\n")
             abort_step()
 
@@ -1815,11 +1801,11 @@ def run_resource(
             return True
         if choice == "generate 7-day PAT" and key == "DATABRICKS_TOKEN":
             host = os.environ.get("DATABRICKS_HOST", "").strip()
-            profile = os.environ.get("DATABRICKS_CONFIG_PROFILE", "").strip()
             if not host:
                 print(f"  {FAIL} DATABRICKS_HOST not set — cannot generate PAT{W}")
                 return True
             try:
+                profile = _profile_for_host(host)
                 if profile:
                     w = WorkspaceClient(host=host, profile=profile)
                 else:
@@ -1975,9 +1961,9 @@ def run_resource_ka() -> bool:
     print(f"\n  {B}Provisioning Knowledge Assistant...{W}\n")
 
     for label, cmd in [
-        ("Create UC volume", ["uv", "run", "python", "scripts/ka/create_volume.py"]),
-        ("Upload PDFs", ["uv", "run", "python", "scripts/ka/upload_pdfs.py"]),
-        ("Create KA", ["uv", "run", "python", "scripts/ka/create_kas_from_yml.py", "--skip-existing"]),
+        ("Create UC volume", ["uv", "run", "python", "scripts/py/ka/create_volume.py"]),
+        ("Upload PDFs", ["uv", "run", "python", "scripts/py/ka/upload_pdfs.py"]),
+        ("Create KA", ["uv", "run", "python", "scripts/py/ka/create_kas_from_yml.py", "--skip-existing"]),
     ]:
         print(f"  {C}→ {label}...{W}")
         rc = subprocess.call(cmd, cwd=ROOT)
@@ -2009,17 +1995,17 @@ def run_check_only() -> None:
     section("Connection")
     host = os.environ.get("DATABRICKS_HOST", "").strip()
     token = os.environ.get("DATABRICKS_TOKEN", "").strip()
-    profile = os.environ.get("DATABRICKS_CONFIG_PROFILE", "").strip()
+    profile = _profile_for_host(host) if host else ""
     if not host:
         print(f"  {FAIL} DATABRICKS_HOST not set")
         all_ok = False
     else:
         print(f"  {OK} DATABRICKS_HOST {C}({host}){W}")
     if not token and not profile:
-        print(f"  {FAIL} DATABRICKS_TOKEN or DATABRICKS_CONFIG_PROFILE not set")
+        print(f"  {FAIL} Need DATABRICKS_TOKEN or a valid CLI profile for this host")
         all_ok = False
     else:
-        print(f"  {OK} Auth {C}({'token' if token else f'profile={profile}'}){W}")
+        print(f"  {OK} Auth {C}({'token' if token else f'profile={profile} [auto-detected]'}){W}")
 
     if all_ok:
         ok, msg = verify_host_token()
@@ -2129,7 +2115,7 @@ def run_check_only() -> None:
                     else:
                         print(f"\n  {FAIL} Asset creation exited with {rc}{W}\n")
                         abort_step()
-            except (EOFError, KeyboardInterrupt):
+            except EOFError:
                 print(f"  {DIM}Skipped{W}\n")
         if grants_failed:
             try:
@@ -2145,40 +2131,35 @@ def run_check_only() -> None:
                         grants_applied = True
                     else:
                         print(f"\n  {FAIL} Grants script exited with {rc}{W}\n")
-            except (EOFError, KeyboardInterrupt):
+            except EOFError:
                 print(f"  {DIM}Skipped{W}\n")
         if not assets_created and not grants_applied:
             print(FIX_FIRST_MSG)
         sys.exit(1)
 
 
-def main() -> None:
-    if "--check" in sys.argv:
-        run_check_only()
-        return
+def _setup_interrupt_handler() -> None:
+    """Erase the ^C echo and exit cleanly on Ctrl+C."""
+    import signal as _signal
+    def _handler(sig, frame):
+        print(f"\033[2K\r\n  {DIM}Cancelled.{W}\n", flush=True)
+        sys.exit(130)
+    _signal.signal(_signal.SIGINT, _handler)
 
+
+# ── Extracted step functions ───────────────────────────────────────────────────
+
+def run_step_auth() -> None:
+    """Configure DATABRICKS_TOKEN or auto-detected CLI profile."""
     load_dotenv(ENV_FILE, override=True)
-
-    print(f"\n{BOLD}{M}╔══════════════════════════════════════════════════╗{W}")
-    print(f"{BOLD}{M}║  Init & Check Databricks Environment (.env.local) ║{W}")
-    print(f"{BOLD}{M}╚══════════════════════════════════════════════════╝{W}")
-
-    # Connection: HOST + TOKEN (or PROFILE)
-    run_resource_host()
-
-    load_dotenv(ENV_FILE, override=True)
-    if not os.environ.get("DATABRICKS_HOST"):
-        print(f"  {FAIL} DATABRICKS_HOST required. Aborting.{W}")
-        sys.exit(1)
-
     token = os.environ.get("DATABRICKS_TOKEN", "").strip()
-    profile = os.environ.get("DATABRICKS_CONFIG_PROFILE", "").strip()
+    host_for_profile = os.environ.get("DATABRICKS_HOST", "").strip()
     if token:
         run_resource("DATABRICKS_TOKEN", "Connection: DATABRICKS_TOKEN", lambda: verify_host_token(), "dapi...")
-    elif profile:
+    elif _profile_for_host(host_for_profile):
         run_resource_profile()
     else:
-        choices = ["DATABRICKS_TOKEN", "DATABRICKS_CONFIG_PROFILE"]
+        choices = ["DATABRICKS_TOKEN", "use CLI profile (auto-detected)"]
         c = prompt_choice("Which auth?", choices)
         if c is None:
             print(f"  {DIM}Skipped{W}")
@@ -2187,46 +2168,51 @@ def main() -> None:
         else:
             run_resource_profile()
 
-    load_dotenv(ENV_FILE, override=True)
-    run_resource_warehouse()
+
+def run_step_schema() -> None:
+    """Configure PROJECT_UNITY_CATALOG_SCHEMA."""
     run_resource("PROJECT_UNITY_CATALOG_SCHEMA", "PROJECT_UNITY_CATALOG_SCHEMA", verify_schema, "catalog.schema")
 
-    # Step 1: ensure SQL init files exist for all CSVs
-    load_dotenv(ENV_FILE, override=True)
-    if os.environ.get("PROJECT_UNITY_CATALOG_SCHEMA"):
-        sql_paths = ensure_init_sql_files()
 
-        # Step 2: tables check + offer to run SQL files
-        ok, msg = verify_tables()
-        if not ok:
-            section(f"Tables ({', '.join(get_csv_tables())})")
-            print(f"  {FAIL} {msg}{W}")
-            if sql_paths:
-                print(f"\n  SQL files to execute:")
-                for i, p in enumerate(sql_paths):
-                    branch = "  \\-- " if i == len(sql_paths) - 1 else "  |-- "
-                    print(f"{branch}{p.relative_to(ROOT)}")
-            try:
-                raw = input(f"\n  {C}Run all SQL files and create assets? [y/N]: {W}").strip().lower()
-                if raw in ("y", "yes"):
-                    print(f"  {B}Creating schema, tables, volume, Genie ...{W}\n")
-                    rc = subprocess.call(
-                        ["uv", "run", "python", "data/init/create_all_assets.py"],
-                        cwd=ROOT,
-                    )
-                    if rc == 0:
-                        print(f"\n  {OK} {G}Assets created. Re-run to verify.{W}\n")
-                    else:
-                        print(f"\n  {FAIL} Asset creation exited with {rc}{W}\n")
-                        abort_step()
+def run_resource_tables() -> None:
+    """Ensure SQL init files exist and offer to create Delta tables."""
+    load_dotenv(ENV_FILE, override=True)
+    if not os.environ.get("PROJECT_UNITY_CATALOG_SCHEMA"):
+        print(f"  {WARN} PROJECT_UNITY_CATALOG_SCHEMA not set — configure schema first.{W}")
+        return
+    sql_paths = ensure_init_sql_files()
+    ok, msg = verify_tables()
+    if not ok:
+        section(f"Tables ({', '.join(get_csv_tables())})")
+        print(f"  {FAIL} {msg}{W}")
+        if sql_paths:
+            print(f"\n  SQL files to execute:")
+            for i, p in enumerate(sql_paths):
+                branch = "  \\-- " if i == len(sql_paths) - 1 else "  |-- "
+                print(f"{branch}{p.relative_to(ROOT)}")
+        try:
+            raw = input(f"\n  {C}Run all SQL files and create assets? [y/N]: {W}").strip().lower()
+            if raw in ("y", "yes"):
+                print(f"  {B}Creating schema, tables, volume, Genie ...{W}\n")
+                rc = subprocess.call(["uv", "run", "python", "data/init/create_all_assets.py"], cwd=ROOT)
+                if rc == 0:
+                    print(f"\n  {OK} {G}Assets created. Re-run to verify.{W}\n")
                 else:
-                    print(f"  {DIM}Skipped{W}\n")
+                    print(f"\n  {FAIL} Asset creation exited with {rc}{W}\n")
                     abort_step()
-            except (EOFError, KeyboardInterrupt):
+            else:
                 print(f"  {DIM}Skipped{W}\n")
                 abort_step()
+        except EOFError:
+            print(f"  {DIM}Skipped{W}\n")
+            abort_step()
+    else:
+        section(f"Tables ({', '.join(get_csv_tables())})")
+        print(f"  {OK} {msg}{W}")
 
-    # UC Functions
+
+def run_resource_functions() -> None:
+    """Create/replace UC functions from data/func/."""
     section("UC Functions (data/func/)")
     _func_sql = sorted((ROOT / "data" / "func").glob("*.sql"))
     _func_ddl = [p for p in _func_sql if re.search(r"\bCREATE\b", p.read_text(), re.IGNORECASE)]
@@ -2248,11 +2234,13 @@ def main() -> None:
                 print(f"  {FAIL} create_all_functions exited with {rc}{W}\n")
         else:
             print(f"  {DIM}Skipped{W}")
-    except (EOFError, KeyboardInterrupt):
-        print(f"\n\n  {WARN} Interrupted — exiting.{W}\n")
+    except EOFError:
+        print(f"\n  {DIM}Cancelled.{W}\n")
         sys.exit(130)
 
-    # UC Procedures
+
+def run_resource_procedures() -> None:
+    """Create/replace UC procedures from data/proc/."""
     section("UC Procedures (data/proc/)")
     _proc_sql = sorted((ROOT / "data" / "proc").glob("*.sql"))
     if _proc_sql:
@@ -2271,23 +2259,129 @@ def main() -> None:
                 print(f"  {FAIL} create_all_procedures exited with {rc}{W}\n")
         else:
             print(f"  {DIM}Skipped{W}")
-    except (EOFError, KeyboardInterrupt):
-        print(f"\n\n  {WARN} Interrupted — exiting.{W}\n")
+    except EOFError:
+        print(f"\n  {DIM}Cancelled.{W}\n")
         sys.exit(130)
 
-    run_resource_genie()
-    run_resource_ka()
-    run_resource_mlflow()
+
+def run_step_model() -> None:
+    """Configure AGENT_MODEL_ENDPOINT and AGENT_MODEL_TOKEN."""
     run_resource_model_endpoint()
+    load_dotenv(ENV_FILE, override=True)
     run_resource_model_token()
 
+
+def run_resource_model_test() -> None:
+    """Test the configured Foundation Model endpoint."""
     section("Agent Model Test")
     load_dotenv(ENV_FILE, override=True)
-    rc = subprocess.call(["uv", "run", "python", "scripts/test_agent_model.py"], cwd=ROOT)
+    rc = subprocess.call(["uv", "run", "python", "scripts/py/test_agent_model.py"], cwd=ROOT)
     if rc != 0:
         print(f"  {WARN} Model test failed — see above for details.{W}")
 
+
+def run_resource_app_name() -> None:
+    """Configure DBX_APP_NAME."""
     run_resource("DBX_APP_NAME", "DBX_APP_NAME", lambda: (True, os.environ.get("DBX_APP_NAME", "")), "my-app-name")
+
+
+def run_resource_env_store() -> None:
+    """Set up env store save/load to a UC Volume (optional)."""
+    section("Env Store (optional)")
+    load_dotenv(ENV_FILE, override=True)
+    already = os.environ.get("ENV_STORE_CATALOG_VOLUME_PATH", "").strip()
+    if already:
+        print(f"  {OK} Env store already configured: {C}{already}{W}")
+    else:
+        try:
+            raw = input(f"\n  Set up env save/load to a UC Volume? [y/N]: ").strip().lower()
+            if raw in ("y", "yes"):
+                rc = subprocess.call(["uv", "run", "python", "scripts/py/init_env_store.py"], cwd=ROOT)
+                if rc != 0:
+                    print(f"  {WARN} Env store init exited with {rc} — skipping.{W}")
+            else:
+                print(f"  {DIM}Skipped{W}")
+        except EOFError:
+            print(f"\n  {DIM}Cancelled.{W}\n")
+            sys.exit(130)
+
+
+# ── Step registry ──────────────────────────────────────────────────────────────
+
+STEPS: list[tuple[str, str, object]] = [
+    ("host",        "DATABRICKS_HOST",               run_resource_host),
+    ("auth",        "DATABRICKS_TOKEN / CLI profile", run_step_auth),
+    ("warehouse",   "DATABRICKS_WAREHOUSE_ID",        run_resource_warehouse),
+    ("schema",      "PROJECT_UNITY_CATALOG_SCHEMA",   run_step_schema),
+    ("tables",      "Delta tables (data/sql/)",       run_resource_tables),
+    ("functions",   "UC Functions (data/func/)",      run_resource_functions),
+    ("procedures",  "UC Procedures (data/proc/)",     run_resource_procedures),
+    ("genie",       "PROJECT_GENIE_CHECKIN",          run_resource_genie),
+    ("ka",          "Knowledge Assistants",           run_resource_ka),
+    ("mlflow",      "MLFLOW_EXPERIMENT_ID",           run_resource_mlflow),
+    ("model",       "AGENT_MODEL_ENDPOINT + TOKEN",   run_step_model),
+    ("model-test",  "Foundation model connection test", run_resource_model_test),
+    ("app-name",    "DBX_APP_NAME",                  run_resource_app_name),
+    ("env-store",   "Env Store (optional)",           run_resource_env_store),
+    ("check",       "Full status check",             run_check_only),
+]
+
+_STEP_MAP = {name: fn for name, _, fn in STEPS}
+
+
+def main() -> None:
+    _setup_interrupt_handler()
+
+    if "--check" in sys.argv:
+        run_check_only()
+        return
+
+    if "--steps" in sys.argv:
+        print(f"\n{BOLD}{B}Agent Forge — Setup Steps{W}\n")
+        for i, (name, desc, _) in enumerate(STEPS, 1):
+            print(f"  {B}[{i:2}]{W} {C}{name:<14}{W} {desc}")
+        print(f"\n  Usage: {DIM}uv run python scripts/py/setup_dbx_env.py --step <name>{W}\n")
+        return
+
+    if "--step" in sys.argv:
+        idx = sys.argv.index("--step")
+        step = sys.argv[idx + 1] if idx + 1 < len(sys.argv) else None
+        if not step or step not in _STEP_MAP:
+            valid = ", ".join(n for n, _, _ in STEPS)
+            print(f"  {FAIL} Unknown step '{step}'. Valid steps: {valid}")
+            sys.exit(1)
+        load_dotenv(ENV_FILE, override=True)
+        _STEP_MAP[step]()
+        return
+
+    load_dotenv(ENV_FILE, override=True)
+
+    print(f"\n{BOLD}{M}╔══════════════════════════════════════════════════╗{W}")
+    print(f"{BOLD}{M}║  Init & Check Databricks Environment (.env.local) ║{W}")
+    print(f"{BOLD}{M}╚══════════════════════════════════════════════════╝{W}")
+
+    run_resource_host()
+
+    load_dotenv(ENV_FILE, override=True)
+    if not os.environ.get("DATABRICKS_HOST"):
+        print(f"  {FAIL} DATABRICKS_HOST required. Aborting.{W}")
+        sys.exit(1)
+
+    run_step_auth()
+
+    load_dotenv(ENV_FILE, override=True)
+    run_resource_warehouse()
+    run_step_schema()
+    run_resource_tables()
+    run_resource_functions()
+    run_resource_procedures()
+    run_resource_genie()
+    run_resource_ka()
+    run_resource_mlflow()
+    run_step_model()
+    run_resource_model_test()
+    run_resource_app_name()
+    run_resource_env_store()
 
     section("Done")
     print(f"  {OK} {G}Configuration saved to {ENV_FILE}{W}\n")
@@ -2304,7 +2398,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print(f"\n\n  {WARN} Interrupted — exiting.{W}\n")
+        print(f"\n  {DIM}Cancelled.{W}\n")
         sys.exit(130)
     except Exception as e:
         print(f"\n  {FAIL} {e}{W}")

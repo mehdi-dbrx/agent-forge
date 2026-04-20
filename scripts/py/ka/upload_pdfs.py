@@ -5,8 +5,8 @@ Volume path is derived from PROJECT_UNITY_CATALOG_SCHEMA in .env.local:
   e.g. vibe.main → /Volumes/vibe/main/doc
 
 Usage:
-  uv run python scripts/ka/upload_pdfs.py
-  uv run python scripts/ka/upload_pdfs.py --dry-run
+  uv run python scripts/py/ka/upload_pdfs.py
+  uv run python scripts/py/ka/upload_pdfs.py --dry-run
 """
 from __future__ import annotations
 
