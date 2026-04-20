@@ -20,6 +20,7 @@ from agent.utils import (
     get_databricks_host_from_env,
     process_agent_astream_events,
 )
+from tools.query_checkin_metrics import query_checkin_metrics
 from tools.query_flights_at_risk import query_flights_at_risk
 from tools.update_flight_risk import update_flight_risk
 
@@ -58,6 +59,7 @@ async def init_agent(workspace_client: Optional[WorkspaceClient] = None):
     tools = list(wrapped_tools) + [
         query_flights_at_risk,
         update_flight_risk,
+        query_checkin_metrics,
     ]
     endpoint = os.environ.get("AGENT_MODEL_ENDPOINT", "").strip()
     if not endpoint:
