@@ -4,6 +4,8 @@
 
 ### 1. Install dependencies
 
+#### Python
+
 Requires [uv](https://docs.astral.sh/uv/getting-started/installation/).
 
 ```bash
@@ -13,6 +15,16 @@ uv sync
 This creates `.venv/` and installs all pinned dependencies from `uv.lock` — including `databricks-sdk>=0.102.0`.
 
 > Fallback (without uv): `pip install -r requirements.txt`
+
+#### Visual app (optional)
+
+Requires [Node.js](https://nodejs.org/) (v18+).
+
+```bash
+cd visual && bash start.sh
+```
+
+`start.sh` installs Node deps automatically on first run via `npm ci`. Opens the architecture explorer at **http://localhost:9000**.
 
 ### 2. Configure environment
 
