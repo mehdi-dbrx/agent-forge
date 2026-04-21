@@ -459,6 +459,151 @@ app.post('/api/setup/exec', (req, res) => {
   }
 })
 
+// GET /api/setup/test?step=<id> — test the live connection for a configured step
+const TEST_SCRIPTS = {
+  host: `
+from dotenv import load_dotenv; load_dotenv('.env.local', override=True)
+import os, urllib.request, json, ssl
+host = os.environ.get('DATABRICKS_HOST','').strip().rstrip('/')
+token = os.environ.get('DATABRICKS_TOKEN','').strip()
+if not host: print('[x] DATABRICKS_HOST not set'); exit(1)
+ctx = ssl.create_default_context()
+req = urllib.request.Request(host + '/api/2.0/preview/scim/v2/Me')
+if token: req.add_header('Authorization', 'Bearer ' + token)
+try:
+    with urllib.request.urlopen(req, timeout=8, context=ctx) as r:
+        d = json.loads(r.read())
+        print('[+] reachable — ' + d.get('userName', '?'))
+except urllib.error.HTTPError as e:
+    if e.code in (401, 403): print('[~] host reachable (auth required)')
+    else: print('[x] HTTP ' + str(e.code)); exit(1)
+except Exception as e:
+    print('[x] ' + str(e)[:100]); exit(1)
+`.trim(),
+
+  auth: `
+from dotenv import load_dotenv; load_dotenv('.env.local', override=True)
+import os, urllib.request, json, ssl
+host = os.environ.get('DATABRICKS_HOST','').strip().rstrip('/')
+token = os.environ.get('DATABRICKS_TOKEN','').strip()
+if not host: print('[x] DATABRICKS_HOST not set'); exit(1)
+if not token: print('[x] DATABRICKS_TOKEN not set'); exit(1)
+ctx = ssl.create_default_context()
+try:
+    req = urllib.request.Request(host + '/api/2.0/preview/scim/v2/Me', headers={'Authorization': 'Bearer ' + token})
+    with urllib.request.urlopen(req, timeout=8, context=ctx) as r:
+        d = json.loads(r.read())
+        print('[+] authenticated — ' + d.get('userName', '?'))
+except Exception as e:
+    print('[x] ' + str(e)[:100]); exit(1)
+`.trim(),
+
+  warehouse: `
+from dotenv import load_dotenv; load_dotenv('.env.local', override=True)
+from databricks.sdk import WorkspaceClient; import os
+wh_id = os.environ.get('DATABRICKS_WAREHOUSE_ID','').strip()
+if not wh_id: print('[x] DATABRICKS_WAREHOUSE_ID not set'); exit(1)
+w = WorkspaceClient()
+try:
+    wh = w.warehouses.get(wh_id)
+    state = str(wh.state).split('.')[-1]
+    print('[+] reachable — ' + wh.name + ' (' + state + ')')
+except Exception as e:
+    print('[x] ' + str(e)[:100]); exit(1)
+`.trim(),
+
+  schema: `
+from dotenv import load_dotenv; load_dotenv('.env.local', override=True)
+from databricks.sdk import WorkspaceClient; import os
+spec = os.environ.get('PROJECT_UNITY_CATALOG_SCHEMA','').strip()
+if not spec: print('[x] PROJECT_UNITY_CATALOG_SCHEMA not set'); exit(1)
+w = WorkspaceClient()
+try:
+    s = w.schemas.get(full_name=spec)
+    print('[+] found — ' + (s.full_name or spec))
+except Exception as e:
+    print('[x] ' + str(e)[:100]); exit(1)
+`.trim(),
+
+  model: `
+from dotenv import load_dotenv; load_dotenv('.env.local', override=True)
+import os, urllib.request, json, ssl
+endpoint = os.environ.get('AGENT_MODEL_ENDPOINT','').strip()
+host = os.environ.get('DATABRICKS_HOST','').strip().rstrip('/')
+if not endpoint: endpoint = host + '/serving-endpoints/databricks-claude-sonnet-4-6/invocations'
+token = (os.environ.get('AGENT_MODEL_TOKEN','') or os.environ.get('DATABRICKS_TOKEN','')).strip()
+if not token: print('[x] no token (AGENT_MODEL_TOKEN or DATABRICKS_TOKEN)'); exit(1)
+payload = json.dumps({'messages': [{'role': 'user', 'content': 'hi'}], 'max_tokens': 5}).encode()
+ctx = ssl.create_default_context()
+try:
+    req = urllib.request.Request(endpoint, data=payload, headers={'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'})
+    with urllib.request.urlopen(req, timeout=20, context=ctx) as r:
+        d = json.loads(r.read())
+        print('[+] responding — ' + d.get('model','?'))
+except urllib.error.HTTPError as e:
+    body = e.read().decode()[:120]
+    print('[x] HTTP ' + str(e.code) + ' ' + body); exit(1)
+except Exception as e:
+    print('[x] ' + str(e)[:100]); exit(1)
+`.trim(),
+
+  genie: `
+from dotenv import load_dotenv; load_dotenv('.env.local', override=True)
+from databricks.sdk import WorkspaceClient; import os
+sid = os.environ.get('PROJECT_GENIE_CHECKIN','').strip()
+if not sid: print('[x] PROJECT_GENIE_CHECKIN not set'); exit(1)
+w = WorkspaceClient()
+try:
+    sp = w.genie.get_space(space_id=sid)
+    print('[+] found — ' + getattr(sp, 'title', sid))
+except Exception as e:
+    print('[x] ' + str(e)[:100]); exit(1)
+`.trim(),
+
+  ka: `
+from dotenv import load_dotenv; load_dotenv('.env.local', override=True)
+from databricks.sdk import WorkspaceClient; import os
+ka_name = os.environ.get('PROJECT_KA_PASSENGERS','').strip()
+if not ka_name: print('[x] PROJECT_KA_PASSENGERS not set'); exit(1)
+w = WorkspaceClient()
+try:
+    ep = w.serving_endpoints.get(name=ka_name)
+    state = str(ep.state.ready).split('.')[-1] if ep.state else '?'
+    print('[+] active — ' + ep.name + ' (' + state + ')')
+except Exception as e:
+    print('[x] ' + str(e)[:100]); exit(1)
+`.trim(),
+
+  mlflow: `
+from dotenv import load_dotenv; load_dotenv('.env.local', override=True)
+from databricks.sdk import WorkspaceClient; import os
+eid = os.environ.get('MLFLOW_EXPERIMENT_ID','').strip()
+if not eid: print('[x] MLFLOW_EXPERIMENT_ID not set'); exit(1)
+w = WorkspaceClient()
+try:
+    exp = w.experiments.get_experiment(experiment_id=eid)
+    print('[+] found — ' + getattr(exp, 'name', eid))
+except Exception as e:
+    print('[x] ' + str(e)[:100]); exit(1)
+`.trim(),
+}
+
+app.get('/api/setup/test', (req, res) => {
+  const step = req.query.step
+  const script = TEST_SCRIPTS[step]
+  if (!script) return res.json({ ok: false, message: 'no test for step: ' + step })
+
+  execFile('uv', ['run', 'python', '-c', script], {
+    cwd: PROJECT_ROOT,
+    timeout: 25000,
+  }, (err, stdout, stderr) => {
+    const raw = (stdout || '').trim() || (stderr || '').trim()
+    const ok = !err && raw.startsWith('[+]')
+    const message = raw.replace(/^\[.\] /, '')
+    res.json({ ok, message: message || (err ? String(err) : 'no output') })
+  })
+})
+
 app.listen(PORT, () => {
   console.log(`[visual-backend] listening on http://localhost:${PORT}`)
 })

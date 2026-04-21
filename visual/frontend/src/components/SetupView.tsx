@@ -60,13 +60,20 @@ export function SetupView() {
 
     if (action === 'done') { setPhase('done'); return }
 
+    // Already in configure — always advance to execute
+    if (phase === 'configure') {
+      setExecLines([])
+      setPhase('execute')
+      return
+    }
+
     const NEEDS_CONFIGURE = ['cfg-profile', 'cfg-warehouse', 'cfg-catalog', 'cfg-genie',
       'cfg-grants', 'cfg-new', 'cfg-ka', 'manual', 'exec-genie']
     if (NEEDS_CONFIGURE.includes(action)) { setPhase('configure'); return }
 
     setExecLines([])
     setPhase('execute')
-  }, [activeStep, selectedChoice])
+  }, [activeStep, selectedChoice, phase])
 
   const handleBack = useCallback(() => {
     setPhase(prev => {
@@ -76,6 +83,11 @@ export function SetupView() {
       return 'choose'
     })
   }, [])
+
+  const handleNext = useCallback(() => {
+    const idx = ALL_STEP_IDS.indexOf(activeStep)
+    if (idx < ALL_STEP_IDS.length - 1) handleActivate(ALL_STEP_IDS[idx + 1])
+  }, [activeStep, handleActivate])
 
   const handleReconfigure = useCallback(() => {
     setPhase('choose')
@@ -116,10 +128,12 @@ export function SetupView() {
           phase={phase}
           selectedChoice={selectedChoice}
           execLines={execLines}
+          currentValues={stepStates[activeStep].values}
           onSelectChoice={setSelectedChoice}
           onContinue={handleContinue}
           onBack={handleBack}
           onReconfigure={handleReconfigure}
+          onNext={ALL_STEP_IDS.indexOf(activeStep) < ALL_STEP_IDS.length - 1 ? handleNext : undefined}
           onExecDone={handleExecDone}
         />
       </div>

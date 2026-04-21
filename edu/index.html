@@ -473,6 +473,95 @@
     }
     .blist strong { color: var(--text); }
 
+    /* ══ TABS ══ */
+    .nav-tabs { display: flex; gap: 2px; align-items: center; }
+    .nav-tab {
+      font-size: 0.78rem; font-weight: 600; padding: 0.28rem 0.85rem;
+      border-radius: 6px; border: 1px solid transparent; cursor: pointer;
+      transition: all .15s; background: transparent; color: var(--text3);
+      font-family: inherit;
+    }
+    .nav-tab[data-tab="platform"].on { background: var(--blue-dim);   color: var(--blue); border-color: rgba(27,115,232,0.2); }
+    .nav-tab[data-tab="forge"].on    { background: var(--red-dim);    color: var(--red);  border-color: rgba(235,22,0,0.2);  }
+    .nav-tab:not(.on):hover { background: var(--surface2); color: var(--text2); }
+
+    /* ══ PLATFORM CHAPTER LABEL ══ */
+    .ch-label-platform {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 2.5px;
+      text-transform: uppercase; color: var(--blue); margin-bottom: 0.4rem;
+    }
+
+    /* ══ PLATFORM SLIDE LAYOUTS ══ */
+    #pch1, #pch3 {
+      grid-template-columns: 1fr 1fr;
+    }
+    #pch1 .left, #pch3 .left {
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 0 4rem 0 5rem; gap: 1.5rem;
+    }
+    #pch1 .right, #pch3 .right {
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 0 4rem 0 2rem; gap: 0.5rem;
+      border-left: 1px solid var(--border);
+    }
+
+    #pch4, #pch6, #pch7, #pch9, #pch11 { grid-template-columns: 1fr 1fr; }
+    #pch4 .left, #pch6 .left, #pch7 .left, #pch9 .left, #pch11 .left {
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 3rem 2.5rem 3rem 5rem; gap: 0.75rem;
+    }
+    #pch4 .left h1, #pch6 .left h1, #pch7 .left h1, #pch9 .left h1, #pch11 .left h1 { margin-bottom: 0.5rem; }
+    #pch4 .left .lead, #pch6 .left .lead, #pch7 .left .lead, #pch9 .left .lead, #pch11 .left .lead { margin-bottom: 0.75rem; }
+    #pch4 .right, #pch6 .right, #pch7 .right, #pch9 .right, #pch11 .right {
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 3rem 4rem 3rem 2.5rem; gap: 0.75rem;
+      border-left: 1px solid var(--border);
+    }
+
+    #pch2, #pch5, #pch8 { grid-template-rows: auto 1fr; }
+    #pch2 .top, #pch5 .top, #pch8 .top {
+      padding: 2.5rem 5rem 1.5rem; border-bottom: 1px solid var(--border);
+    }
+    #pch2 .grid, #pch5 .grid, #pch8 .grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr);
+      gap: 1rem; padding: 1.5rem 5rem;
+    }
+
+    #pch10 { grid-template-rows: auto 1fr; }
+    #pch10 .top { padding: 2.5rem 5rem 1rem; border-bottom: 1px solid var(--border); }
+    #pch10 .body {
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem 4rem; gap: 0.75rem;
+    }
+
+    #pch1  { background: radial-gradient(ellipse at 85% 40%, rgba(27,115,232,0.06) 0%, var(--bg) 65%); }
+    #pch2  { background: radial-gradient(ellipse at 50% 90%, rgba(235,22,0,0.04)   0%, var(--bg) 65%); }
+    #pch3  { background: radial-gradient(ellipse at 10% 50%, rgba(26,158,103,0.05) 0%, var(--bg) 65%); }
+    #pch4  { background: radial-gradient(ellipse at 80% 20%, rgba(27,115,232,0.05) 0%, var(--bg) 65%); }
+    #pch5  { background: radial-gradient(ellipse at 20% 80%, rgba(109,40,217,0.05) 0%, var(--bg) 65%); }
+    #pch6  { background: radial-gradient(ellipse at 85% 60%, rgba(26,158,103,0.05) 0%, var(--bg) 65%); }
+    #pch7  { background: radial-gradient(ellipse at 20% 30%, rgba(27,115,232,0.05) 0%, var(--bg) 65%); }
+    #pch8  { background: radial-gradient(ellipse at 70% 90%, rgba(184,114,0,0.04)  0%, var(--bg) 65%); }
+    #pch9  { background: radial-gradient(ellipse at 10% 60%, rgba(235,22,0,0.04)   0%, var(--bg) 65%); }
+    #pch10 { background: radial-gradient(ellipse at 50% 10%, rgba(27,115,232,0.05) 0%, var(--bg) 65%); }
+    #pch11 { background: radial-gradient(ellipse at 80% 80%, rgba(26,158,103,0.06) 0%, var(--bg) 65%); }
+
+    /* ══ CONTRAST ROWS (pch11) ══ */
+    .contrast-row {
+      display: flex; align-items: center; gap: 0.65rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 0.55rem 0.9rem;
+    }
+    .contrast-before {
+      flex: 1; font-size: 0.83rem; color: var(--text3);
+      text-decoration: line-through; font-family: 'DM Mono', monospace;
+    }
+    .contrast-arrow { color: var(--border2); font-size: 0.9rem; flex-shrink: 0; }
+    .contrast-after {
+      flex: 1; font-size: 0.83rem; color: var(--green); font-weight: 600;
+      font-family: 'DM Mono', monospace;
+    }
+
     /* bullet list inside cards */
     .clist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.25rem; }
     .clist li {
@@ -499,7 +588,10 @@
     </svg>
     <span class="nav-title">Agent <em>Forge</em></span>
     <div class="nav-sep"></div>
-    <span class="nav-sub">Getting Started</span>
+    <div class="nav-tabs">
+      <button class="nav-tab on" data-tab="platform">Databricks Platform</button>
+      <button class="nav-tab" data-tab="forge">Getting Started</button>
+    </div>
   </div>
   <div class="nav-dots" id="navDots"></div>
 </nav>
@@ -508,7 +600,7 @@
 <!-- ══════════════════════════════════════════════
      SLIDE A — The Problem
 ══════════════════════════════════════════════ -->
-<section class="slide" id="cha">
+<section class="slide" data-tab="forge" id="cha">
 
   <div class="left">
     <div class="ch-label-intro">Origin · 1 / 3</div>
@@ -547,7 +639,7 @@
 <!-- ══════════════════════════════════════════════
      SLIDE B — The Origin
 ══════════════════════════════════════════════ -->
-<section class="slide" id="chb">
+<section class="slide" data-tab="forge" id="chb">
 
   <div class="left">
     <div class="ch-label-intro">Origin · 2 / 3</div>
@@ -587,7 +679,7 @@
 <!-- ══════════════════════════════════════════════
      SLIDE C — The Approach
 ══════════════════════════════════════════════ -->
-<section class="slide" id="chc">
+<section class="slide" data-tab="forge" id="chc">
 
   <div class="top">
     <div class="ch-label-intro">Origin · 3 / 3</div>
@@ -629,7 +721,7 @@
 <!-- ══════════════════════════════════════════════
      SLIDE 1 — What is Agent Forge?
 ══════════════════════════════════════════════ -->
-<section class="slide" id="ch1">
+<section class="slide" data-tab="forge" id="ch1">
 
   <div class="left">
     <div class="ch-label">Chapter 1</div>
@@ -664,7 +756,7 @@
 <!-- ══════════════════════════════════════════════
      SLIDE 2 — The Bricks
 ══════════════════════════════════════════════ -->
-<section class="slide" id="ch2">
+<section class="slide" data-tab="forge" id="ch2">
 
   <div class="top">
     <div class="ch-label">Chapter 2</div>
@@ -724,7 +816,7 @@
 <!-- ══════════════════════════════════════════════
      SLIDE 3 — How They Fit Together
 ══════════════════════════════════════════════ -->
-<section class="slide" id="ch3">
+<section class="slide" data-tab="forge" id="ch3">
 
   <div class="top">
     <div class="ch-label">Chapter 3</div>
@@ -840,7 +932,7 @@
 <!-- ══════════════════════════════════════════════
      SLIDE 4 — Automated Setup
 ══════════════════════════════════════════════ -->
-<section class="slide" id="ch4">
+<section class="slide" data-tab="forge" id="ch4">
 
   <div class="left">
     <div class="ch-label">Chapter 4</div>
@@ -900,7 +992,7 @@
 <!-- ══════════════════════════════════════════════
      SLIDE 5 — Deploy
 ══════════════════════════════════════════════ -->
-<section class="slide" id="ch5">
+<section class="slide" data-tab="forge" id="ch5">
 
   <div class="left">
     <div class="ch-label">Chapter 5</div>
@@ -959,7 +1051,7 @@
 <!-- ══════════════════════════════════════════════
      SLIDE 6 — The User Experience
 ══════════════════════════════════════════════ -->
-<section class="slide" id="ch6">
+<section class="slide" data-tab="forge" id="ch6">
 
   <div class="left">
     <div class="ch-label">Chapter 6</div>
@@ -1000,7 +1092,7 @@
 <!-- ══════════════════════════════════════════════
      SLIDE 7 — Add Your Own Data
 ══════════════════════════════════════════════ -->
-<section class="slide" id="ch7">
+<section class="slide" data-tab="forge" id="ch7">
 
   <div class="left">
     <div class="ch-label">Chapter 7</div>
@@ -1055,7 +1147,7 @@
 <!-- ══════════════════════════════════════════════
      SLIDE 8 — Add Tools
 ══════════════════════════════════════════════ -->
-<section class="slide" id="ch8">
+<section class="slide" data-tab="forge" id="ch8">
 
   <div class="top">
     <div class="ch-label">Chapter 8</div>
@@ -1094,7 +1186,7 @@
 <!-- ══════════════════════════════════════════════
      SLIDE 9 — Knowledge Assistants
 ══════════════════════════════════════════════ -->
-<section class="slide" id="ch9">
+<section class="slide" data-tab="forge" id="ch9">
 
   <div class="left">
     <div class="ch-label">Chapter 9</div>
@@ -1149,7 +1241,7 @@
 <!-- ══════════════════════════════════════════════
      SLIDE 10 — Evaluate & Improve
 ══════════════════════════════════════════════ -->
-<section class="slide" id="ch10">
+<section class="slide" data-tab="forge" id="ch10">
 
   <div class="left">
     <div class="ch-label">Chapter 10</div>
@@ -1202,38 +1294,654 @@
 </section>
 
 
+<!-- ══════════════════════════════════════════════
+     PLATFORM 1 — The AI Complexity Tax
+══════════════════════════════════════════════ -->
+<section class="slide" data-tab="platform" id="pch1">
+  <div class="left">
+    <div class="ch-label-platform">Platform · 1 / 11</div>
+    <h1>The AI<br><span style="color:var(--blue)">Complexity</span><br>Tax.</h1>
+    <p class="lead">
+      The race to build agentic AI is real — but for most enterprises it has produced a sprawling stack of disconnected vendors, fragile integrations, and invisible risks.
+      Every new capability adds a new tool. Every new tool adds a new attack surface, a new compliance gap, a new team owning exactly one piece.
+    </p>
+    <p class="lead" style="font-size:1rem">The platform is not the bottleneck. The glue code between platforms is.</p>
+  </div>
+  <div class="right">
+    <div class="card c-blue">
+      <svg class="ico cb"><use href="#ico-layers"/></svg>
+      <h3>8–12 Vendors</h3>
+      <p>The average enterprise AI stack spans a dozen products — LLM API, vector DB, orchestration framework, monitoring tool, hosting platform — each independently provisioned, secured, and billed.</p>
+    </div>
+    <div class="card c-red">
+      <svg class="ico cr"><use href="#ico-activity"/></svg>
+      <h3>No Central Observability</h3>
+      <ul class="clist"><li>When a production agent hallucincates, the trace lives across 4 systems — if it exists at all</li><li>Error discovery is reactive: end users report it first</li></ul>
+    </div>
+    <div class="card c-amber">
+      <svg class="ico ca"><use href="#ico-key"/></svg>
+      <h3>Governance Gaps</h3>
+      <ul class="clist"><li>Data access policies enforced piecemeal across 6 different systems</li><li>Audit logs scattered, lineage invisible, compliance reports assembled by hand</li></ul>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     PLATFORM 2 — What Teams Are Actually Dealing With
+══════════════════════════════════════════════ -->
+<section class="slide" data-tab="platform" id="pch2">
+  <div class="top">
+    <div class="ch-label-platform">Platform · 2 / 11</div>
+    <h1>What Teams Are <span class="red">Actually</span> Dealing With</h1>
+    <p class="lead" style="max-width:65ch">These are not theoretical risks. They are reported blockers in every enterprise AI initiative.</p>
+  </div>
+  <div class="grid">
+    <div class="card c-red">
+      <svg class="ico cr"><use href="#ico-server"/></svg>
+      <h3>Data &amp; Model Silos</h3>
+      <p>Models trained on stale CSV exports because live data "can't cross the security boundary" to the training environment.</p>
+    </div>
+    <div class="card c-red">
+      <svg class="ico cr"><use href="#ico-key"/></svg>
+      <h3>Scattered Secrets</h3>
+      <ul class="clist"><li>API keys in .env files, Slack threads, CI pipelines, developer laptops</li><li>No single revocation path when a key leaks</li></ul>
+    </div>
+    <div class="card c-amber">
+      <svg class="ico ca"><use href="#ico-router"/></svg>
+      <h3>Invisible Lineage</h3>
+      <p>Which dataset trained this model? Which model version served this prediction? These questions take days to answer — if they can be answered at all.</p>
+    </div>
+    <div class="card c-amber">
+      <svg class="ico ca"><use href="#ico-activity"/></svg>
+      <h3>Undetected Quality Drift</h3>
+      <ul class="clist"><li>No structured mechanism to measure agent response quality over time</li><li>Hallucination rate increases silently — discovered by end users, not dashboards</li></ul>
+    </div>
+    <div class="card c-purple">
+      <svg class="ico cp"><use href="#ico-monitor"/></svg>
+      <h3>Compliance Blindspots</h3>
+      <ul class="clist"><li>GDPR, HIPAA, internal data policies — near-impossible to enforce across 6 vendor boundaries</li><li>Audit reports assembled manually from disparate logs</li></ul>
+    </div>
+    <div class="card c-purple">
+      <svg class="ico cp"><use href="#ico-package"/></svg>
+      <h3>Slow Iteration</h3>
+      <ul class="clist"><li>Updating a prompt or swapping a model version touches 4 systems, each with its own pipeline</li><li>Time-to-deploy measured in days, not minutes</li></ul>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     PLATFORM 3 — The Databricks Answer
+══════════════════════════════════════════════ -->
+<section class="slide" data-tab="platform" id="pch3">
+  <div class="left">
+    <div class="ch-label-platform">Platform · 3 / 11</div>
+    <h1>One Platform.<br><span class="green">Zero Duct Tape.</span></h1>
+    <p class="lead">
+      Databricks is the unified platform for the full AI lifecycle — from raw data to deployed agents — built around a single governance model, a single identity layer, and a single operational surface.
+    </p>
+    <p class="lead" style="font-size:1rem">
+      Not a collection of best-of-breed tools stitched together. A coherent system where every component was designed to work with every other — without adapters, without synchronisation jobs, without integration tax.
+    </p>
+  </div>
+  <div class="right">
+    <div class="card card-hero">
+      <svg class="ico cg"><use href="#ico-layers"/></svg>
+      <h3>Four Layers. One Platform.</h3>
+      <ul class="clist">
+        <li><strong>Data Layer</strong> — Delta Lake + Unity Catalog. ACID, governed, time-travel ready</li>
+        <li><strong>AI Layer</strong> — Foundation Models, Knowledge Assistants, LangGraph agents</li>
+        <li><strong>Observability Layer</strong> — MLflow traces every call, every decision, every evaluation</li>
+        <li><strong>Deployment Layer</strong> — Databricks Apps + Asset Bundles. One command, full stack</li>
+      </ul>
+    </div>
+    <div class="card c-green">
+      <svg class="ico cg"><use href="#ico-check"/></svg>
+      <h3>One Governance Model</h3>
+      <p>Unity Catalog governs tables, models, functions, volumes, and apps — the same policy, the same audit trail, everywhere in the platform.</p>
+    </div>
+    <div class="card c-blue">
+      <svg class="ico cb"><use href="#ico-database"/></svg>
+      <h3>Already Where Your Data Lives</h3>
+      <p>If your data is on Databricks, your AI runs next to it — no copies, no export pipelines, no security boundaries to negotiate.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     PLATFORM 4 — Unity Catalog
+══════════════════════════════════════════════ -->
+<section class="slide" data-tab="platform" id="pch4">
+  <div class="left">
+    <div class="ch-label-platform">Platform · 4 / 11</div>
+    <h1>Unity Catalog<br><span class="blue">Governed by Default</span></h1>
+    <p class="lead">A universal catalog for everything: tables, views, models, functions, stored procedures, volumes, and apps. One policy. One audit trail. One namespace.</p>
+
+    <div class="step">
+      <div class="step-n">1</div>
+      <div>
+        <h4>Universal Asset Governance</h4>
+        <p>Every asset — from a raw CSV to a deployed model to a Databricks App — lives in the catalog hierarchy: <span class="ic">catalog.schema.asset</span>. One access model, applied uniformly.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">2</div>
+      <div>
+        <h4>Fine-Grained Access Control</h4>
+        <p>Column-level masking, row-level filters, and attribute-based policies — enforced transparently at query time, without touching a single line of application code.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">3</div>
+      <div>
+        <h4>Automated Data Lineage</h4>
+        <p>Every transformation tracked automatically. Trace exactly which tables trained which model, which model served which prediction — without writing a single lineage job.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="card c-blue">
+      <svg class="ico cb"><use href="#ico-cloud"/></svg>
+      <h3>Delta Sharing</h3>
+      <ul class="clist"><li>Share live data across workspaces, organizations, and clouds — without copies or exports</li><li>Recipients query directly over the Delta protocol with no data movement</li></ul>
+    </div>
+    <div class="card c-green">
+      <svg class="ico cg"><use href="#ico-check"/></svg>
+      <h3>Immutable Audit Trail</h3>
+      <ul class="clist"><li>Every read, write, and model inference logged automatically</li><li>Searchable, exportable, tamper-proof — audit prep measured in minutes, not weeks</li></ul>
+    </div>
+    <div class="card c-purple">
+      <svg class="ico cp"><use href="#ico-chart"/></svg>
+      <h3>Time Travel</h3>
+      <p>Query any table as it was at any point in history. Reproduce training datasets, debug data incidents, and roll back bad writes — without snapshots or backups.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     PLATFORM 5 — Foundation Models & Model Serving
+══════════════════════════════════════════════ -->
+<section class="slide" data-tab="platform" id="pch5">
+  <div class="top">
+    <div class="ch-label-platform">Platform · 5 / 11</div>
+    <h1>Foundation Models — <span class="purple">LLMs at Enterprise Scale</span></h1>
+    <p class="lead" style="max-width:68ch">Access 50+ curated foundation models through a single unified API — without managing infrastructure, rotating API keys, or maintaining vendor-specific integrations.</p>
+  </div>
+  <div class="grid">
+    <div class="card c-purple">
+      <span class="tag t-purple">FMAPI</span>
+      <svg class="ico cp"><use href="#ico-cpu"/></svg>
+      <h3>50+ Foundation Models</h3>
+      <p>Claude, Llama 3, Mixtral, DBRX, Command R — natively available, one endpoint, one auth token, no vendor key rotation.</p>
+    </div>
+    <div class="card c-blue">
+      <span class="tag t-blue">Gateway</span>
+      <svg class="ico cb"><use href="#ico-router"/></svg>
+      <h3>External Model Gateway</h3>
+      <ul class="clist"><li>Bring OpenAI, Azure OpenAI, or Anthropic endpoints under one API surface</li><li>Unified auth, unified logging, unified rate-limit management</li></ul>
+    </div>
+    <div class="card c-green">
+      <span class="tag t-green">Custom</span>
+      <svg class="ico cg"><use href="#ico-tool"/></svg>
+      <h3>Custom Model Endpoints</h3>
+      <ul class="clist"><li>Deploy fine-tuned or proprietary models alongside foundation models</li><li>Same governance, same API contract, same monitoring infrastructure</li></ul>
+    </div>
+    <div class="card c-red">
+      <span class="tag t-red">Production</span>
+      <svg class="ico cr"><use href="#ico-bolt"/></svg>
+      <h3>Provisioned Throughput</h3>
+      <p>Dedicated token capacity for production workloads — guaranteed latency, no throttling, no cold starts, fully predictable cost at scale.</p>
+    </div>
+    <div class="card c-amber">
+      <span class="tag t-amber">Security</span>
+      <svg class="ico ca"><use href="#ico-key"/></svg>
+      <h3>Unified Authentication</h3>
+      <ul class="clist"><li>One PAT or service principal for every model call across all providers</li><li>No vendor-specific keys to manage, rotate, or accidentally expose in source code</li></ul>
+    </div>
+    <div class="card c-blue">
+      <span class="tag t-blue">Economics</span>
+      <svg class="ico cb"><use href="#ico-chart"/></svg>
+      <h3>Consolidated Billing</h3>
+      <p>Pay-per-token, billed at workspace level. One line item — not 6 separate vendor invoices for each model provider your teams use.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     PLATFORM 6 — Genie
+══════════════════════════════════════════════ -->
+<section class="slide" data-tab="platform" id="pch6">
+  <div class="left">
+    <div class="ch-label-platform">Platform · 6 / 11</div>
+    <h1>Genie —<br><span class="green">Data for Everyone</span></h1>
+    <p class="lead">Genie turns your Delta tables into a conversational analytics surface. Business users, analysts, and AI agents can all query live data in plain English — no SQL required, no dashboard to build.</p>
+
+    <div class="step">
+      <div class="step-n">1</div>
+      <div>
+        <h4>Natural Language → SQL, Automatically</h4>
+        <p>Genie understands your schema, table semantics, and business vocabulary. Ask in plain English — it generates SQL, executes it, and returns structured results in seconds.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">2</div>
+      <div>
+        <h4>Always Live, Never Stale</h4>
+        <p>Queries run against live Delta tables. No scheduled exports, no caches, no dashboards refreshing on a timer. Every answer reflects the current state of your data.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">3</div>
+      <div>
+        <h4>Embeddable in Agents &amp; Apps</h4>
+        <p>Expose Genie as an MCP tool. Your AI agent routes analytical questions here automatically — no custom SQL layer to build or maintain.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="card c-green">
+      <svg class="ico cg"><use href="#ico-check"/></svg>
+      <h3>Trusted Answers</h3>
+      <ul class="clist"><li>Genie learns from curated, verified Q&amp;A pairs you define</li><li>Cites trusted answers before generating new SQL — hallucination risk minimized at the architecture level</li></ul>
+    </div>
+    <div class="card c-blue">
+      <svg class="ico cb"><use href="#ico-key"/></svg>
+      <h3>Access-Controlled</h3>
+      <p>Genie inherits Unity Catalog permissions. Users can only ask about data they are already authorised to see — no additional policy layer to configure or maintain.</p>
+    </div>
+    <div class="card c-purple">
+      <svg class="ico cp"><use href="#ico-message"/></svg>
+      <h3>Shareable Spaces</h3>
+      <ul class="clist"><li>Share a Genie space with an entire team or embed it in an application</li><li>They get a governed, natural-language interface to your data with zero setup</li></ul>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     PLATFORM 7 — Knowledge Assistants
+══════════════════════════════════════════════ -->
+<section class="slide" data-tab="platform" id="pch7">
+  <div class="left">
+    <div class="ch-label-platform">Platform · 7 / 11</div>
+    <h1>Knowledge<br><span class="blue">Assistants</span><br>Enterprise RAG</h1>
+    <p class="lead">Ground your agents in proprietary knowledge — regulatory docs, technical manuals, product specs, policy PDFs — with full Unity Catalog governance and no vector database to manage or operate.</p>
+
+    <div class="step">
+      <div class="step-n">1</div>
+      <div>
+        <h4>YAML-Configured, Fully Managed</h4>
+        <p>Define knowledge sources, output format, and instructions in a single config file. Databricks provisions the embedding pipeline, vector index, and serving endpoint automatically.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">2</div>
+      <div>
+        <h4>Governed Storage, Governed Retrieval</h4>
+        <p>Documents live in Unity Catalog Volumes. The same access policies that protect your tables protect your knowledge base — no separate file server, no separate security model.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">3</div>
+      <div>
+        <h4>Precise, Auditable Citations</h4>
+        <p>Answers reference specific passages — not summaries. Each response includes the source document and paragraph, auditable, reproducible, and defensible.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="card c-blue">
+      <svg class="ico cb"><use href="#ico-server"/></svg>
+      <h3>Standard Serving Endpoint</h3>
+      <ul class="clist"><li>Each KA exposes a governed REST endpoint via Model Serving</li><li>Wire it into any agent or application as a tool — no custom retrieval code required</li></ul>
+    </div>
+    <div class="card c-purple">
+      <svg class="ico cp"><use href="#ico-database"/></svg>
+      <h3>UC-Native Vector Search</h3>
+      <ul class="clist"><li>Powered by Databricks Vector Search — ACID, governed, no separate vendor contract</li><li>Index updates automatically as new documents are added to the Volume</li></ul>
+    </div>
+    <div class="card c-green">
+      <svg class="ico cg"><use href="#ico-activity"/></svg>
+      <h3>MLflow-Traced</h3>
+      <p>Every retrieval call and generated answer logged to MLflow. Evaluate citation quality, track answer drift over time, compare Knowledge Assistant versions side by side.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     PLATFORM 8 — MLflow
+══════════════════════════════════════════════ -->
+<section class="slide" data-tab="platform" id="pch8">
+  <div class="top">
+    <div class="ch-label-platform">Platform · 8 / 11</div>
+    <h1>MLflow — <span class="green">Observability Across the AI Lifecycle</span></h1>
+    <p class="lead" style="max-width:68ch">The open standard for AI observability. Experiment tracking, model registry, LLM tracing, and structured evaluation — integrated into the platform and governed by Unity Catalog.</p>
+  </div>
+  <div class="grid">
+    <div class="card c-green">
+      <span class="tag t-green">Track</span>
+      <svg class="ico cg"><use href="#ico-chart"/></svg>
+      <h3>Experiment Tracking</h3>
+      <p>Log every training run, eval run, or prompt variant. Compare metrics across dozens of runs in a unified UI — find what works, with statistical evidence.</p>
+    </div>
+    <div class="card c-blue">
+      <span class="tag t-blue">Govern</span>
+      <svg class="ico cb"><use href="#ico-package"/></svg>
+      <h3>Model Registry</h3>
+      <ul class="clist"><li>Version, stage, and promote models via a governed approval workflow: Dev → Staging → Production</li><li>Full lineage from training data to live endpoint</li></ul>
+    </div>
+    <div class="card c-purple">
+      <span class="tag t-purple">Observe</span>
+      <svg class="ico cp"><use href="#ico-activity"/></svg>
+      <h3>LLM Tracing</h3>
+      <ul class="clist"><li>Capture every LLM call: prompt, response, token count, latency, tool calls</li><li>See the complete trace tree for multi-step agent runs</li></ul>
+    </div>
+    <div class="card c-amber">
+      <span class="tag t-amber">Diagnose</span>
+      <svg class="ico ca"><use href="#ico-router"/></svg>
+      <h3>Agent Traces</h3>
+      <p>Track multi-turn agent runs end to end. See exactly which tool was called, in which order, what it returned, and how long each step took — for every production conversation.</p>
+    </div>
+    <div class="card c-red">
+      <span class="tag t-red">Evaluate</span>
+      <svg class="ico cr"><use href="#ico-check"/></svg>
+      <h3>Structured Evaluation</h3>
+      <ul class="clist"><li>Define custom LLM judges, run evaluations at scale against curated test datasets</li><li>Compare model versions with statistical confidence — not intuition</li></ul>
+    </div>
+    <div class="card c-green">
+      <span class="tag t-green">Deploy</span>
+      <svg class="ico cg"><use href="#ico-bolt"/></svg>
+      <h3>One-Command Promotion</h3>
+      <p>Promote a model from the Registry to Model Serving in a single API call. Registry and serving are the same system — no separate deployment pipeline to maintain.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     PLATFORM 9 — Databricks Apps & Asset Bundles
+══════════════════════════════════════════════ -->
+<section class="slide" data-tab="platform" id="pch9">
+  <div class="left">
+    <div class="ch-label-platform">Platform · 9 / 11</div>
+    <h1>Deploy<br><span class="red">Without Ops</span></h1>
+    <p class="lead">Databricks Apps host full-stack applications inside the workspace — authenticated, co-located with your data, with no Kubernetes, no load balancers, and no SSL certificates to manage.</p>
+
+    <div class="step">
+      <div class="step-n">1</div>
+      <div>
+        <h4>Inherited SSO, Zero Configuration</h4>
+        <p>Authentication is automatic. Your app uses the workspace's identity layer — no OAuth flow to configure, no session management to build, no user database to maintain.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">2</div>
+      <div>
+        <h4>Co-Located with Your Data</h4>
+        <p>The app runs inside the same security perimeter as Unity Catalog and Model Serving. Data never has to leave the workspace to power your application — zero cross-boundary exposure.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">3</div>
+      <div>
+        <h4>Asset Bundles: IaC for the Full Stack</h4>
+        <p>Declare apps, jobs, experiments, and model endpoints in <span class="ic">databricks.yml</span>. Deploy the entire agentic stack as one reproducible, version-controlled unit.</p>
+        <code>databricks bundle deploy</code>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="card c-red">
+      <svg class="ico cr"><use href="#ico-cloud"/></svg>
+      <h3>Zero Infra Management</h3>
+      <ul class="clist"><li>No servers to provision, no networks to configure, no certificates to rotate</li><li>Databricks manages scale, availability, and failover transparently</li></ul>
+    </div>
+    <div class="card c-blue">
+      <svg class="ico cb"><use href="#ico-activity"/></svg>
+      <h3>Git-Integrated CI/CD</h3>
+      <ul class="clist"><li>Asset Bundles integrate natively with GitHub Actions, GitLab CI, and Azure DevOps</li><li>Push to main → deploy automatically, with environment promotion built in</li></ul>
+    </div>
+    <div class="card c-green">
+      <svg class="ico cg"><use href="#ico-layers"/></svg>
+      <h3>Multi-Workspace Promotion</h3>
+      <p>The same Bundle deploys to dev, staging, and production. Workspace-specific variables resolve from environment config — clean separation by design, no hardcoded values.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     PLATFORM 10 — The Unified Stack
+══════════════════════════════════════════════ -->
+<section class="slide" data-tab="platform" id="pch10">
+  <div class="top">
+    <div class="ch-label-platform">Platform · 10 / 11</div>
+    <h1>Everything <span class="blue">Connected</span>. Nothing Repeated.</h1>
+    <p class="lead" style="max-width:65ch">One platform. One governance model. One place to observe it all. No adapter layers. No vendor stitching. No integration tax.</p>
+  </div>
+  <div class="body">
+
+    <div class="flow-col">
+      <div class="fbox">
+        <svg class="ico-md cm"><use href="#ico-user"/></svg>
+        User
+        <small>or application</small>
+      </div>
+    </div>
+    <div class="farrow"><svg class="ico-sm cm"><use href="#ico-arrow"/></svg></div>
+
+    <div class="flow-col">
+      <div class="fbox">
+        <svg class="ico-md cm"><use href="#ico-monitor"/></svg>
+        Databricks Apps
+        <small>SSO · zero ops</small>
+      </div>
+    </div>
+    <div class="farrow"><svg class="ico-sm cm"><use href="#ico-arrow"/></svg></div>
+
+    <div class="flow-col">
+      <div class="fbox fa">
+        <svg class="ico-md cr"><use href="#ico-cpu"/></svg>
+        Agent
+        <small>FM API · LangGraph</small>
+      </div>
+    </div>
+    <div class="farrow"><svg class="ico-sm cm"><use href="#ico-arrow"/></svg></div>
+
+    <div class="flow-col" style="gap:0.5rem">
+      <div class="fbox fa" style="min-width:110px">
+        <svg class="ico-sm cr"><use href="#ico-message"/></svg>
+        Genie
+        <small>NL → SQL</small>
+      </div>
+      <div style="font-size:0.7rem;color:var(--text3)">or</div>
+      <div class="fbox fa" style="min-width:110px">
+        <svg class="ico-sm cr"><use href="#ico-book"/></svg>
+        Knowledge Assistant
+        <small>RAG · governed</small>
+      </div>
+      <div style="font-size:0.7rem;color:var(--text3)">or</div>
+      <div class="fbox fa" style="min-width:110px">
+        <svg class="ico-sm cr"><use href="#ico-tool"/></svg>
+        SQL / Procedure
+        <small>precise actions</small>
+      </div>
+    </div>
+    <div class="farrow"><svg class="ico-sm cm"><use href="#ico-arrow"/></svg></div>
+
+    <div class="flow-col">
+      <div class="fbox fg">
+        <svg class="ico-md cg"><use href="#ico-database"/></svg>
+        Unity Catalog
+        <small>governed · live</small>
+      </div>
+    </div>
+    <div class="farrow"><svg class="ico-sm cm"><use href="#ico-arrow"/></svg></div>
+
+    <div class="flow-col">
+      <div class="fbox fg">
+        <svg class="ico-md cg"><use href="#ico-chart"/></svg>
+        MLflow
+        <small>traces · evals</small>
+      </div>
+    </div>
+    <div class="farrow"><svg class="ico-sm cm"><use href="#ico-arrow"/></svg></div>
+
+    <div class="flow-col">
+      <div class="fbox">
+        <svg class="ico-md cm"><use href="#ico-package"/></svg>
+        Asset Bundle
+        <small>one deploy · all layers</small>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════
+     PLATFORM 11 — Built for Builders
+══════════════════════════════════════════════ -->
+<section class="slide" data-tab="platform" id="pch11">
+
+  <div class="left">
+    <div class="ch-label-platform">Platform · 11 / 11</div>
+    <h1>Built for Builders.<br><span class="blue">Designed for</span><br>Production.</h1>
+    <p class="lead">
+      Customers who built agentic AI on other platforms describe the same journey: months assembling a stack,
+      weeks debugging integrations, days chasing permissions across systems that were never meant to talk to each other.
+      Databricks was designed so that conversation never happens.
+    </p>
+
+    <div style="display:flex;flex-direction:column;gap:0.55rem;margin-top:0.25rem">
+      <div class="contrast-row">
+        <span class="contrast-before">weeks of infrastructure setup</span>
+        <span class="contrast-arrow">→</span>
+        <span class="contrast-after">working agent, day one</span>
+      </div>
+      <div class="contrast-row">
+        <span class="contrast-before">6 vendors, 6 security models</span>
+        <span class="contrast-arrow">→</span>
+        <span class="contrast-after">one UC policy, applied everywhere</span>
+      </div>
+      <div class="contrast-row">
+        <span class="contrast-before">"where did that trace go?"</span>
+        <span class="contrast-arrow">→</span>
+        <span class="contrast-after">full stack traced by default</span>
+      </div>
+      <div class="contrast-row">
+        <span class="contrast-before">3 teams to deploy one app</span>
+        <span class="contrast-arrow">→</span>
+        <span class="contrast-after">one command, full stack live</span>
+      </div>
+      <div class="contrast-row">
+        <span class="contrast-before">compliance audit = manual panic</span>
+        <span class="contrast-arrow">→</span>
+        <span class="contrast-after">immutable audit trail, always ready</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="card card-hero">
+      <svg class="ico cr"><use href="#ico-layers"/></svg>
+      <h3>Architecture by Design</h3>
+      <ul class="clist">
+        <li>Every component was built to work with every other — not integrated after the fact</li>
+        <li>Governance, observability, and deployment are first-class citizens, not bolt-ons added later</li>
+        <li>The same architecture scales from a two-person prototype to enterprise production without redesign</li>
+      </ul>
+    </div>
+    <div class="card c-blue">
+      <svg class="ico cb"><use href="#ico-bolt"/></svg>
+      <h3>Integration-First, Not Integration-Later</h3>
+      <ul class="clist">
+        <li>Data, models, apps, and governance share the same identity layer from the very first line of code</li>
+        <li>No adapter layers to build, no sync jobs to run, no "integration sprint" before go-live</li>
+      </ul>
+    </div>
+    <div class="card c-green">
+      <svg class="ico cg"><use href="#ico-check"/></svg>
+      <h3>From Idea to Production in a Sprint</h3>
+      <ul class="clist">
+        <li>SDK-first automation eliminates the manual UI work that consumed previous projects</li>
+        <li>What used to take a quarter — connect data, wire a model, secure and deploy an app — now fits in a single sprint</li>
+        <li>Your team ships capability, not plumbing</li>
+      </ul>
+    </div>
+  </div>
+
+</section>
+
+
 <script>
-  const slides = document.querySelectorAll('.slide');
-  const dotsEl = document.getElementById('navDots');
+  const allSlides = [...document.querySelectorAll('.slide')];
+  const dotsEl   = document.getElementById('navDots');
+  let activeTab  = 'platform';
+  let current    = 0;
+  let observer   = null;
 
-  slides.forEach((s, i) => {
-    const d = document.createElement('div');
-    d.className = 'dot';
-    d.title = `Slide ${i + 1}`;
-    d.onclick = () => s.scrollIntoView({ behavior: 'smooth' });
-    dotsEl.appendChild(d);
-  });
+  function visible() { return allSlides.filter(s => s.dataset.tab === activeTab); }
 
-  let current = 0;
-
-  const obs = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        current = [...slides].indexOf(e.target);
-        document.querySelectorAll('.dot').forEach((d, j) => d.classList.toggle('on', j === current));
-      }
+  function rebuildDots() {
+    dotsEl.innerHTML = '';
+    visible().forEach((s, i) => {
+      const d = document.createElement('div');
+      d.className = 'dot';
+      d.title = `Slide ${i + 1}`;
+      d.onclick = () => s.scrollIntoView({ behavior: 'smooth' });
+      dotsEl.appendChild(d);
     });
-  }, { threshold: 0.5 });
+  }
 
-  slides.forEach(s => obs.observe(s));
+  function updateDots() {
+    document.querySelectorAll('.dot').forEach((d, j) => d.classList.toggle('on', j === current));
+  }
+
+  function startObserver() {
+    if (observer) observer.disconnect();
+    observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          current = visible().indexOf(e.target);
+          updateDots();
+        }
+      });
+    }, { threshold: 0.5 });
+    visible().forEach(s => observer.observe(s));
+  }
+
+  function switchTab(tab) {
+    activeTab = tab;
+    current   = 0;
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+    allSlides.forEach(s => { s.style.display = s.dataset.tab === tab ? '' : 'none'; });
+    const first = visible()[0];
+    if (first) first.scrollIntoView({ behavior: 'instant' });
+    rebuildDots();
+    updateDots();
+    startObserver();
+  }
+
+  document.querySelectorAll('.nav-tab').forEach(b => { b.onclick = () => switchTab(b.dataset.tab); });
+
+  switchTab('platform');
 
   document.addEventListener('keydown', e => {
+    const v = visible();
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      const next = Math.min(current + 1, slides.length - 1);
-      slides[next].scrollIntoView({ behavior: 'smooth' });
+      v[Math.min(current + 1, v.length - 1)].scrollIntoView({ behavior: 'smooth' });
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      const prev = Math.max(current - 1, 0);
-      slides[prev].scrollIntoView({ behavior: 'smooth' });
+      v[Math.max(current - 1, 0)].scrollIntoView({ behavior: 'smooth' });
     }
   });
 </script>
