@@ -26,3 +26,5 @@ env:
     value: "airties.main"
   - name: DATABRICKS_WAREHOUSE_ID
     value: "ab0ed8896b7bdebe"
+  - name: PROJECT_KA_PASSENGERS
+    value: "ka-087003b9-endpoint"

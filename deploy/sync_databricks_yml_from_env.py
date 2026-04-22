@@ -3,8 +3,8 @@
 Creates databricks.yml and app.yaml from templates if they don't exist.
 
 Updates:
-  - databricks.yml: sql_warehouse.id, genie_space.space_id, serving_endpoint.name, app name
-  - app.yaml: AGENT_MODEL_ENDPOINT, PROJECT_UNITY_CATALOG_SCHEMA, DATABRICKS_WAREHOUSE_ID
+  - databricks.yml: sql_warehouse.id, genie_space.space_id, serving_endpoint.name, ka_endpoint.name, app name
+  - app.yaml: AGENT_MODEL_ENDPOINT, PROJECT_UNITY_CATALOG_SCHEMA, DATABRICKS_WAREHOUSE_ID, PROJECT_KA_PASSENGERS
   - Databricks Secrets: pushes AGENT_MODEL_TOKEN to scope 'agent-forge' (cross-workspace only)
 
 Usage:
@@ -67,6 +67,10 @@ resources:
           serving_endpoint:
             name: 'PLACEHOLDER_ENDPOINT'
             permission: 'CAN_QUERY'
+        - name: 'ka_endpoint'
+          serving_endpoint:
+            name: 'PLACEHOLDER_KA_ENDPOINT'
+            permission: 'CAN_QUERY'
         - name: 'agent_model_token'
           secret:
             scope: 'agent-forge'
@@ -117,6 +121,8 @@ env:
     value: "PLACEHOLDER_SCHEMA"
   - name: DATABRICKS_WAREHOUSE_ID
     value: "PLACEHOLDER_WAREHOUSE_ID"
+  - name: PROJECT_KA_PASSENGERS
+    value: "PLACEHOLDER_KA_ENDPOINT"
 """
 
 
@@ -269,6 +275,19 @@ def main() -> int:
                 )
                 changes.append(("serving_endpoint.name", "AGENT_MODEL_ENDPOINT", endpoint))
 
+    # ka_endpoint.name <- PROJECT_KA_PASSENGERS
+    ka_endpoint = os.environ.get("PROJECT_KA_PASSENGERS", "").strip()
+    if ka_endpoint:
+        m = re.search(r"ka_endpoint.*?serving_endpoint:.*?name: '([^']*)'", content, re.DOTALL)
+        if m and m.group(1) != ka_endpoint:
+            content = re.sub(
+                r"(name: 'ka_endpoint'\s*\n\s+serving_endpoint:\s*\n\s+)name: '[^']*'",
+                r"\g<1>name: '" + ka_endpoint + "'",
+                content,
+                count=1,
+            )
+            changes.append(("ka_endpoint.name", "PROJECT_KA_PASSENGERS", ka_endpoint))
+
     # production target app name <- DBX_APP_NAME
     app_name = os.environ.get("DBX_APP_NAME", "").strip()
     if app_name:
@@ -287,7 +306,7 @@ def main() -> int:
                 )
                 changes.append((f"targets.{target} app name", "DBX_APP_NAME", app_name))
 
-    # app.yaml: AGENT_MODEL_ENDPOINT, PROJECT_UNITY_CATALOG_SCHEMA, DATABRICKS_WAREHOUSE_ID
+    # app.yaml: AGENT_MODEL_ENDPOINT, PROJECT_UNITY_CATALOG_SCHEMA, DATABRICKS_WAREHOUSE_ID, PROJECT_KA_PASSENGERS
     # AGENT_MODEL_TOKEN is managed via Databricks Secrets — not stamped here.
     if app_yml.exists():
         app_content = app_yml.read_text()
@@ -298,6 +317,7 @@ def main() -> int:
             ("AGENT_MODEL_ENDPOINT", endpoint),
             ("PROJECT_UNITY_CATALOG_SCHEMA", schema_spec),
             ("DATABRICKS_WAREHOUSE_ID", wh_id),
+            ("PROJECT_KA_PASSENGERS", ka_endpoint),
         ]:
             if not value:
                 continue

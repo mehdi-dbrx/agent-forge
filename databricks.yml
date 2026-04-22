@@ -26,6 +26,10 @@ resources:
             name: 'agent-forge-checkin'
             space_id: '01f13cec584b100499621278c4975089'
             permission: 'CAN_RUN'
+        - name: 'ka_endpoint'
+          serving_endpoint:
+            name: 'ka-087003b9-endpoint'
+            permission: 'CAN_QUERY'
         - name: 'agent_model_token'
           secret:
             scope: 'agent-forge'
