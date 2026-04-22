@@ -235,12 +235,59 @@ def main() -> int:
             changes.append(("genie_space.name", None, "agent-forge-checkin"))
 
     # serving_endpoint <- AGENT_MODEL_ENDPOINT
-    # Cross-workspace URL: remove the serving_endpoint resource (can't grant on external workspace).
-    # Same-workspace (not set): remove agent_model_token secret resource — not needed.
+    # Cross-workspace URL: remove serving_endpoint resource (can't grant on external workspace),
+    #   push AGENT_MODEL_TOKEN to Databricks Secrets.
+    # Same-workspace (not set or same-host URL): keep serving_endpoint with FM_MODEL name
+    #   so the app SP gets CAN_QUERY; remove agent_model_token secret (not needed).
     # Local name: update serving_endpoint.name as usual.
     endpoint = os.environ.get("AGENT_MODEL_ENDPOINT", "").strip()
-    if not endpoint:
-        # Same-workspace mode: remove agent_model_token secret resource from databricks.yml
+    databricks_host = os.environ.get("DATABRICKS_HOST", "").strip().rstrip("/")
+    fm_model = "databricks-claude-sonnet-4-6"
+
+    # Determine if endpoint is cross-workspace
+    _is_cross_workspace = False
+    _ep_name_from_url: str | None = None
+    if endpoint:
+        ep_url = re.search(r"/serving-endpoints/([^/]+)/invocations", endpoint)
+        if ep_url:
+            _ep_name_from_url = ep_url.group(1)
+            ep_host = endpoint[:ep_url.start()].rstrip("/")
+            _is_cross_workspace = ep_host != databricks_host
+
+    if not endpoint or (endpoint and _ep_name_from_url and not _is_cross_workspace):
+        # Same-workspace mode: ensure serving_endpoint resource uses the FM model name
+        # so the app service principal gets CAN_QUERY permission.
+        ep_name = _ep_name_from_url or fm_model
+        m = re.search(r"(- name: 'serving_endpoint'\s*\n\s+serving_endpoint:\s*\n\s+)name: '([^']*)'", content)
+        if m:
+            if m.group(2) != ep_name:
+                content = re.sub(
+                    r"(- name: 'serving_endpoint'\s*\n\s+serving_endpoint:\s*\n\s+)name: '[^']*'",
+                    r"\g<1>name: '" + ep_name + "'",
+                    content,
+                    count=1,
+                )
+                changes.append(("serving_endpoint.name", None, f"{ep_name} (same-workspace — app SP needs CAN_QUERY)"))
+        else:
+            # serving_endpoint resource was removed previously — re-add it
+            # Insert before ka_endpoint or agent_model_token if they exist, else at end of resources
+            se_block = (
+                f"\n        - name: 'serving_endpoint'\n"
+                f"          serving_endpoint:\n"
+                f"            name: '{ep_name}'\n"
+                f"            permission: 'CAN_QUERY'"
+            )
+            # Try to insert before ka_endpoint
+            if "- name: 'ka_endpoint'" in content:
+                content = content.replace("        - name: 'ka_endpoint'", se_block + "\n        - name: 'ka_endpoint'", 1)
+            elif "- name: 'agent_model_token'" in content:
+                content = content.replace("        - name: 'agent_model_token'", se_block + "\n        - name: 'agent_model_token'", 1)
+            else:
+                # Append after last resource block (before targets:)
+                content = content.replace("\ntargets:", se_block + "\n\ntargets:", 1)
+            changes.append(("serving_endpoint resource", None, f"added ({ep_name} — app SP needs CAN_QUERY)"))
+
+        # Remove agent_model_token secret resource (not needed in same-workspace)
         new_content = re.sub(
             r"\s*- name: 'agent_model_token'\s*\n\s+secret:\s*\n\s+scope: '[^']*'\s*\n\s+key: '[^']*'\s*\n\s+permission: '[^']*'",
             "",
@@ -249,36 +296,37 @@ def main() -> int:
         if new_content != content:
             content = new_content
             changes.append(("agent_model_token resource", "AGENT_MODEL_ENDPOINT", "removed (same-workspace mode)"))
-    if endpoint:
-        ep_url = re.search(r"/serving-endpoints/([^/]+)/invocations", endpoint)
-        if ep_url:
-            # Remove the serving_endpoint resource block entirely
-            new_content = re.sub(
-                r"\s*- name: 'serving_endpoint'\s*\n\s+serving_endpoint:\s*\n\s+name: '[^']*'\s*\n\s+permission: '[^']*'",
-                "",
-                content,
-            )
-            if new_content != content:
-                content = new_content
-                changes.append(("serving_endpoint resource", "AGENT_MODEL_ENDPOINT", "removed (cross-workspace URL)"))
 
-            # Push AGENT_MODEL_TOKEN to Databricks Secrets
-            model_token = os.environ.get("AGENT_MODEL_TOKEN", "").strip()
-            if model_token:
-                print(f"\n{BOLD}Databricks Secrets:{W}")
-                ensure_secret(model_token, args.dry_run)
-            else:
-                print(f"  {WARN} AGENT_MODEL_TOKEN not set in .env.local — secret not pushed")
+    elif endpoint and _is_cross_workspace:
+        # Cross-workspace: remove serving_endpoint resource (can't grant on external workspace)
+        new_content = re.sub(
+            r"\s*- name: 'serving_endpoint'\s*\n\s+serving_endpoint:\s*\n\s+name: '[^']*'\s*\n\s+permission: '[^']*'",
+            "",
+            content,
+        )
+        if new_content != content:
+            content = new_content
+            changes.append(("serving_endpoint resource", "AGENT_MODEL_ENDPOINT", "removed (cross-workspace URL)"))
+
+        # Push AGENT_MODEL_TOKEN to Databricks Secrets
+        model_token = os.environ.get("AGENT_MODEL_TOKEN", "").strip()
+        if model_token:
+            print(f"\n{BOLD}Databricks Secrets:{W}")
+            ensure_secret(model_token, args.dry_run)
         else:
-            m = re.search(r"serving_endpoint:\s*\n\s+name: '([^']*)'", content)
-            if m and m.group(1) != endpoint:
-                content = re.sub(
-                    r"(serving_endpoint:\s*\n\s+)name: '[^']*'",
-                    r"\g<1>name: '" + endpoint + "'",
-                    content,
-                    count=1,
-                )
-                changes.append(("serving_endpoint.name", "AGENT_MODEL_ENDPOINT", endpoint))
+            print(f"  {WARN} AGENT_MODEL_TOKEN not set in .env.local — secret not pushed")
+
+    elif endpoint and not _ep_name_from_url:
+        # Local endpoint name (not a URL) — update serving_endpoint.name
+        m = re.search(r"serving_endpoint:\s*\n\s+name: '([^']*)'", content)
+        if m and m.group(1) != endpoint:
+            content = re.sub(
+                r"(serving_endpoint:\s*\n\s+)name: '[^']*'",
+                r"\g<1>name: '" + endpoint + "'",
+                content,
+                count=1,
+            )
+            changes.append(("serving_endpoint.name", "AGENT_MODEL_ENDPOINT", endpoint))
 
     # ka_endpoint.name <- PROJECT_KA_PASSENGERS
     ka_endpoint = os.environ.get("PROJECT_KA_PASSENGERS", "").strip()
@@ -349,22 +397,23 @@ def main() -> int:
             entry = f'  - name: {name}\n    {key}: "{value}"\n'
             return content.replace("  - name: PROJECT_UNITY_CATALOG_SCHEMA", entry + "  - name: PROJECT_UNITY_CATALOG_SCHEMA", 1)
 
-        # AGENT_MODEL_ENDPOINT + AGENT_MODEL_TOKEN: inject only for cross-workspace
-        if endpoint:
-            new = _app_set(app_content, "AGENT_MODEL_ENDPOINT", endpoint)
-            if not _app_has("AGENT_MODEL_TOKEN"):
+        # AGENT_MODEL_ENDPOINT: always set explicitly in app.yaml.
+        # In same-workspace mode, use just the model name (not a full URL) so
+        # agent.py takes the local-name path with default WorkspaceClient auth,
+        # avoiding host-comparison mismatches at runtime.
+        # AGENT_MODEL_TOKEN: only inject for cross-workspace (via Databricks Secrets).
+        effective_endpoint = endpoint or fm_model
+        if effective_endpoint:
+            new = _app_set(app_content, "AGENT_MODEL_ENDPOINT", effective_endpoint)
+            if _is_cross_workspace and not _app_has("AGENT_MODEL_TOKEN"):
                 new += '  # Secret injected via DAB resource agent_model_token (scope: agent-forge, key: AGENT_MODEL_TOKEN).\n'
                 new += '  - name: AGENT_MODEL_TOKEN\n    valueFrom: "agent_model_token"\n'
+            elif not _is_cross_workspace and _app_has("AGENT_MODEL_TOKEN"):
+                new = _app_remove(new, "AGENT_MODEL_TOKEN")
             if new != app_content:
                 app_content = new; app_changed = True
-                changes.append(("app.yaml  AGENT_MODEL_ENDPOINT", "AGENT_MODEL_ENDPOINT", endpoint))
-        else:
-            # Same-workspace: remove both if present
-            for name in ("AGENT_MODEL_ENDPOINT", "AGENT_MODEL_TOKEN"):
-                if _app_has(name):
-                    app_content = _app_remove(app_content, name)
-                    app_changed = True
-                    changes.append((f"app.yaml  {name}", None, "(removed — same-workspace mode)"))
+                label = "cross-workspace" if _is_cross_workspace else "same-workspace (explicit)"
+                changes.append(("app.yaml  AGENT_MODEL_ENDPOINT", None, f"{effective_endpoint} ({label})"))
 
         # Standard value fields
         for env_name, value in [

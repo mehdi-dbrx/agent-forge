@@ -103,7 +103,21 @@ uv run python scripts/py/setup_dbx_env.py --check
 
 ---
 
-## 5. Bundle deploy lock left by interrupted run
+## 5. Bundle deploy fails with "app already exists" on first deploy
+
+**Symptom:** `databricks bundle deploy` fails with: *"Failed to create app <name>. An app with the same name already exists."*
+
+**Root cause:** `deploy.sh` pre-creates the app via `databricks apps create` (needed because the Terraform provider cannot create apps from scratch). The `bind` command is called before the first deploy, but has no effect — there is no Terraform state yet for it to attach to. When `bundle deploy` runs, Terraform tries to create the app and fails because it already exists.
+
+**Fix applied:** `deploy.sh` now detects the "already exists" error, runs `databricks bundle deployment bind` (which works after the failed apply creates initial state entries), and retries the deploy. The retry succeeds because Terraform now knows to update the existing app rather than create a new one.
+
+**Long-term fix:** Yes — the retry logic is in `deploy.sh` and handles this automatically.
+
+**Fresh deploy safe?** Yes — the retry is transparent and adds a few seconds on first deploy only.
+
+---
+
+## 6. Bundle deploy lock left by interrupted run
 
 **Symptom:** Subsequent deploy attempts fail immediately: *"deploy lock acquired by ... Use --force-lock to override"*
 
@@ -120,7 +134,7 @@ DATABRICKS_HOST=https://... DATABRICKS_TOKEN=... databricks bundle deploy --forc
 
 ---
 
-## 6. Frontend `client/dist/` not deployed — 500 on GET /
+## 7. Frontend `client/dist/` not deployed — 500 on GET /
 
 **Symptom:** App starts but every request to `/` returns `500 Internal Server Error`. Logs show: *"ENOENT: no such file or directory, stat '.../e2e-chatbot-app-next/client/dist/index.html'"*
 

@@ -19,22 +19,22 @@ resources:
             permission: 'CAN_MANAGE'
         - name: 'sql_warehouse'
           sql_warehouse:
-            id: 'ab0ed8896b7bdebe'
+            id: '6435bcfcf68fd910'
             permission: 'CAN_USE'
         - name: 'genie_space'
           genie_space:
             name: 'agent-forge-checkin'
-            space_id: '01f13cec584b100499621278c4975089'
+            space_id: '01f13e5b64ab1c68937e8d964e779116'
             permission: 'CAN_RUN'
+
+        - name: 'serving_endpoint'
+          serving_endpoint:
+            name: 'databricks-claude-sonnet-4-6'
+            permission: 'CAN_QUERY'
         - name: 'ka_endpoint'
           serving_endpoint:
-            name: 'ka-087003b9-endpoint'
+            name: 'ka-e0012089-endpoint'
             permission: 'CAN_QUERY'
-        - name: 'agent_model_token'
-          secret:
-            scope: 'agent-forge'
-            key: 'AGENT_MODEL_TOKEN'
-            permission: 'READ'
 
 targets:
   dev:
@@ -48,4 +48,4 @@ targets:
     resources:
       apps:
         agent_app:
-          name: 'agent-airties'
+          name: 'agent-airties-mehdi'

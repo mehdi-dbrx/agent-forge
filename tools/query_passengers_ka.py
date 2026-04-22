@@ -5,14 +5,17 @@ import os
 import time
 
 import requests
+from databricks.sdk import WorkspaceClient
 from langchain_core.tools import tool
 
 _MAX_RETRIES = 3
 _RETRY_BACKOFF = 15
 
+_workspace_client = WorkspaceClient()
+
 
 def _ka_url() -> str:
-    host = os.environ.get("DATABRICKS_HOST", "").rstrip("/")
+    host = _workspace_client.config.host.rstrip("/")
     endpoint = os.environ.get("PROJECT_KA_PASSENGERS", "").strip()
     if not host or not endpoint:
         raise ValueError("PROJECT_KA_PASSENGERS is not configured")
@@ -20,10 +23,7 @@ def _ka_url() -> str:
 
 
 def _auth_header() -> str:
-    token = os.environ.get("DATABRICKS_TOKEN", "").strip()
-    if not token:
-        raise ValueError("DATABRICKS_TOKEN must be set")
-    return f"Bearer {token}"
+    return f"Bearer {_workspace_client.config.token}"
 
 
 def _call_ka(query: str) -> dict:

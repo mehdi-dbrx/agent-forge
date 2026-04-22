@@ -1000,15 +1000,35 @@ def verify_genie() -> tuple[bool, str]:
         return False, str(e)
 
 
+def _verify_endpoint_on_host(host: str, name: str) -> tuple[bool, str]:
+    """Check a serving endpoint exists on the current workspace via SDK."""
+    try:
+        w = WorkspaceClient()
+        ep = w.serving_endpoints.get(name=name)
+        state = getattr(ep, "state", None)
+        ready = str(getattr(state, "ready", "") or "") if state else ""
+        return True, f"{name} on {host} ({ready or 'OK'})"
+    except Exception as e:
+        return False, f"endpoint '{name}' not found on {host}: {e}"
+
+
 def verify_model_endpoint() -> tuple[bool, str]:
     endpoint = os.environ.get("AGENT_MODEL_ENDPOINT", "").strip()
     host = os.environ.get("DATABRICKS_HOST", "").strip().rstrip("/")
     if not endpoint:
         if host:
-            return True, f"same-workspace fallback → {_fm_invocations_url(host)}"
+            # Same-workspace fallback — verify the endpoint actually exists
+            return _verify_endpoint_on_host(host, FM_MODEL)
         return False, "not set"
     if endpoint.startswith("http://") or endpoint.startswith("https://"):
-        # Full URL — accept as-is, no SDK lookup possible
+        # Full URL — extract name and host; verify if same-workspace
+        m = re.search(r"/serving-endpoints/([^/]+)/invocations", endpoint)
+        if m:
+            ep_name = m.group(1)
+            ep_host = endpoint[:m.start()].rstrip("/")
+            if ep_host == host:
+                return _verify_endpoint_on_host(host, ep_name)
+        # Cross-workspace URL — accept (can't SDK-verify remote workspace)
         return True, f"URL ({endpoint})"
     try:
         w = WorkspaceClient()

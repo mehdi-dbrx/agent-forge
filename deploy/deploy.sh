@@ -15,7 +15,7 @@ BOLD=$'\033[1m'; DIM=$'\033[2m'; ORANGE=$'\033[38;5;214m'
 OK="  ${G}✓${W}"; FAIL="  ${R}✗${W}"; WARN="  ${Y}⚠${W}"
 BAR_FILL="█"; BAR_EMPTY="░"
 
-TOTAL_STEPS=6
+TOTAL_STEPS=7
 STEP=0
 DRY_RUN=false
 [[ "${1:-}" == "--dry-run" ]] && DRY_RUN=true
@@ -157,6 +157,11 @@ if ! run_step "databricks bundle validate" databricks bundle validate; then
   abort "Bundle validation failed — review databricks.yml"
 fi
 
+if ! run_step "Model endpoint connectivity" \
+    uv run python scripts/py/test_agent_model.py; then
+  abort "Model endpoint unreachable — check AGENT_MODEL_ENDPOINT or verify the endpoint exists on DATABRICKS_HOST"
+fi
+
 if $DRY_RUN; then
   echo -e "\n  ${Y}${BOLD}Dry-run complete — all checks passed.${W}\n"
   exit 0
@@ -241,13 +246,46 @@ else
 fi
 
 
-if ! run_step "databricks bundle deploy" databricks bundle deploy; then
-  abort "Bundle deploy failed"
+# Bundle deploy — retry on "already exists" (first deploy after pre-creation
+# has no Terraform state, so bind only works after the initial failed apply
+# creates state entries).
+_deploy_log=$(mktemp)
+info "Running bundle deploy..."
+if databricks bundle deploy >"$_deploy_log" 2>&1; then
+  ok "databricks bundle deploy"
+else
+  if grep -q "already exists" "$_deploy_log"; then
+    warn "App exists outside Terraform state — binding and retrying..."
+    databricks bundle deployment bind agent_app "$DBX_APP_NAME" --auto-approve 2>/dev/null || true
+    ok "Bound existing app to bundle"
+    if ! run_step "databricks bundle deploy (retry)" databricks bundle deploy; then
+      abort "Bundle deploy failed on retry"
+    fi
+  else
+    fail "databricks bundle deploy"
+    uniq "$_deploy_log" | sed 's/^/    /' >&2
+    abort "Bundle deploy failed"
+  fi
+fi
+rm -f "$_deploy_log"
+
+# ── Step 5: App Service Principal ─────────────────────────────────────────────
+section "App Service Principal"
+
+_sp_json=$(databricks apps get "$DBX_APP_NAME" --output json 2>/dev/null)
+_sp_client_id=$(echo "$_sp_json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('service_principal_client_id',''))" 2>/dev/null)
+_sp_name=$(echo "$_sp_json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('service_principal_name',''))" 2>/dev/null)
+_sp_id=$(echo "$_sp_json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('service_principal_id',''))" 2>/dev/null)
+
+if [[ -n "$_sp_client_id" ]]; then
+  ok "Service principal: ${C}${_sp_name}${W}"
+  info "Client ID:  ${DIM}${_sp_client_id}${W}"
+  info "SP ID:      ${DIM}${_sp_id}${W}"
+else
+  warn "Could not retrieve app service principal — grants may fail"
 fi
 
-# ── Secret scope grant must happen before bundle run (secret resolved at start time) ──
-_sp_client_id=$(databricks apps get "$DBX_APP_NAME" --output json 2>/dev/null \
-  | python3 -c "import sys,json; print(json.load(sys.stdin).get('service_principal_client_id',''))" 2>/dev/null)
+# Pre-deploy secret scope grant (secret resolved at app start time)
 if [[ -n "$_sp_client_id" ]]; then
   databricks secrets put-acl agent-forge "$_sp_client_id" READ 2>/dev/null || true
 fi
@@ -256,48 +294,58 @@ if ! run_step "Starting app ${DBX_APP_NAME}" databricks bundle run agent_app; th
   abort "App failed to start"
 fi
 
-# ── Step 5: Grants ────────────────────────────────────────────────────────────
+# ── Step 6: Grants ────────────────────────────────────────────────────────────
 section "Grants"
 
+# 6a. UC table access
 info "UC table access..."
 if uv run python deploy/grant/grant_app_tables.py "$DBX_APP_NAME" \
     --schema "$PROJECT_UNITY_CATALOG_SCHEMA" 2>/dev/null; then
   ok "UC table grants applied"
 else
   warn "grant_app_tables failed — run manually:"
-  echo -e "  ${DIM}uv run python deploy/grant/grant_app_tables.py ${DBX_APP_NAME} --schema ${PROJECT_UNITY_CATALOG_SCHEMA}${W}"
+  echo -e "    ${DIM}uv run python deploy/grant/grant_app_tables.py ${DBX_APP_NAME} --schema ${PROJECT_UNITY_CATALOG_SCHEMA}${W}"
 fi
 
+# 6b. SQL warehouse access
 info "SQL warehouse access..."
 if uv run python deploy/grant/authorize_warehouse_for_app.py "$DBX_APP_NAME" 2>/dev/null; then
   ok "Warehouse grant applied"
 else
   warn "authorize_warehouse_for_app failed — run manually:"
-  echo -e "  ${DIM}uv run python deploy/grant/authorize_warehouse_for_app.py ${DBX_APP_NAME}${W}"
+  echo -e "    ${DIM}uv run python deploy/grant/authorize_warehouse_for_app.py ${DBX_APP_NAME}${W}"
 fi
 
+# 6c. Serving endpoint access (resolves endpoint IDs; skips FM endpoints)
+info "Serving endpoint access..."
+if uv run python deploy/grant/authorize_endpoint_for_app.py "$DBX_APP_NAME" 2>/dev/null; then
+  ok "Serving endpoint grants applied"
+else
+  warn "authorize_endpoint_for_app failed (FM endpoints are auto-accessible) — run manually:"
+  echo -e "    ${DIM}uv run python deploy/grant/authorize_endpoint_for_app.py ${DBX_APP_NAME}${W}"
+fi
+
+# 6d. Genie space access
+info "Genie space access..."
+if uv run python deploy/grant/authorize_genie_for_app.py 2>/dev/null; then
+  ok "Genie space grant applied"
+else
+  warn "authorize_genie_for_app skipped or failed (non-blocking)"
+fi
+
+# 6e. Secret scope access (cross-workspace token)
 info "Secret scope access..."
-_sp_client_id=$(databricks apps get "$DBX_APP_NAME" --output json 2>/dev/null \
-  | python3 -c "import sys,json; print(json.load(sys.stdin).get('service_principal_client_id',''))" 2>/dev/null)
 if [[ -n "$_sp_client_id" ]]; then
   if databricks secrets put-acl agent-forge "$_sp_client_id" READ 2>/tmp/acl_err; then
-    ok "Secret scope ${C}agent-forge${W} → READ granted to app SP"
+    ok "Secret scope ${C}agent-forge${W} -> READ granted to app SP"
   else
-    warn "Failed to grant secret scope ACL: $(cat /tmp/acl_err)"
-  fi
-  # Verify
-  _acl=$(databricks secrets list-acls agent-forge 2>/dev/null \
-    | python3 -c "import sys,json; acls=json.load(sys.stdin); print(next((a['permission'] for a in acls if a['principal']=='$_sp_client_id'), 'MISSING'))" 2>/dev/null)
-  if [[ "$_acl" == "MISSING" || -z "$_acl" ]]; then
-    warn "Secret ACL verification failed — ${C}AGENT_MODEL_TOKEN${W} may not be accessible to app"
-  else
-    ok "Verified: app SP ${DIM}${_sp_client_id}${W} has ${C}${_acl}${W} on scope ${C}agent-forge${W}"
+    warn "Failed to grant secret scope ACL: $(cat /tmp/acl_err 2>/dev/null)"
   fi
 else
-  warn "Could not retrieve app service principal — skipping secret scope grant"
+  warn "No SP client ID — skipping secret scope grant"
 fi
 
-# ── Step 6: Done ──────────────────────────────────────────────────────────────
+# ── Step 7: Done ──────────────────────────────────────────────────────────────
 section "Complete"
 
 APP_URL=$(databricks apps get "$DBX_APP_NAME" --output json 2>/dev/null | jq -r '.url // empty' || true)
