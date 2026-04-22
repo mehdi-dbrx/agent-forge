@@ -306,12 +306,13 @@ def main() -> int:
                 )
                 changes.append((f"targets.{target} app name", "DBX_APP_NAME", app_name))
 
+    schema_spec = os.environ.get("PROJECT_UNITY_CATALOG_SCHEMA", "").strip()
+
     # app.yaml: AGENT_MODEL_ENDPOINT, PROJECT_UNITY_CATALOG_SCHEMA, DATABRICKS_WAREHOUSE_ID, PROJECT_KA_PASSENGERS
     # AGENT_MODEL_TOKEN is managed via Databricks Secrets — not stamped here.
     if app_yml.exists():
         app_content = app_yml.read_text()
         app_changed = False
-        schema_spec = os.environ.get("PROJECT_UNITY_CATALOG_SCHEMA", "").strip()
 
         for env_name, value in [
             ("AGENT_MODEL_ENDPOINT", endpoint),
@@ -335,8 +336,25 @@ def main() -> int:
         if app_changed and not args.dry_run:
             app_yml.write_text(app_content)
 
+    # Always print current config summary
+    host = os.environ.get("DATABRICKS_HOST", "").strip()
+    genie_id_display = os.environ.get("PROJECT_GENIE_CHECKIN", "").strip()
+    print(f"\n{BOLD}Current config:{W}")
+    for label, val in [
+        ("DATABRICKS_HOST              ", host),
+        ("DATABRICKS_WAREHOUSE_ID      ", wh_id),
+        ("PROJECT_UNITY_CATALOG_SCHEMA ", schema_spec),
+        ("PROJECT_GENIE_CHECKIN        ", genie_id_display),
+        ("PROJECT_KA_PASSENGERS        ", ka_endpoint),
+        ("AGENT_MODEL_ENDPOINT         ", endpoint),
+        ("DBX_APP_NAME                 ", app_name),
+    ]:
+        marker = OK if val else WARN
+        display = val if val else f"{DIM}not set{W}"
+        print(f"  {marker}  {label}{C}{display}{W}")
+
     if not changes:
-        print(f"  {OK} {G}databricks.yml{W} and {G}app.yaml{W} already in sync with {C}.env.local{W}")
+        print(f"\n  {OK} {G}databricks.yml{W} and {G}app.yaml{W} already in sync with {C}.env.local{W}")
         return 0
 
     print(f"\n{BOLD}Syncing from {C}.env.local{W}{BOLD}:{W}\n")
