@@ -2,7 +2,7 @@
 
 from langchain_core.tools import tool
 
-from data.sql_utils import get_schema_qualified
+from data.py.sql_utils import get_schema_qualified
 from tools.sql_executor import execute_statement, get_warehouse
 
 

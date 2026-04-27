@@ -4,7 +4,7 @@ from pathlib import Path
 
 from langchain_core.tools import tool
 
-from data.sql_utils import substitute_schema
+from data.py.sql_utils import substitute_schema
 from tools.sql_executor import _escape_sql_string, execute_query, format_query_result, get_warehouse
 
 _FUNC_DIR = Path(__file__).resolve().parents[1] / "data" / "func"

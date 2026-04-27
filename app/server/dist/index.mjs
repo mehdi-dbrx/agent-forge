@@ -30834,12 +30834,7 @@ const ALLOWED_TABLES = [
 	"border_officers",
 	"border_terminals"
 ];
-const EMPTY_TABLES = new Set([
-	"checkin_metrics",
-	"checkin_agents",
-	"border_officers",
-	"border_terminals"
-]);
+const EMPTY_TABLES = /* @__PURE__ */ new Set();
 const tablesRouter = (0, import_express$1.Router)();
 tablesRouter.use(authMiddleware);
 /**

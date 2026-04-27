@@ -39,9 +39,13 @@ async def start_frontend():
 
 from tools.sql_executor import execute_query, get_warehouse  # noqa: E402
 
-@app.get("/tables/flights")
-def get_flights():
-    """Return flights table data from UC."""
+_ALLOWED_TABLES = {"flights", "checkin_metrics", "checkin_agents", "border_officers", "border_terminals"}
+
+@app.get("/tables/{table_name}")
+def get_table(table_name: str):
+    """Return table data from UC."""
+    if table_name not in _ALLOWED_TABLES:
+        raise HTTPException(status_code=400, detail=f"Table not allowed: {table_name}")
     schema_spec = os.environ.get("PROJECT_UNITY_CATALOG_SCHEMA", "").strip()
     if not schema_spec or "." not in schema_spec:
         raise HTTPException(
@@ -50,9 +54,9 @@ def get_flights():
         )
     catalog, schema = schema_spec.split(".", 1)
     full_table = (
-        f"{catalog}.`{schema}`.flights"
+        f"{catalog}.`{schema}`.{table_name}"
         if "-" in schema or " " in schema
-        else f"{catalog}.{schema}.flights"
+        else f"{catalog}.{schema}.{table_name}"
     )
     try:
         w_client, wh_id = get_warehouse()
@@ -63,7 +67,10 @@ def get_flights():
 
 
 
-setup_mlflow_git_based_version_tracking()
+try:
+    setup_mlflow_git_based_version_tracking()
+except Exception:
+    pass  # mlflow 3.9.0 bug in search_logged_models — non-critical
 
 
 def main():

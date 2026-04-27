@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from pathlib import Path
@@ -28,10 +29,11 @@ from tools.update_flight_risk import update_flight_risk
 # New same-domain tools: append to tools in init_agent and implement under tools/<name>/
 mlflow.langchain.autolog()
 sp_workspace_client = WorkspaceClient()
+_log = logging.getLogger(__name__)
 
 
-
-def init_mcp_client(workspace_client: WorkspaceClient) -> DatabricksMultiServerMCPClient:
+def _build_mcp_servers(workspace_client: WorkspaceClient) -> list[DatabricksMCPServer]:
+    """Build list of MCP server configs (does not connect yet)."""
     host_name = get_databricks_host_from_env()
     servers = []
     genie_checkin_id = os.environ.get("PROJECT_GENIE_CHECKIN", "").strip()
@@ -58,7 +60,25 @@ def init_mcp_client(workspace_client: WorkspaceClient) -> DatabricksMultiServerM
                 ),
             )
 
-    return DatabricksMultiServerMCPClient(servers)
+    return servers
+
+
+async def _get_mcp_tools_safe(workspace_client: WorkspaceClient) -> list:
+    """Connect to each MCP server individually; skip unavailable ones."""
+    servers = _build_mcp_servers(workspace_client)
+    all_tools = []
+    # _mcp_clients kept alive so tool callbacks remain valid
+    _get_mcp_tools_safe._clients = []
+    for server in servers:
+        try:
+            client = DatabricksMultiServerMCPClient([server])
+            tools = await client.get_tools()
+            all_tools.extend(tools)
+            _get_mcp_tools_safe._clients.append(client)
+            _log.info("MCP server '%s' connected — %d tools", server.name, len(tools))
+        except Exception as e:
+            _log.warning("MCP server '%s' unavailable — skipping: %s", server.name, e)
+    return all_tools
 
 
 async def init_agent(workspace_client: Optional[WorkspaceClient] = None):
@@ -69,8 +89,7 @@ async def init_agent(workspace_client: Optional[WorkspaceClient] = None):
     only — LangGraph's "messages" mode forces the LLM into streaming regardless
     of the ChatDatabricks.streaming attribute.
     """
-    mcp_client = init_mcp_client(workspace_client or sp_workspace_client)
-    mcp_tools = await mcp_client.get_tools()
+    mcp_tools = await _get_mcp_tools_safe(workspace_client or sp_workspace_client)
     wrapped_tools = [wrap_for_genie_capture(t) for t in mcp_tools]
     tools = list(wrapped_tools) + [
         query_flights_at_risk,
