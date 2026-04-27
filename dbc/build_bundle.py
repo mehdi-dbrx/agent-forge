@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Vocareum Bundle Creator for Agent Forge.
+Vocareum Bundle Creator for Agent Airops.
 
-Reads the Agent Forge repo, optionally builds the React frontend,
+Reads the Agent Airops repo, optionally builds the React frontend,
 and generates a Vocareum courseware folder:
 
     dbc/output/courseware/
     ├── config.json
-    └── agent-forge-setup.zip
-        ├── agent_forge_setup.py       (notebook — one cell per step)
+    └── agent_setup.zip
+        ├── agent_setup.py       (notebook — one cell per step)
         ├── agent/                     (Python source, plain files)
         ├── tools/
         ├── data/
@@ -42,11 +42,11 @@ OUTPUT_DEFAULT = ROOT / "dbc" / "output" / "courseware"
 # ---------------------------------------------------------------------------
 # Constants used inside the generated notebook
 # ---------------------------------------------------------------------------
-CATALOG = "dbacademy"
+CATALOG = "amadeus"
 SCHEMA = "airops"
-VS_ENDPOINT = "agent-forge-vs"
+VS_ENDPOINT = "agent-airops-vs"
 VS_EMBEDDING_MODEL = "databricks-bge-large-en"
-APP_NAME = "agent-forge"
+APP_NAME = "agent-airops"
 
 # ANSI helpers (build script output only)
 G, Y, R, C, W = "\033[32m", "\033[33m", "\033[31m", "\033[36m", "\033[0m"
@@ -136,9 +136,9 @@ def _cell_header() -> str:
     return textwrap.dedent('''\
         # Databricks notebook source
         # MAGIC %md
-        # MAGIC # Agent Forge - Workspace Setup
+        # MAGIC # Agent Airops - Workspace Setup
         # MAGIC
-        # MAGIC This notebook provisions the complete Agent Forge environment:
+        # MAGIC This notebook provisions the complete Agent Airops environment:
         # MAGIC 1. Schema & grants
         # MAGIC 2. Tables & seed data
         # MAGIC 3. Stored procedures & functions
@@ -169,7 +169,7 @@ def _cell_pip_and_constants() -> str:
         VS_ENDPOINT = "{VS_ENDPOINT}"
         VS_EMBEDDING_MODEL = "{VS_EMBEDDING_MODEL}"
         APP_NAME = "{APP_NAME}"
-        WORKSPACE_PATH = "/Workspace/Shared/agent-forge"
+        WORKSPACE_PATH = "/Workspace/Shared/agent-airops"
 
         import json, os, time
         import requests as _requests
@@ -374,7 +374,7 @@ def _cell_upload_code() -> str:
 def _cell_mlflow_experiment() -> str:
     return textwrap.dedent('''\
         # Cell 5: Create MLflow Experiment
-        EXPERIMENT_NAME = "/Shared/agent-forge-experiment"
+        EXPERIMENT_NAME = "/Shared/agent-airops-experiment"
         try:
             resp = api("POST", "/api/2.0/mlflow/experiments/create", json={
                 "name": EXPERIMENT_NAME,
@@ -410,8 +410,8 @@ def _cell_genie_space() -> str:
         GENIE_SPACE_ID = None
         try:
             genie_resp = api("POST", "/api/2.0/genie/spaces", json={{
-                "title": "Agent Forge - Flight Check-in",
-                "description": "Flight operations data for the Agent Forge AI assistant",
+                "title": "Agent Airops - Flight Check-in",
+                "description": "Flight operations data for the Agent Airops AI assistant",
                 "warehouse_id": WAREHOUSE_ID,
                 "table_identifiers": [
                     f"{CATALOG}.{SCHEMA}.flights"
@@ -424,7 +424,7 @@ def _cell_genie_space() -> str:
                 try:
                     spaces = api("GET", "/api/2.0/genie/spaces")
                     for sp in spaces.get("spaces", []):
-                        if "Agent Forge" in sp.get("title", ""):
+                        if "Agent Airops" in sp.get("title", ""):
                             GENIE_SPACE_ID = sp.get("space_id") or sp.get("id", "")
                             break
                 except Exception:
@@ -717,7 +717,7 @@ def _cell_deploy_app() -> str:
             try:
                 api("POST", "/api/2.0/apps", json={{
                     "name": APP_NAME,
-                    "description": "Agent Forge - AI Ops Advisor for flight operations",
+                    "description": "Agent Airops - AI Ops Advisor for flight operations",
                 }})
                 ok("App creation initiated")
             except Exception as e:
@@ -923,7 +923,7 @@ def _cell_permissions_summary() -> str:
         # Summary
         print()
         print(f"{{_G}}{'=' * 60}{{_W}}")
-        print(f"  {{_B}}AGENT FORGE SETUP COMPLETE{{_W}}")
+        print(f"  {{_B}}AGENT SETUP COMPLETE{{_W}}")
         print(f"{{_G}}{'=' * 60}{{_W}}")
         print(f"  Catalog/Schema:  {{_C}}{CATALOG}.{SCHEMA}{{_W}}")
         print(f"  Warehouse:       {{_C}}{{WAREHOUSE_ID}}{{_W}}")
@@ -944,8 +944,8 @@ def _cell_permissions_summary() -> str:
 def generate_config_json() -> dict:
     return {
         "workspace_setup": {
-            "src": "agent-forge-setup.zip",
-            "entry": "agent_forge_setup",
+            "src": "agent_setup.zip",
+            "entry": "agent_setup",
             "serverless_job_cluster": True,
             "timeout_minutes": 30,
         },
@@ -973,7 +973,7 @@ def create_setup_zip(output_path: Path, notebook_content: str, has_frontend: boo
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zf:
         # The notebook itself
-        zf.writestr("agent_forge_setup.py", notebook_content)
+        zf.writestr("agent_setup.py", notebook_content)
 
         # All source files
         for rel_path in BUNDLE_FILES:
@@ -1007,13 +1007,13 @@ def create_setup_zip(output_path: Path, notebook_content: str, has_frontend: boo
 # ---------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="Build Vocareum courseware bundle for Agent Forge")
+    parser = argparse.ArgumentParser(description="Build Vocareum courseware bundle for Agent Airops")
     parser.add_argument("--output", type=Path, default=OUTPUT_DEFAULT, help="Output directory")
     parser.add_argument("--skip-frontend", action="store_true", help="Skip npm build of React frontend")
     args = parser.parse_args()
 
     output_dir: Path = args.output
-    print(f"\n{BOLD}Agent Forge — Vocareum Bundle Creator{W}")
+    print(f"\n{BOLD}Agent Airops — Vocareum Bundle Creator{W}")
     print(f"  Output: {C}{output_dir}{W}\n")
 
     # Clean output
@@ -1081,7 +1081,7 @@ def main():
     # 4. Package
     print(f"\n{BOLD}4. Packaging{W}")
 
-    setup_zip = output_dir / "agent-forge-setup.zip"
+    setup_zip = output_dir / "agent_setup.zip"
     create_setup_zip(setup_zip, notebook_content, has_frontend)
     print(f"  {G}[+]{W} {setup_zip.name} ({setup_zip.stat().st_size:,} bytes)")
 

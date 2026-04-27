@@ -19,6 +19,6 @@ env:
   - name: AGENT_MODEL_ENDPOINT
     value: "databricks-claude-sonnet-4-6"
   - name: PROJECT_UNITY_CATALOG_SCHEMA
-    value: "dbacademy.airops"
+    value: "amadeus.airops"
   - name: DATABRICKS_WAREHOUSE_ID
     value: "44d9f9e1e0624dfc"

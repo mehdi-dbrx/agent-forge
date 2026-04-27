@@ -1,7 +1,7 @@
 # Cell 5: Create MLflow Experiment
 import mlflow
 
-EXPERIMENT_NAME = "/Shared/agent-forge-experiment"
+EXPERIMENT_NAME = "/Shared/agent-airops-experiment"
 
 try:
     exp_id = mlflow.create_experiment(EXPERIMENT_NAME)

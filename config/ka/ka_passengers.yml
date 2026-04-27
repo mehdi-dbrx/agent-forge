@@ -1,5 +1,5 @@
 knowledge_assistant:
-  display_name: "agent-forge-passenger-rights"
+  display_name: "ka-agent-passengers-rights"
   description: "Answers questions about air passenger rights under EU Regulation EC 261/2004, covering compensation entitlements for flight delays, cancellations, denied boarding, and downgrading."
 
   instructions: |

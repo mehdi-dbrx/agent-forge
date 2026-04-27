@@ -24,7 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DEFAULT = ROOT / "dbc" / "output" / "courseware"
 
-CATALOG = os.environ.get("BUNDLE_CATALOG", "dbacademy")
+CATALOG = os.environ.get("BUNDLE_CATALOG", "amadeus")
 SCHEMA = os.environ.get("BUNDLE_SCHEMA", "airops")
 APP_NAME = os.environ.get("BUNDLE_APP_NAME", "agent-app")
 
@@ -390,7 +390,7 @@ def _cell_mlflow_experiment() -> str:
                 request_object_id=exp_id,
                 access_control_list=[
                     AccessControlRequest(
-                        group_name="users",
+                        group_name="account users",
                         permission_level=PermissionLevel.CAN_MANAGE,
                     )
                 ],
@@ -437,7 +437,7 @@ def _cell_genie_space() -> str:
             space = w.genie.create_space(
                 warehouse_id=WAREHOUSE_ID,
                 serialized_space=json.dumps(serialized),
-                title="Agent - Flight Check-in",
+                title="GENIE-AMADEUS-AIROPS",
                 description="Flight operations data for the Agent AI assistant",
             )
             GENIE_SPACE_ID = space.space_id
@@ -446,7 +446,7 @@ def _cell_genie_space() -> str:
             if "ALREADY_EXISTS" in str(e) or "already exists" in str(e).lower():
                 spaces = list(w.genie.list_spaces().spaces or [])
                 for sp in spaces:
-                    if "Agent" in (getattr(sp, "title", "") or ""):
+                    if "GENIE-AMADEUS-AIROPS" in (getattr(sp, "title", "") or ""):
                         GENIE_SPACE_ID = sp.space_id
                         break
                 ok(f"Genie space already exists: {{GENIE_SPACE_ID}}")
@@ -463,7 +463,7 @@ def _cell_genie_space() -> str:
                     headers={{"Authorization": f"Bearer {{token}}"}},
                     json={{
                         "access_control_list": [
-                            {{"group_name": "users", "permission_level": "CAN_RUN"}}
+                            {{"group_name": "account users", "permission_level": "CAN_RUN"}}
                         ]
                     }},
                 )
@@ -482,7 +482,7 @@ def _cell_knowledge_assistant() -> str:
             FilesSpec, KnowledgeAssistant, KnowledgeSource,
         )
 
-        KA_DISPLAY_NAME = "agent-passenger-rights"
+        KA_DISPLAY_NAME = "ka-agent-passengers-rights"
         VOLUME_PATH = f"/Volumes/{{CATALOG}}/{{SCHEMA}}/doc"
 
         # --- Create UC Volume for PDFs ---
@@ -534,30 +534,47 @@ def _cell_knowledge_assistant() -> str:
         if existing_ka:
             ka_name = existing_ka.name or f"knowledge-assistants/{{existing_ka.id}}"
             ok(f"KA already exists: {{ka_name}}")
+            # Check if already ACTIVE — skip wait loop entirely
+            _state = existing_ka.state
+            _s = _state.value if _state and hasattr(_state, "value") else str(_state or "")
+            if _s == "ACTIVE" and existing_ka.endpoint_name:
+                KA_ENDPOINT = existing_ka.endpoint_name
+                ok(f"KA already ACTIVE — endpoint: {{KA_ENDPOINT}}")
         else:
             info(f"Creating KA '{{KA_DISPLAY_NAME}}'...")
-            ka_resp = w.knowledge_assistants.create_knowledge_assistant(
-                knowledge_assistant=KnowledgeAssistant(
-                    display_name=ka_block["display_name"],
-                    description=ka_block["description"],
-                    instructions=instructions or None,
+            try:
+                ka_resp = w.knowledge_assistants.create_knowledge_assistant(
+                    knowledge_assistant=KnowledgeAssistant(
+                        display_name=ka_block["display_name"],
+                        description=ka_block["description"],
+                        instructions=instructions or None,
+                    )
                 )
-            )
-            ka_name = ka_resp.name or f"knowledge-assistants/{{ka_resp.id}}"
-            ok(f"KA created: {{ka_name}}")
+                ka_name = ka_resp.name or f"knowledge-assistants/{{ka_resp.id}}"
+                ok(f"KA created: {{ka_name}}")
 
-            # Add knowledge source
-            src = cfg["knowledge_sources"][0]
-            w.knowledge_assistants.create_knowledge_source(
-                parent=ka_name,
-                knowledge_source=KnowledgeSource(
-                    display_name=src["display_name"],
-                    description=src.get("description", ""),
-                    source_type="files",
-                    files=FilesSpec(path=VOLUME_PATH),
-                ),
-            )
-            ok("Knowledge source added")
+                # Add knowledge source
+                src = cfg["knowledge_sources"][0]
+                w.knowledge_assistants.create_knowledge_source(
+                    parent=ka_name,
+                    knowledge_source=KnowledgeSource(
+                        display_name=src["display_name"],
+                        description=src.get("description", ""),
+                        source_type="files",
+                        files=FilesSpec(path=VOLUME_PATH),
+                    ),
+                )
+                ok("Knowledge source added")
+            except Exception as _ka_err:
+                if "ALREADY_EXISTS" in str(_ka_err) or "already exists" in str(_ka_err).lower():
+                    ok("KA already exists (race condition)")
+                    # Re-fetch to get ka_name
+                    for ka in w.knowledge_assistants.list_knowledge_assistants():
+                        if (ka.display_name or "").lower() == KA_DISPLAY_NAME.lower():
+                            ka_name = ka.name or f"knowledge-assistants/{{ka.id}}"
+                            break
+                else:
+                    raise
 
         # --- Wait for KA to become ACTIVE ---
         wait_msgs = [
@@ -573,15 +590,17 @@ def _cell_knowledge_assistant() -> str:
             "Loading awesomeness... please stand by...",
         ]
 
-        print()
-        info("Waiting for KA to become ACTIVE...")
-        print(f"    {{_DIM}}This typically takes 10-20 minutes.{{_W}}")
-        print()
+        if not KA_ENDPOINT:
+            print()
+            info("Waiting for KA to become ACTIVE...")
+            print(f"    {{_DIM}}This typically takes 10-20 minutes.{{_W}}")
+            print()
 
         elapsed = 0
-        ka_ready = False
-        KA_ENDPOINT = ""
-        for attempt in range(60):
+        ka_ready = bool(KA_ENDPOINT)
+        if not KA_ENDPOINT:
+            KA_ENDPOINT = ""
+        for attempt in range(60 if not ka_ready else 0):
             try:
                 ka_detail = w.knowledge_assistants.get_knowledge_assistant(ka_name)
                 state = ka_detail.state
@@ -628,12 +647,12 @@ def _cell_knowledge_assistant() -> str:
                     request_object_id=_ep_id,
                     access_control_list=[
                         AccessControlRequest(
-                            group_name="users",
+                            group_name="account users",
                             permission_level=PermissionLevel.CAN_QUERY,
-                        )
+                        ),
                     ],
                 )
-                ok(f"Granted CAN_QUERY on {{KA_ENDPOINT}} to all users")
+                ok(f"Granted CAN_QUERY on {{KA_ENDPOINT}} to account users")
             except Exception as e:
                 warn(f"Could not set KA endpoint permissions: {{e}}")
 
@@ -679,7 +698,34 @@ def _cell_deploy_app() -> str:
 
         # --- Create app ---
         import random
-        from databricks.sdk.service.apps import App, AppDeployment
+        from databricks.sdk.service.apps import (
+            App, AppDeployment, AppResource,
+            AppResourceServingEndpoint,
+            AppResourceServingEndpointServingEndpointPermission,
+            AppResourceSqlWarehouse,
+            AppResourceSqlWarehouseSqlWarehousePermission,
+        )
+
+        # Build resource list so the app SP gets granted access
+        app_resources = [
+            AppResource(
+                name="sql-warehouse",
+                description="SQL warehouse for table queries",
+                sql_warehouse=AppResourceSqlWarehouse(
+                    id=WAREHOUSE_ID,
+                    permission=AppResourceSqlWarehouseSqlWarehousePermission.CAN_USE,
+                ),
+            ),
+        ]
+        if KA_ENDPOINT:
+            app_resources.append(AppResource(
+                name="ka-endpoint",
+                description="Knowledge Assistant serving endpoint",
+                serving_endpoint=AppResourceServingEndpoint(
+                    name=KA_ENDPOINT,
+                    permission=AppResourceServingEndpointServingEndpointPermission.CAN_QUERY,
+                ),
+            ))
 
         wait_msgs = [
             "Brewing coffee while the app spins up...",
@@ -717,7 +763,11 @@ def _cell_deploy_app() -> str:
             info("App not found -- creating it now...")
             try:
                 w.apps.create(
-                    app=App(name=APP_NAME, description="Agent - AI Ops Advisor for flight operations"),
+                    app=App(
+                        name=APP_NAME,
+                        description="Agent - AI Ops Advisor for flight operations",
+                        resources=app_resources,
+                    ),
                 )
                 ok("App creation initiated")
             except Exception as e:
@@ -918,6 +968,22 @@ def _cell_deploy_app() -> str:
             warn("Deployment not confirmed after 10 min")
             print(f"    Check manually: {{app_url}}")
 
+        # --- Grant CAN_USE on the app to all users ---
+        from databricks.sdk.service.apps import AppAccessControlRequest, AppPermissionLevel
+        try:
+            w.apps.update_permissions(
+                app_name=APP_NAME,
+                access_control_list=[
+                    AppAccessControlRequest(
+                        group_name="account users",
+                        permission_level=AppPermissionLevel.CAN_USE,
+                    ),
+                ],
+            )
+            ok("Granted CAN_USE on app to account users")
+        except Exception as e:
+            warn(f"Could not set app permissions: {{e}}")
+
         ok(f"APP_NAME = {{APP_NAME}}")
     ''')
 
@@ -934,7 +1000,7 @@ def _cell_permissions_summary() -> str:
                 request_object_id=WAREHOUSE_ID,
                 access_control_list=[
                     AccessControlRequest(
-                        group_name="users",
+                        group_name="account users",
                         permission_level=PermissionLevel.CAN_USE,
                     )
                 ],
@@ -1003,6 +1069,9 @@ def create_setup_zip(output_path: Path, notebook_content: str, has_frontend: boo
             for f in SERVER_DIR.rglob("*"):
                 if f.is_file():
                     zf.write(str(f), f"app/server/dist/{f.relative_to(SERVER_DIR)}")
+        thumbnail = ROOT / "assets" / "app-thumbnail.png"
+        if thumbnail.exists():
+            zf.write(str(thumbnail), "assets/app-thumbnail.png")
 
 
 # ---------------------------------------------------------------------------

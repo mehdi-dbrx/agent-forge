@@ -77,7 +77,7 @@ except Exception:
     print(f"[*] App not found -- creating it now...")
     try:
         create_resp = w.apps.create(
-            app=App(name=APP_NAME, description="Agent Forge - AI Ops Advisor for flight operations"),
+            app=App(name=APP_NAME, description="Agent Airops - AI Ops Advisor for flight operations"),
         )
         print(f"[+] App creation initiated")
     except Exception as e:
