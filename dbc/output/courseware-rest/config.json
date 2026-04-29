@@ -1,0 +1,20 @@
+{
+  "workspace_setup": {
+    "src": "agent-forge-setup.zip",
+    "entry": "agent_forge_setup",
+    "serverless_job_cluster": true,
+    "timeout_minutes": 30
+  },
+  "user_config": {
+    "warehouse": {
+      "name": "shared_wh"
+    }
+  },
+  "shared_vector_search_endpoints": [
+    {
+      "name": "agent-forge-vs",
+      "endpoint_type": "STANDARD"
+    }
+  ],
+  "enable_tokens": true
+}

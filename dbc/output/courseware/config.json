@@ -1,0 +1,14 @@
+{
+  "workspace_setup": {
+    "src": "agent_setup.zip",
+    "entry": "agent_setup",
+    "serverless_job_cluster": true,
+    "timeout_minutes": 30
+  },
+  "user_config": {
+    "warehouse": {
+      "name": "shared_wh"
+    }
+  },
+  "enable_tokens": true
+}

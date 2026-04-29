@@ -33,5 +33,5 @@ logs/*
 internal/fevm/session_cookies.json
 app/client/dist/
 
-# Vocareum bundle output
-dbc/output/
+# Vocareum bundle output (now tracked)
+# dbc/output/
