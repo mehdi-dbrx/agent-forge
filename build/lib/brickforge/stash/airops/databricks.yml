@@ -1,0 +1,20 @@
+bundle:
+  name: brickforge-airops
+
+resources:
+  apps:
+    agent_app:
+      name: "brickforge-airops"
+      description: "BrickForge Agent Application — Airport Operations"
+      source_code_path: ./
+
+      resources:
+        - name: 'sql_warehouse'
+          sql_warehouse:
+            id: '{DATABRICKS_WAREHOUSE_ID}'
+            permission: 'CAN_USE'
+
+targets:
+  default:
+    mode: production
+    default: true

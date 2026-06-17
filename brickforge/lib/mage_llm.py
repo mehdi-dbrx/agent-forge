@@ -19,16 +19,14 @@ _PREFERENCE = [
 ]
 
 
-def detect_fmapi_model(host: str = "", token: str | None = None) -> str | None:
+def detect_fmapi_model(host: str, token: str | None = None) -> str | None:
     """List serving endpoints and pick best available FMAPI model.
     Returns endpoint name or None if nothing found."""
     try:
-        if host and token:
-            w = WorkspaceClient(host=host, token=token)
-        elif host:
-            w = WorkspaceClient(host=host)
-        else:
-            w = WorkspaceClient()  # CLI profile fallback
+        kwargs = {"host": host}
+        if token:
+            kwargs["token"] = token
+        w = WorkspaceClient(**kwargs)
         endpoints = list(w.serving_endpoints.list())
     except Exception:
         return None

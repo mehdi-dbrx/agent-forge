@@ -1,0 +1,160 @@
+forge: "1.0"
+domain: airops
+display_name: "Airport Operations"
+description: "AI ops advisor for airport check-in operations -- monitors flight risk, check-in performance, staffing, border control, and e-gate availability."
+
+data:
+  tables:
+    - name: flights
+      ddl: data/init/create_flights.sql
+      seed: data/csv/flights.csv
+    - name: checkin_metrics
+      ddl: data/init/create_checkin_metrics.sql
+    - name: checkin_agents
+      ddl: data/init/create_checkin_agents.sql
+    - name: border_officers
+      ddl: data/init/create_border_officers.sql
+    - name: border_terminals
+      ddl: data/init/create_border_terminals.sql
+  functions:
+    - available_agents_for_redeployment.sql
+    - border_officer_staffing.sql
+    - border_officers_by_post.sql
+    - border_terminal_details.sql
+    - checkin_agent_staffing.sql
+    - checkin_agents_by_counter_status.sql
+    - checkin_metrics.sql
+    - checkin_performance_metrics.sql
+    - egate_availability.sql
+    - flights_at_risk.sql
+    - staffing_duties.sql
+  procedures:
+    - confirm_arrival_procedure.sql
+    - update_border_officer_procedure.sql
+    - update_checkin_agents_procedure.sql
+    - update_flight_risk.sql
+
+tools:
+  # Tools are auto-generated at runtime by tool_factory.py from UC functions/procedures.
+  # No individual .py files needed. Entries here define names + patterns for UI mapping.
+  - name: query_flights_at_risk
+    function: flights_at_risk
+    pattern: sql_read
+  - name: update_flight_risk
+    procedure: update_flight_risk
+    pattern: action
+  - name: query_checkin_metrics
+    function: checkin_metrics
+    pattern: sql_read
+  - name: query_checkin_performance_metrics
+    function: checkin_performance_metrics
+    pattern: sql_read
+  - name: query_checkin_agent_staffing
+    function: checkin_agent_staffing
+    pattern: sql_read
+  - name: query_checkin_agents_by_counter_status
+    function: checkin_agents_by_counter_status
+    pattern: sql_read
+  - name: query_available_agents_for_redeployment
+    function: available_agents_for_redeployment
+    pattern: sql_read
+  - name: query_border_officer_staffing
+    function: border_officer_staffing
+    pattern: sql_read
+  - name: query_border_officers_by_post
+    function: border_officers_by_post
+    pattern: sql_read
+  - name: query_border_terminal_details
+    function: border_terminal_details
+    pattern: sql_read
+  - name: query_egate_availability
+    function: egate_availability
+    pattern: sql_read
+  - name: query_staffing_duties
+    function: staffing_duties
+    pattern: sql_read
+  - name: update_checkin_agent
+    procedure: update_checkin_agents_procedure
+    pattern: action
+  - name: update_border_officer
+    procedure: update_border_officer_procedure
+    pattern: action
+  - name: confirm_arrival
+    procedure: confirm_arrival_procedure
+    pattern: action
+  - name: back_to_normal
+    pattern: domain
+  - name: create_checkin_incident
+    pattern: domain
+  - name: create_border_incident
+    pattern: domain
+  - name: query_passengers_ka
+    pattern: ka
+
+prompt:
+  system: conf/prompt/main.prompt
+  knowledge_base: conf/prompt/knowledge.base
+  starters: conf/prompt/user.prompt
+
+knowledge_assistants:
+  - config: conf/ka/ka_passengers.yml
+    env_key: PROJECT_KA_PASSENGERS
+
+vector_search:
+  - config: conf/vector-search/vs_passengers.yml
+
+genie:
+  default_name: "Checkin Metrics"
+  description: "Natural language exploration of check-in and flight performance data in Unity Catalog."
+
+ui:
+  dashboard:
+    tables:
+      - name: checkin_metrics
+        color: "bg-rose-100 dark:bg-rose-900/30"
+      - name: flights
+        color: "bg-sky-100 dark:bg-sky-900/30"
+      - name: checkin_agents
+        color: "bg-emerald-100 dark:bg-emerald-900/30"
+      - name: border_officers
+        color: "bg-violet-100 dark:bg-violet-900/30"
+      - name: border_terminals
+        color: "bg-indigo-100 dark:bg-indigo-900/30"
+  response_blocks:
+    - checkin-flight-badge
+    - checkin-performance-issue-card
+    - checkin-update-card
+    - checkin-available-agents
+    - checkin-consequences-card
+    - checkin-root-cause-card
+    - checkin-recommended-action-card
+    - checkin-root-cause-actions-card
+    - checkin-impact-card
+    - follow-up-actions
+    - staffing-duty-card
+    - turnaround-started-card
+    - live-turnaround-checklist
+  tool_messages:
+    update_flight_risk: "Updating flights at risk"
+    update_checkin_agent: "Updating check-in agent"
+    update_border_officer: "Updating border officer"
+    confirm_arrival: "Confirming arrival"
+    back_to_normal: "Checking status"
+    query_checkin_agent_staffing: "Checking agent staffing"
+    query_available_agents_for_redeployment: "Finding available agents"
+    query_flights_at_risk: "Checking flights at risk"
+    query_staffing_duties: "Loading staffing duties"
+    query_checkin_performance_metrics: "Loading performance metrics"
+    create_checkin_incident: "Creating check-in incident"
+    create_border_incident: "Creating border incident"
+  starters:
+    - "Which flights are at risk in terminal 2?"
+    - "Show check-in performance for zone B"
+    - "Mark BA312 as AT_RISK"
+
+eval:
+  dataset: eval/data/ec261_eval_dataset.jsonl
+  runner: eval/eval_dataset.py
+
+deploy:
+  schema_example: "amadeus.airops"

@@ -1,0 +1,143 @@
+INTRO
+
+You want to build an AI agent on Databricks. You need tables, functions, a model endpoint, Genie, maybe a Knowledge Assistant, a chat UI, deploy it as an app, wire up the permissions. That's a dozen services, hundreds of lines of config, and a week of your time.
+
+Or you do this:
+
+pip install brickforge
+brickforge
+
+BrickForge is a single pip package that gives you a visual setup app. You describe your domain, it generates everything. Data, functions, prompts. And deploys a production agent to Databricks Apps. No notebooks. No YAML to write. No repo to clone to get started.
+
+Let me show you. We'll build one from scratch, but if you're in a hurry, BrickForge ships with pre-built templates. Pick one, connect your workspace, deploy. Under two minutes.
+
+WHY THIS EXISTS
+
+Building a Databricks agent today means stitching together a dozen pieces manually. Unity Catalog schemas, SQL functions, stored procedures, model endpoints, Genie spaces, Knowledge Assistants, the agent code itself, the chat UI, the deploy pipeline, the grants. Each one is a separate doc page, a separate API, a separate config format.
+
+BrickForge wraps all of that into 18 setup blocks. Each block follows the same pattern: choose an approach, configure, execute, done. The setup app walks you through them top to bottom.
+
+Think of it as a directed graph of your agent's infrastructure. Green means configured. Gray means not yet. You work through them in order, or jump to any block.
+
+And here's the key: everything you build is portable. Your entire agent, config, data schemas, functions, prompts, knowledge base, saves as a single forge zip bundle. Export it, share it with a colleague, load it on a completely different workspace, deploy it there. Build once on your dev workspace, deploy to production. Hand it to a customer, they load it and run. No vendor lock-in, no hidden state. You own the code, the config, everything.
+
+STEP 1: CONNECT
+
+First thing: create a project. Click the project dropdown, new project, name it. Each project is a separate agent with its own config, data, and tools. You can have multiple projects on the same workspace. But right now, let's build our first one.
+
+First block: connect to your Databricks workspace. Three options. Pick a saved workspace, authenticate via bridge-forge, or paste a host and token manually. Bridge-forge opens your browser, authenticates via OAuth, creates a token, and saves it to your OS keychain. One click. Your credentials never touch disk.
+
+Then pick a SQL warehouse. BrickForge lists the running ones. Click to select.
+
+And set your Unity Catalog schema. Pick an existing catalog or type one. BrickForge creates the catalog and schema if they don't exist.
+
+Three blocks done. Your workspace is connected.
+
+STEP 2: GENERATE DATA + FUNCTIONS
+
+This is where it gets interesting. You have four options for data: generate synthetic data with AI, connect existing tables, upload CSVs, or use demo data.
+
+Let's generate. Click generate synthetic data. You land in the data wizard.
+
+Describe your domain in plain English. E-commerce platform with customers, products, orders, and reviews. Hit generate.
+
+The model designs your table schemas, generates synthetic rows, and saves them as CSVs. Review the schemas, adjust if needed, then provision to Unity Catalog.
+
+Tables created. Now functions. Same wizard. The model generates SQL functions and stored procedures from your table schemas.
+
+Watch the terminal here. The SQL generation has a self-healing loop. If a generated function fails when executed against Databricks, wrong column name, syntax error, type mismatch, BrickForge captures the exact error, feeds it back to the model, and the model fixes it. It'll retry up to three times. Most failures resolve on the first retry.
+
+All your data infrastructure. Tables, functions, procedures. Generated from a text description. We'll go deeper on the SQL generation pipeline in a future video. There's a 5-layer defense system under the hood.
+
+STEP 3: WIRE THE AGENT
+
+Pick your Foundation Model. Auto-detect scans your workspace for every available serving endpoint. Claude, Llama, Mixtral, DBRX. Anything served via Foundation Model APIs works. BrickForge is model-agnostic. You're not locked into one provider. Click to select.
+
+Next: the agent prompt. BrickForge generates a system prompt tailored to your domain and tables. Or edit it manually.
+
+Now the interesting wiring. Genie gives your agent natural-language SQL. It asks Genie questions, Genie writes the SQL, queries your tables, returns results. No prompt engineering for SQL.
+
+Agent Bricks. These are toggleable AI building blocks. Knowledge Assistant for RAG over documents, Information Extraction, Document Parsing, Text Classification. Each is a toggle. Enable KA, pick an existing endpoint or provision one from PDFs.
+
+Then external connections. MCP servers let you plug in any MCP-compatible tool server. Weather, Slack, custom internal services. REST APIs connect via UC-governed connections or direct HTTP.
+
+And A2A. Google's Agent-to-Agent protocol. Your agent can delegate tasks to other agents over HTTP. Add a remote agent URL, BrickForge discovers its capabilities via the Agent Card, and it becomes a callable tool. Multi-agent orchestration out of the box.
+
+Features toggle: memory, per-user long-term memory via Lakebase. Charts, inline in chat. Voice input. Dashboard, live data tables on the home page. All toggleable, all optional.
+
+STEP 4: DEPLOY
+
+Set your app name. Hit deploy.
+
+BrickForge bundles your agent code, the chat UI, your config, uploads to the workspace, creates the Databricks App, deploys, waits for it to start, then runs all the UC grants automatically. And on redeploy, the virtual environment is reused. No cold start, no reinstalling 160 packages. Just your code changes, pushed and live.
+
+You get a URL. Click it.
+
+That's your agent. Chat UI with your branding, your tools, your data. Ask it a question.
+
+The agent calls Genie for SQL, uses your stored procedures for mutations, renders charts inline, and the dashboard shows live table data that updates when the agent modifies records.
+
+STEP 5: PORTABLE
+
+Your agent is live. But here's what makes this different: everything you just built is portable.
+
+Click the export icon. That downloads a forge zip bundle. Your config, prompts, generated SQL, functions, procedures. The entire agent in one file.
+
+Now watch. Different workspace. Open BrickForge, click import, drop the bundle in. The project loads with all its config intact. Hit deploy. Same agent, new workspace. That's the workflow: build on dev, export, deploy to production. Hand it to a customer, they load it and run.
+
+No hidden state. You own everything. And later, we'll push this whole agent to GitHub. But let's keep going.
+
+STEP 6: ITERATE
+
+Now iterate. Change the prompt, add a new tool, toggle a feature, redeploy. Same flow, same blocks.
+
+Multiple projects per workspace. Each one is a separate agent with its own config, data, and tools. Switch between them with one click.
+
+And if you work across multiple workspaces, BrickForge remembers them. Every workspace you connect to is saved. Click the workspace block, pick from saved workspaces. One click to switch.
+
+And when you're done, the cleanup block discovers all resources BrickForge created and lets you tear them down cleanly.
+
+STEP 7: OWN THE CODE
+
+This is important. BrickForge is not a black box. Everything it generates is real code you can take over.
+
+Click Source Control, connect a GitHub repo. BrickForge pushes the full agent source: the LangGraph agent, the tools, the SQL functions, the stored procedures, the chat UI, the system prompt, the config. All of it. Real Python. Real TypeScript. Real SQL.
+
+Now you're in full control. Clone the repo, run start local. It checks your Python version, checks for Node.js, handles authentication, finds your Databricks CLI profile or walks you through creating one, installs deps, and starts the server. One command, zero config.
+
+Open it in your editor. Tweak the agent logic, customize the chat UI, add your own tools, refactor the prompts. Use Claude Code, Cursor, any AI IDE. Vibe it. Make it yours.
+
+Push your changes. Set up CI/CD. Deploy from your pipeline instead of the setup panel. BrickForge got you from zero to working agent. Now you graduate to your own codebase and workflow.
+
+That's the philosophy: BrickForge is the scaffolding, not the cage. Use it to build fast, then own what you built.
+
+WHAT'S UNDER THE HOOD
+
+Two services in one Databricks App:
+
+MLflow AgentServer on port 8000. LangGraph agent with LangChain tools, Foundation Model endpoint.
+Chat UI on port 3000. React frontend, Express backend, Vercel AI SDK for streaming.
+
+All config lives in a single config.json. No env vars in app.yaml. The agent reads config at boot, flattens to env vars, and every tool discovers itself.
+
+Tools are auto-discovered from Unity Catalog. Drop a Python file with @tool functions into the tools folder. It's automatically loaded. No registration, no wiring.
+
+CLOSING
+
+pip install brickforge
+brickforge
+
+That's it. From zero to a deployed AI agent on Databricks. Describe your domain, generate everything, deploy with one click.
+
+BrickForge is open source, on PyPI, and in beta. Links in the description.
+
+NEXT VIDEOS
+
+There's also a built-in evaluation pipeline. MLflow experiment, custom LLM judge, baseline vs with-guideline scoring. You can see how your prompt changes affect quality before you redeploy.
+
+In the next videos, we'll go deeper:
+Agent Evaluation. Run the eval pipeline, tune your prompts with data, compare runs side-by-side.
+Knowledge Assistants. Upload documents, build a RAG pipeline, wire it into your agent with citations.
+Custom Tools. Write your own tool functions, add external APIs, connect MCP servers.
+Per-User Memory. Enable Lakebase-backed long-term memory so the agent remembers across sessions.
+Vibe Coding. Push to GitHub, clone the repo, customize agent logic and chat UI with AI-assisted coding.

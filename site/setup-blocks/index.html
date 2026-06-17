@@ -1,0 +1,1736 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Build and deploy Databricks AI agents in minutes">
+      
+      
+      
+        <link rel="canonical" href="https://brickforge.readthedocs.io/setup-blocks/">
+      
+      
+        <link rel="prev" href="../getting-started/">
+      
+      
+        <link rel="next" href="../data-generation/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/logo.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Setup Blocks - BrickForge</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#setup-blocks" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="BrickForge" class="md-header__button md-logo" aria-label="BrickForge" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            BrickForge
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Setup Blocks
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/mehdi-dbx/brickforge" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mehdi-dbx/brickforge
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="BrickForge" class="md-nav__button md-logo" aria-label="BrickForge" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    BrickForge
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/mehdi-dbx/brickforge" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    mehdi-dbx/brickforge
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Blocks
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Blocks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#block-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Block reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Block reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#host-workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        host - Workspace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#warehouse-sql-warehouse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        warehouse - SQL Warehouse
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema-unity-catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        schema - Unity Catalog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tables-data-tables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        tables - Data Tables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#functions-uc-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        functions - UC Functions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#model-model-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        model - Model Endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prompt-agent-prompt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prompt - Agent Prompt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#genie-genie-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        genie - Genie Space
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bricks-agent-bricks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bricks - Agent Bricks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vs-vector-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vs - Vector Search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcp-mcp-external" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcp - MCP (External)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-api-external" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        api - API (External)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a2a-a2a-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        a2a - A2A (Agents)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        features - Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lakebase-lakebase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        lakebase - Lakebase
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mlflow-mlflow-experiment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mlflow - MLflow Experiment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deploy-deploy-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        deploy - Deploy App
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#git-source-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        git - Source Control
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#status-and-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status and testing
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-generation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Generation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agent-tools/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Tools
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../prompt-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prompt System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deploy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Projects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Evaluation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../github-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_13">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/tools-table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools Table
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/config-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/known-issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Known Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#block-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Block reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Block reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#host-workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        host - Workspace
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#warehouse-sql-warehouse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        warehouse - SQL Warehouse
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#schema-unity-catalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        schema - Unity Catalog
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tables-data-tables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        tables - Data Tables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#functions-uc-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        functions - UC Functions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#model-model-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        model - Model Endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prompt-agent-prompt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prompt - Agent Prompt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#genie-genie-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        genie - Genie Space
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bricks-agent-bricks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        bricks - Agent Bricks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vs-vector-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        vs - Vector Search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcp-mcp-external" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcp - MCP (External)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#api-api-external" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        api - API (External)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a2a-a2a-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        a2a - A2A (Agents)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        features - Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lakebase-lakebase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        lakebase - Lakebase
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mlflow-mlflow-experiment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mlflow - MLflow Experiment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deploy-deploy-app" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        deploy - Deploy App
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#git-source-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        git - Source Control
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#status-and-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status and testing
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="setup-blocks">Setup Blocks<a class="headerlink" href="#setup-blocks" title="Permanent link">&para;</a></h1>
+<p>The Setup App presents 18 blocks in a directed graph. Each block follows the same lifecycle:</p>
+<p><strong>choose</strong> -&gt; <strong>configure</strong> -&gt; <strong>execute</strong> -&gt; <strong>done</strong></p>
+<p>Green means configured. Gray means pending. Work through them top to bottom or jump to any block.</p>
+<h2 id="block-reference">Block reference<a class="headerlink" href="#block-reference" title="Permanent link">&para;</a></h2>
+<h3 id="host-workspace">host - Workspace<a class="headerlink" href="#host-workspace" title="Permanent link">&para;</a></h3>
+<p>Connect to your Databricks workspace.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bridge-Forge</td>
+<td>OAuth PKCE flow via shell script. Creates PAT (7-day TTL), saves host + token to config. Handles IP whitelist.</td>
+</tr>
+<tr>
+<td>Manual</td>
+<td>Paste workspace URL + PAT. Saved directly to config.</td>
+</tr>
+</tbody>
+</table>
+<p>Saved workspaces are remembered. Switch between them from a dropdown.</p>
+<hr />
+<h3 id="warehouse-sql-warehouse">warehouse - SQL Warehouse<a class="headerlink" href="#warehouse-sql-warehouse" title="Permanent link">&para;</a></h3>
+<p>Pick a running SQL warehouse for all SQL operations.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Select existing</td>
+<td>Lists running warehouses via SDK. Click to select. Warehouse ID saved to config.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Only warehouses in RUNNING state appear. BrickForge does not start or create warehouses.</p>
+</div>
+<hr />
+<h3 id="schema-unity-catalog">schema - Unity Catalog<a class="headerlink" href="#schema-unity-catalog" title="Permanent link">&para;</a></h3>
+<p>Set the target <code>catalog.schema</code> for all tables, functions, and procedures.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Select existing</td>
+<td>Browse available catalogs and schemas.</td>
+</tr>
+<tr>
+<td>Create new</td>
+<td>Enter <code>catalog.schema</code>. BrickForge creates both if they don't exist via <code>CREATE CATALOG IF NOT EXISTS</code> / <code>CREATE SCHEMA IF NOT EXISTS</code>.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="tables-data-tables">tables - Data Tables<a class="headerlink" href="#tables-data-tables" title="Permanent link">&para;</a></h3>
+<p>Provision Delta tables in Unity Catalog.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Generate Synthetic Data</td>
+<td>Opens the <a href="../data-generation/">data generation wizard</a>. AI creates table schemas, generates CSV data, provisions to UC.</td>
+</tr>
+<tr>
+<td>Use Demo Data</td>
+<td>Provisions pre-built seed data from <code>brickforge/data/demo/csv/</code>.</td>
+</tr>
+<tr>
+<td>Upload CSVs</td>
+<td>Upload your own CSV files. BrickForge creates Delta tables from them.</td>
+</tr>
+<tr>
+<td>Connect Existing</td>
+<td>Point to tables already in Unity Catalog.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="functions-uc-functions">functions - UC Functions<a class="headerlink" href="#functions-uc-functions" title="Permanent link">&para;</a></h3>
+<p>Create SQL functions and stored procedures in Unity Catalog.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Generate with AI</td>
+<td>Opens the routines wizard. AI generates UC functions and stored procedures from your table context. Includes <a href="../data-generation/#the-5-layer-sql-defense-system">5-layer self-healing</a>.</td>
+</tr>
+<tr>
+<td>Use Demo Functions</td>
+<td>Provisions pre-built SQL functions from <code>brickforge/data/demo/func/</code> and procedures from <code>brickforge/data/demo/proc/</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Function names are auto-registered in config under <code>tools.functions[]</code>. The agent discovers them at runtime.</p>
+<hr />
+<h3 id="model-model-endpoint">model - Model Endpoint<a class="headerlink" href="#model-model-endpoint" title="Permanent link">&para;</a></h3>
+<p>Configure the Foundation Model API endpoint the agent uses for reasoning.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Same workspace</td>
+<td>Auto-detect scans your workspace for available serving endpoints (Claude, Llama, Mixtral, etc.). Click to select.</td>
+</tr>
+<tr>
+<td>Cross-workspace</td>
+<td>Enter a serving endpoint URL + token from a different workspace.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="prompt-agent-prompt">prompt - Agent Prompt<a class="headerlink" href="#prompt-agent-prompt" title="Permanent link">&para;</a></h3>
+<p>Edit the system prompt and knowledge base that define agent behavior.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Generate from domain</td>
+<td>AI generates a system prompt and knowledge base tailored to your tables and domain.</td>
+</tr>
+<tr>
+<td>Edit manually</td>
+<td>Open the prompt editor. Edit <code>main.prompt</code> and <code>knowledge.base</code> directly.</td>
+</tr>
+</tbody>
+</table>
+<p>Prompts are project-scoped - stored in <code>projects/{name}/prompt/</code>.</p>
+<hr />
+<h3 id="genie-genie-space">genie - Genie Space<a class="headerlink" href="#genie-genie-space" title="Permanent link">&para;</a></h3>
+<p>Configure a Genie space for natural-language SQL. The agent asks Genie questions, Genie writes SQL, queries your tables, returns results.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Select existing</td>
+<td>Lists Genie spaces in your workspace. Click to select.</td>
+</tr>
+<tr>
+<td>Create new</td>
+<td>BrickForge creates a Genie space with your tables, writes the Genie room config.</td>
+</tr>
+</tbody>
+</table>
+<p>Multiple Genie spaces supported. IDs stored in <code>tools.genie_spaces[]</code>.</p>
+<hr />
+<h3 id="bricks-agent-bricks">bricks - Agent Bricks<a class="headerlink" href="#bricks-agent-bricks" title="Permanent link">&para;</a></h3>
+<p>Toggleable AI building blocks that extend the agent.</p>
+<table>
+<thead>
+<tr>
+<th>Brick</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>KA (Knowledge Assistant)</td>
+<td>RAG over documents via a Databricks Knowledge Assistant endpoint.</td>
+</tr>
+<tr>
+<td>Info Extraction</td>
+<td>Structured data extraction from unstructured text.</td>
+</tr>
+<tr>
+<td>Doc Parsing</td>
+<td>Document parsing and analysis.</td>
+</tr>
+<tr>
+<td>Text Classification</td>
+<td>Text categorization and labeling.</td>
+</tr>
+</tbody>
+</table>
+<p>Each brick is a toggle. Enable/disable in config under <code>bricks.{BRICK}.enabled</code>.</p>
+<hr />
+<h3 id="vs-vector-search">vs - Vector Search<a class="headerlink" href="#vs-vector-search" title="Permanent link">&para;</a></h3>
+<p>Configure a Databricks Vector Search index for semantic retrieval.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Configure</td>
+<td>Set vector search index name and endpoint. Saved to <code>tools.vector_search</code>.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="mcp-mcp-external">mcp - MCP (External)<a class="headerlink" href="#mcp-mcp-external" title="Permanent link">&para;</a></h3>
+<p>Add external MCP (Model Context Protocol) servers as agent tools.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Add server</td>
+<td>Enter MCP server URL + optional auth header. Each server becomes a callable tool.</td>
+</tr>
+</tbody>
+</table>
+<p>Multiple servers supported. Stored in <code>tools.mcp.{SLUG}</code> with <code>enabled</code> toggle.</p>
+<hr />
+<h3 id="api-api-external">api - API (External)<a class="headerlink" href="#api-api-external" title="Permanent link">&para;</a></h3>
+<p>Add REST API connections as agent tools.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Add API</td>
+<td>Configure: UC connection name, URL, method, path, description, parameters, auth header.</td>
+</tr>
+</tbody>
+</table>
+<p>Supports UC Connections (managed credentials) or direct HTTP. Stored in <code>tools.api.{SLUG}</code>.</p>
+<hr />
+<h3 id="a2a-a2a-agents">a2a - A2A (Agents)<a class="headerlink" href="#a2a-a2a-agents" title="Permanent link">&para;</a></h3>
+<p>Add agent-to-agent connections via Google's A2A protocol.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Add agent</td>
+<td>Enter A2A agent URL + optional auth header. The remote agent becomes a callable tool.</td>
+</tr>
+</tbody>
+</table>
+<p>Stored in <code>tools.a2a.{SLUG}</code>.</p>
+<hr />
+<h3 id="features-features">features - Features<a class="headerlink" href="#features-features" title="Permanent link">&para;</a></h3>
+<p>Toggle optional agent capabilities.</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MEMORY</td>
+<td>Per-user long-term memory via Lakebase (AsyncDatabricksStore).</td>
+</tr>
+<tr>
+<td>CHART</td>
+<td>Inline chart generation in chat responses.</td>
+</tr>
+<tr>
+<td>VOICE</td>
+<td>Voice input support.</td>
+</tr>
+<tr>
+<td>VISION</td>
+<td>Image/vision input support.</td>
+</tr>
+<tr>
+<td>PERSONAS</td>
+<td>Multiple agent personas.</td>
+</tr>
+</tbody>
+</table>
+<p>Each feature stored in <code>features.{NAME}.enabled</code>.</p>
+<hr />
+<h3 id="lakebase-lakebase">lakebase - Lakebase<a class="headerlink" href="#lakebase-lakebase" title="Permanent link">&para;</a></h3>
+<p>Create or configure a Lakebase (Postgres-compatible) instance.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Create new</td>
+<td>BrickForge creates a Lakebase instance via SDK. Instance name saved to config.</td>
+</tr>
+<tr>
+<td>Use existing</td>
+<td>Enter an existing instance name.</td>
+</tr>
+</tbody>
+</table>
+<p>Used by the MEMORY feature for per-user agent memory.</p>
+<hr />
+<h3 id="mlflow-mlflow-experiment">mlflow - MLflow Experiment<a class="headerlink" href="#mlflow-mlflow-experiment" title="Permanent link">&para;</a></h3>
+<p>Create or configure an MLflow experiment for agent evaluation.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Create new</td>
+<td>BrickForge creates an MLflow experiment. ID saved to <code>app.mlflow_experiment_id</code>.</td>
+</tr>
+<tr>
+<td>Use existing</td>
+<td>Enter an existing experiment ID.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="deploy-deploy-app">deploy - Deploy App<a class="headerlink" href="#deploy-deploy-app" title="Permanent link">&para;</a></h3>
+<p>Bundle and deploy the agent as a Databricks App.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Deploy Now</td>
+<td>Builds bundle (agent code + config + chat UI), uploads to workspace, creates/updates Databricks App, waits for startup, runs all grants automatically.</td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="../deploy/">Deploy</a> for the full pipeline.</p>
+<hr />
+<h3 id="git-source-control">git - Source Control<a class="headerlink" href="#git-source-control" title="Permanent link">&para;</a></h3>
+<p>Push your agent project to GitHub.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Connect GitHub</td>
+<td>OAuth Device Flow - enter code in browser, BrickForge stores token in keyring.</td>
+</tr>
+<tr>
+<td>Push</td>
+<td>Creates a private repo (if needed), pushes agent bundle with tokens stripped.</td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="../github-integration/">GitHub Integration</a> for details.</p>
+<h2 id="status-and-testing">Status and testing<a class="headerlink" href="#status-and-testing" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>GET /api/setup/status</code> returns all block states from config</li>
+<li><code>GET /api/setup/test</code> runs inline test scripts per block (defined in <code>TEST_SCRIPTS</code> dict in <code>brickforge/routes/setup.py</code>)</li>
+<li>Test results are cached in the frontend to avoid re-testing on every click</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.sections", "navigation.expand", "content.code.copy", "content.tabs.link"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

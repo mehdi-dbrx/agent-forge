@@ -55,6 +55,7 @@ export function MageView() {
   const [prereqs, setPrereqs] = useState<{ workspace: boolean; model: boolean; host?: string; modelName?: string } | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const streamingRef = useRef(false)
 
   // Load status + prerequisites on mount and on window focus
   const loadStatus = useCallback(() => {
@@ -74,6 +75,13 @@ export function MageView() {
     window.addEventListener('focus', onFocus)
     return () => window.removeEventListener('focus', onFocus)
   }, [loadStatus])
+
+  // Resume: if backend says "ready" but we have no messages, show welcome-back
+  useEffect(() => {
+    if (phase === 'ready' && messages.length === 0) {
+      appendMessage({ role: 'assistant', text: 'Session resumed. What would you like to do?' })
+    }
+  }, [phase])
 
   // Auto-scroll
   useEffect(() => {
@@ -97,7 +105,8 @@ export function MageView() {
 
   const sendMessage = useCallback(async (text?: string, extraFields?: Record<string, unknown>) => {
     const msg = text ?? input.trim()
-    if (!msg || isStreaming) return
+    if (!msg || streamingRef.current) return
+    streamingRef.current = true
     setInput('')
     setIsStreaming(true)
     appendMessage({ role: 'user', text: msg })
@@ -180,6 +189,7 @@ export function MageView() {
     } catch (e) {
       appendMessage({ role: 'error', text: `Connection error: ${e}` })
     } finally {
+      streamingRef.current = false
       setIsStreaming(false)
       inputRef.current?.focus()
     }

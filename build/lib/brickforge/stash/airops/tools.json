@@ -1,0 +1,100 @@
+[
+  {
+    "name": "query_flights_at_risk",
+    "type": "sql_read",
+    "function": "flights_at_risk",
+    "params": ["zone", "time_start", "time_end"],
+    "description": "Flights at risk of delay: flights checking in through a zone departing within a time window"
+  },
+  {
+    "name": "query_checkin_metrics",
+    "type": "sql_read",
+    "function": "checkin_metrics",
+    "params": ["flight_number"],
+    "description": "Check-in metrics for a given flight: zone, departure time, delay risk, and status"
+  },
+  {
+    "name": "query_checkin_performance_metrics",
+    "type": "sql_read",
+    "function": "checkin_performance_metrics",
+    "params": ["zone"],
+    "description": "Check-in performance metrics: latest avg check-in time, baseline, % change vs baseline, and anomaly flag per zone. Pass empty string for all zones."
+  },
+  {
+    "name": "query_available_agents_for_redeployment",
+    "type": "sql_read",
+    "function": "available_agents_for_redeployment",
+    "params": ["zone"],
+    "description": "Available agents for redeployment: check-in agents currently on break or available. Pass empty string for all zones."
+  },
+  {
+    "name": "query_border_officer_staffing",
+    "type": "sql_read",
+    "function": "border_officer_staffing",
+    "params": ["zone"],
+    "description": "Border officer staffing: counts officers at post (ACTIVE), away, or on break by zone"
+  },
+  {
+    "name": "query_border_officers_by_post",
+    "type": "sql_read",
+    "function": "border_officers_by_post",
+    "params": ["zone"],
+    "description": "Border officers grouped by post status: counts and lists officer IDs/names per status"
+  },
+  {
+    "name": "query_border_terminal_details",
+    "type": "sql_read",
+    "function": "border_terminal_details",
+    "params": ["zone"],
+    "description": "Border terminals: lists each terminal with status plus totals per status"
+  },
+  {
+    "name": "query_checkin_agent_staffing",
+    "type": "sql_read",
+    "function": "checkin_agent_staffing",
+    "params": ["zone"],
+    "description": "Check-in agent staffing: counts agents at counter (ACTIVE) vs away or on break"
+  },
+  {
+    "name": "query_checkin_agents_by_counter_status",
+    "type": "sql_read",
+    "function": "checkin_agents_by_counter_status",
+    "params": ["zone"],
+    "description": "Check-in agents grouped by counter status: counts per status and lists agent IDs/names"
+  },
+  {
+    "name": "query_egate_availability",
+    "type": "sql_read",
+    "function": "egate_availability",
+    "params": ["zone"],
+    "description": "E-gate availability: counts terminals operational vs out of service by zone"
+  },
+  {
+    "name": "query_staffing_duties",
+    "type": "sql_read",
+    "function": "staffing_duties",
+    "params": ["agent_id"],
+    "description": "Staffing duties: new assignments for an agent (zone, counter, assigned by, assigned at)"
+  },
+  {
+    "name": "update_flight_risk",
+    "type": "action",
+    "procedure": "update_flight_risk",
+    "params": ["flight_number", "at_risk"],
+    "description": "Mark a flight as at-risk or normal (updates delay_risk field)"
+  },
+  {
+    "name": "update_border_officer",
+    "type": "action",
+    "procedure": "update_border_officer_procedure",
+    "params": ["officer_id", "at_post"],
+    "description": "Update a border officer's post status (ACTIVE, AWAY, BREAK)"
+  },
+  {
+    "name": "confirm_arrival",
+    "type": "action",
+    "procedure": "confirm_arrival_procedure",
+    "params": ["agent_id"],
+    "description": "Confirm a check-in agent has arrived at their assigned counter"
+  }
+]

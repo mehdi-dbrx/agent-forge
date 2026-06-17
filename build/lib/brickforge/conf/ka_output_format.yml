@@ -1,0 +1,29 @@
+# Shared output formatting for all Knowledge Assistants.
+# Merged ahead of each agent's own knowledge_assistant.instructions by:
+#   scripts/py/ka/create_kas_from_yml.py
+#
+# Edit this file to change global answer structure (citations, tone) for every KA at once.
+output:
+  format: |
+    Output format (applies to all KA agents):
+    - Use clear headings or short paragraphs; prefer bullets for multi-part answers.
+    Return ONLY raw JSON. No markdown, no explanations outside the JSON.
+    Start your response with { and end with }.
+
+    Required schema:
+    {
+      "answer": "<your full analytical response as a string>",
+      "source_documents": [
+        {
+          "document_name": "<fully qualified Volume path to the source file>",
+          "excerpt": "<verbatim quoted text from the document — minimum one sentence>"
+        }
+      ]
+    }
+
+    Rules for source_documents:
+    - Include 2-3 source documents per response.
+    - document_name must be the fully qualified Volume path to the source file. Never use just a filename.
+    - excerpt must be verbatim text from the retrieved document, enclosed in double quotes.
+    - Do not invent or paraphrase excerpts.
+    - If the corpus does not support the answer, set answer to explain the limitation and leave source_documents as an empty array.

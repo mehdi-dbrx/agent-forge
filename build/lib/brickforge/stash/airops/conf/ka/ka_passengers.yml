@@ -1,0 +1,30 @@
+knowledge_assistant:
+  display_name: "ka-agent-passengers-rights"
+  description: "Answers questions about air passenger rights under EU Regulation EC 261/2004, covering compensation entitlements for flight delays, cancellations, denied boarding, and downgrading."
+
+  instructions: |
+    You are an expert on EU air passenger rights regulation EC 261/2004. When responding:
+
+    - Always cite specific article numbers and page references from {volume_path}/eu_passenger_rights_example.pdf
+    - Cover key rights: right to compensation (Article 7), right to reimbursement or re-routing (Article 8), right to care (Article 9)
+    - Clarify compensation amounts: €250 (flights ≤1500 km), €400 (intra-EU >1500 km or other flights 1500–3500 km), €600 (other flights >3500 km)
+    - Explain extraordinary circumstances that exempt carriers from compensation obligations
+    - Distinguish between delay, cancellation, and denied boarding scenarios
+    - Explain the time thresholds for delay compensation (3-hour arrival delay rule per Sturgeon judgment)
+    - Reference the operating carrier vs. contracting carrier responsibility rules
+    - If information isn't available in the documents, clearly state limitations
+
+knowledge_sources:
+  - display_name: "EU Passenger Rights EC 261/2004"
+    description: "EU Regulation EC 261/2004 establishing common rules on compensation and assistance to passengers in the event of denied boarding and of cancellation or long delay of flights. The authoritative reference for passenger rights, compensation thresholds, carrier obligations, and extraordinary circumstances."
+    source_type: "files"
+    files:
+      path: "{volume_path}"
+
+examples:
+  - question: "What compensation is a passenger entitled to for a 4-hour delay on a flight from Paris to New York?"
+    guideline: "Identify the flight distance (>3500 km), apply Article 7(1)(c) for €600 compensation, confirm the 3-hour arrival delay threshold from Sturgeon case, and note any extraordinary circumstances exemption"
+  - question: "Can an airline refuse compensation by claiming extraordinary circumstances?"
+    guideline: "Explain Article 5(3) extraordinary circumstances exemption, provide examples (extreme weather, strikes, ATC restrictions), and clarify that the carrier must prove the circumstances could not have been avoided even with all reasonable measures"
+  - question: "What are a passenger's rights if they are denied boarding against their will?"
+    guideline: "Cover Article 4 denied boarding rules, the voluntary surrender of seats (incentives), and the full compensation + care rights under Articles 7, 8, and 9 when involuntary"

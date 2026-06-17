@@ -29,6 +29,27 @@ def _sub_env():
 from brickforge.lib.project_paths import gen_dir as _gen_dir, prompt_dir as _prompt_dir
 
 
+def _parse_columns_from_sql(sql_path: Path) -> list[dict]:
+    """Extract column definitions from a CREATE TABLE SQL file via regex.
+    Used for demo tables only — generated tables use config.data.table_schemas."""
+    if not sql_path.exists():
+        return []
+    content = sql_path.read_text()
+    create_match = re.search(
+        r'CREATE\s+(?:OR\s+REPLACE\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?\S+\s*\((.*?)\)',
+        content, re.IGNORECASE | re.DOTALL,
+    )
+    if not create_match:
+        return []
+    columns = []
+    for m in re.finditer(
+        r"(\w+)\s+(STRING|INT|BIGINT|DOUBLE|FLOAT|BOOLEAN|DATE|TIMESTAMP\w*|DECIMAL[^,)]*)",
+        create_match.group(1), re.IGNORECASE,
+    ):
+        columns.append({"name": m.group(1), "type": m.group(2)})
+    return columns
+
+
 # ── Status & Discovery ───────────────────────────────────────────────────────
 
 @router.get("/api/gen/status")
@@ -36,17 +57,12 @@ async def gen_status():
     config = _get_config()
     env = config.to_env_dict()
     model_ready = bool((env.get("AGENT_MODEL") or env.get("AGENT_MODEL_ENDPOINT")) and env.get("DATABRICKS_HOST"))
-    manifest = None
-    manifest_path = _gen_dir() / "manifest.json"
-    try:
-        manifest = json.loads(manifest_path.read_text())
-    except (FileNotFoundError, json.JSONDecodeError):
-        pass
+    table_schemas = config.get("data.table_schemas") or []
     use_demo = (env.get("USE_DEMO_DATA") or env.get("USE_DEFAULT_DATA", "true")).strip().lower()
     use_gen = env.get("USE_GEN_DATA", "false").strip().lower()
     return {
         "modelReady": model_ready,
-        "manifest": manifest,
+        "manifest": {"tables": table_schemas} if table_schemas else None,
         "useDefault": use_demo in ("true", "1", "yes"),
         "useGen": use_gen in ("true", "1", "yes"),
     }
@@ -54,34 +70,32 @@ async def gen_status():
 
 @router.get("/api/gen/tables")
 async def gen_tables():
-    env = _get_config().to_env_dict()
+    config = _get_config()
+    env = config.to_env_dict()
     use_demo = (env.get("USE_DEMO_DATA") or env.get("USE_DEFAULT_DATA", "true")).strip().lower()
     use_gen = env.get("USE_GEN_DATA", "false").strip().lower()
     tables = []
-    sources = []
-    if use_demo in ("true", "1", "yes"):
-        sources.append(("demo", PACKAGE_ROOT / "data" / "demo"))
-    if use_gen in ("true", "1", "yes"):
-        sources.append(("generated", _gen_dir()))
 
-    for source, base in sources:
-        csv_dir = base / "csv"
-        init_dir = base / "init"
-        if not csv_dir.exists():
-            continue
-        for csv_path in sorted(csv_dir.glob("*.csv")):
-            table_name = csv_path.stem.replace("-", "_")
-            sql_path = init_dir / f"create_{table_name}.sql"
-            columns = []
-            if sql_path.exists():
-                content = sql_path.read_text()
-                # Extract only the CREATE TABLE (...) block
-                create_match = re.search(r'CREATE\s+(?:OR\s+REPLACE\s+)?TABLE\s+\S+\s*\((.*?)\)', content, re.IGNORECASE | re.DOTALL)
-                if create_match:
-                    create_block = create_match.group(1)
-                    for m in re.finditer(r"(\w+)\s+(STRING|INT|BIGINT|DOUBLE|FLOAT|BOOLEAN|DATE|TIMESTAMP\w*|DECIMAL[^,)]*)", create_block, re.IGNORECASE):
-                        columns.append({"name": m.group(1), "type": m.group(2)})
-            tables.append({"name": table_name, "columns": columns, "source": source})
+    # Demo tables: regex-parse SQL (package-level, no config representation)
+    if use_demo in ("true", "1", "yes"):
+        demo_base = PACKAGE_ROOT / "data" / "demo"
+        csv_dir = demo_base / "csv"
+        init_dir = demo_base / "init"
+        if csv_dir.exists():
+            for csv_path in sorted(csv_dir.glob("*.csv")):
+                table_name = csv_path.stem.replace("-", "_")
+                sql_path = init_dir / f"create_{table_name}.sql"
+                columns = _parse_columns_from_sql(sql_path)
+                tables.append({"name": table_name, "columns": columns, "source": "demo"})
+
+    # Generated tables: read from config (authoritative)
+    if use_gen in ("true", "1", "yes"):
+        for schema in (config.get("data.table_schemas") or []):
+            tables.append({
+                "name": schema["name"],
+                "columns": schema.get("columns", []),
+                "source": "generated",
+            })
 
     return {"tables": tables}
 
@@ -172,6 +186,9 @@ async def clear_gen():
             deleted += 1
         except FileNotFoundError:
             pass
+    # Clear table schemas from config
+    config = _get_config()
+    config.set("data.table_schemas", [])
     return {"ok": True, "deleted": deleted}
 
 
@@ -303,6 +320,15 @@ async def gen_data(request: Request):
 @router.post("/api/gen/save")
 async def gen_save(request: Request):
     body = await request.json()
+    # Sync table schemas to config (subprocess writes manifest.json, we write config)
+    all_tables = body.get("allTables", [])
+    if all_tables:
+        config = _get_config()
+        schemas = [
+            {"name": t["name"], "columns": t.get("columns", []), "row_count": t.get("row_count", 0)}
+            for t in all_tables
+        ]
+        config.set("data.table_schemas", schemas)
     stdin_data = json.dumps(body)
     cmd = [sys.executable, "data/gen/generate_tables.py", "--mode=save"]
     return _sse_gen(cmd, stdin_data)
@@ -321,15 +347,8 @@ async def routine_status():
     config = _get_config()
     env = config.to_env_dict()
     model_ready = bool((env.get("AGENT_MODEL") or env.get("AGENT_MODEL_ENDPOINT")) and env.get("DATABRICKS_HOST"))
-    # Load table schemas for context: try gen manifest first, then existing UC tables
-    table_schemas = None
-    manifest_path = _gen_dir() / "manifest.json"
-    try:
-        manifest = json.loads(manifest_path.read_text())
-        table_schemas = manifest.get("tables")
-    except (FileNotFoundError, json.JSONDecodeError):
-        pass
-    # Fall back to existing UC tables if no generated tables
+    # Load table schemas from config, fall back to UC tables for non-Mage projects
+    table_schemas = config.get("data.table_schemas") or None
     if not table_schemas:
         try:
             from brickforge.routes.setup import _list_schema_tables

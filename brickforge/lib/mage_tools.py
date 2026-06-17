@@ -17,6 +17,15 @@ def _base_url() -> str:
     return f"http://localhost:{port}"
 
 
+def _enable_gen_data():
+    """Mark this project as using Mage-generated data.
+    Sets use_gen_data=true (so gen endpoints see artifacts) and
+    use_demo_data=false (Mage projects use their own data, not demos)."""
+    from brickforge.server import config as _config
+    _config.set("data.use_gen_data", True)
+    _config.set("data.use_demo_data", False)
+
+
 class MageToolkit:
     """Collection of tools Mage can call. Holds SSE queue for progress streaming."""
 
@@ -152,22 +161,14 @@ class MageToolkit:
         Returns the generated SQL string."""
         from brickforge.data.gen.sql_template_engine import generate_sql, validate_spec, build_schema_lookup
 
-        # Load table schemas from manifest
-        from brickforge.lib.project_paths import gen_dir
-        import json as _json
-        manifest_path = gen_dir() / "manifest.json"
-        tables = []
-        if manifest_path.exists():
-            try:
-                tables = _json.loads(manifest_path.read_text()).get("tables", [])
-            except Exception:
-                pass
-
+        # Load table schemas from config
+        from brickforge.server import config as _config
+        tables = _config.get("data.table_schemas") or []
         schema_lookup = build_schema_lookup(tables)
 
         # Refuse to generate without schema data - prevents hallucinated column names
         if not schema_lookup:
-            return "No table schemas found in manifest. Call create_tables_sql first to define tables before generating routines."
+            return "No table schemas found in config. Call create_tables_sql first to define tables before generating routines."
 
         # Validate spec
         errors = validate_spec(query_spec, schema_lookup)
@@ -221,10 +222,11 @@ class MageToolkit:
             manifest_tables.append({"name": name, "columns": norm_cols, "row_count": 0})
             await self.sse_queue.put({"event": "progress", "data": {"line": f"[+] Wrote create_{name}.sql\n"}})
 
-        # Write manifest so generate_routine can validate columns
-        manifest_path = gen_dir() / "manifest.json"
-        manifest_path.write_text(json.dumps({"tables": manifest_tables}, indent=2))
-        await self.sse_queue.put({"event": "progress", "data": {"line": f"[+] Wrote manifest.json ({len(manifest_tables)} tables)\n"}})
+        # Store table schemas in config (travels with project + bundles)
+        from brickforge.server import config as _config
+        _config.set("data.table_schemas", manifest_tables)
+
+        _enable_gen_data()
 
         return f"Created SQL for {len(created)} table(s): {', '.join(created)}"
 
@@ -294,19 +296,13 @@ class MageToolkit:
         create_sql = f"CREATE TABLE IF NOT EXISTS __SCHEMA_QUALIFIED__.{table_name} (\n  {col_sql}\n) USING DELTA;\n"
         (init_dir / f"create_{table_name}.sql").write_text(create_sql)
 
-        # Update manifest
-        manifest_path = gen_dir() / "manifest.json"
-        manifest = {"tables": []}
-        if manifest_path.exists():
-            try:
-                manifest = json.loads(manifest_path.read_text())
-            except Exception:
-                pass
-        # Update or add this table
-        existing = {t["name"]: t for t in manifest.get("tables", [])}
+        # Update table schemas in config
+        from brickforge.server import config as _config
+        existing = {t["name"]: t for t in (_config.get("data.table_schemas") or [])}
         existing[table_name] = {"name": table_name, "columns": norm_cols, "row_count": len(rows)}
-        manifest["tables"] = list(existing.values())
-        manifest_path.write_text(json.dumps(manifest, indent=2))
+        _config.set("data.table_schemas", list(existing.values()))
+
+        _enable_gen_data()
 
         await self.sse_queue.put({"event": "progress", "data": {"line": f"[+] Wrote {table_name}.csv + create_{table_name}.sql ({len(rows)} rows)\n"}})
         return json.dumps({"table": table_name, "rows_generated": len(rows), "columns": [c["name"] for c in norm_cols]})
@@ -372,8 +368,39 @@ class MageToolkit:
         return f"Saved {filename}"
 
     async def provision_tables(self) -> str:
-        """Execute all CREATE TABLE SQL files against the warehouse."""
-        return await self._stream_exec("exec-tables")
+        """Execute all CREATE TABLE SQL files and load CSV data into them."""
+        result = await self._stream_exec("exec-tables")
+
+        # Load CSV data into the created tables
+        from brickforge.lib.project_paths import gen_dir
+        csv_dir = gen_dir() / "csv"
+        csv_files = sorted(csv_dir.glob("*.csv")) if csv_dir.exists() else []
+        if csv_files:
+            await self.sse_queue.put({"event": "progress", "data": {"line": "[~] Loading CSV data into tables...\n"}})
+            import asyncio, sys
+            from brickforge.lib.env_utils import build_sub_env
+            from brickforge.server import config as _config
+            from brickforge import PACKAGE_ROOT
+            cmd = [sys.executable, str(PACKAGE_ROOT / "data" / "py" / "csv_to_delta.py")]
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+                env=build_sub_env(_config),
+                cwd=str(PACKAGE_ROOT),
+            )
+            output = []
+            async for line in proc.stdout:
+                text = line.decode().rstrip()
+                output.append(text)
+                await self.sse_queue.put({"event": "progress", "data": {"line": text + "\n"}})
+            await proc.wait()
+            if proc.returncode != 0:
+                return result + "\n[x] CSV data load failed"
+            await self.sse_queue.put({"event": "progress", "data": {"line": "[+] CSV data loaded\n"}})
+            result += "\nCSV data loaded into tables."
+
+        return result
 
     async def provision_routines(self) -> str:
         """Execute all function and procedure SQL files against the warehouse."""

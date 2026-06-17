@@ -306,8 +306,7 @@ class MageAgent:
             return None
 
         # Set env vars for ChatDatabricks - use what's available
-        if host:
-            os.environ["DATABRICKS_HOST"] = host
+        os.environ["DATABRICKS_HOST"] = host
         if token:
             os.environ["DATABRICKS_TOKEN"] = token
 

@@ -1,0 +1,87 @@
+/* ---- SHARED (both themes) ---- */
+:root {
+  --md-accent-fg-color: #ff3621;
+}
+
+/* Header bar - always dark */
+.md-header {
+  background-color: #0c0c0f;
+  border-bottom: 1px solid #2a2a35;
+}
+
+/* Two-tone site name: Brick (white) + Forge (red) - always on dark header */
+.md-header__topic .md-ellipsis {
+  font-weight: 700;
+  font-size: 0;
+}
+.md-header__topic .md-ellipsis::before {
+  content: "Brick";
+  font-size: 0.9rem;
+  color: #f0f0f5;
+}
+.md-header__topic .md-ellipsis::after {
+  content: "Forge";
+  font-size: 0.9rem;
+  color: #ff3621;
+}
+
+/* Tabs - always dark */
+.md-tabs {
+  background-color: #0c0c0f;
+  border-bottom: 1px solid #2a2a35;
+}
+
+.md-tabs__link--active,
+.md-tabs__link:hover {
+  color: #ff3621;
+}
+
+/* Sidebar active link */
+.md-nav__link--active {
+  color: #ff3621;
+}
+
+/* Links always red */
+.md-typeset a {
+  color: #ff3621;
+}
+.md-typeset a:hover {
+  color: #ff5a47;
+}
+
+/* Code inline */
+.md-typeset code {
+  color: #ff5a47;
+}
+
+/* ---- DARK THEME ---- */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #0c0c0f;
+  --md-primary-bg-color: #f0f0f5;
+  --md-accent-fg-color: #ff3621;
+  --md-default-bg-color: #0c0c0f;
+}
+
+/* ---- LIGHT THEME ---- */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #0c0c0f;
+  --md-primary-bg-color: #f0f0f5;
+  --md-accent-fg-color: #ff3621;
+  --md-default-bg-color: #ffffff;
+}
+
+[data-md-color-scheme="default"] .md-typeset code {
+  color: #d4300f;
+  background-color: #fff0ee;
+}
+
+[data-md-color-scheme="default"] .md-typeset a {
+  color: #d4300f;
+}
+[data-md-color-scheme="default"] .md-typeset a:hover {
+  color: #ff3621;
+}
+
+[data-md-color-scheme="default"] .md-sidebar {
+  border-right: 1px solid #e0e0e0;
+}

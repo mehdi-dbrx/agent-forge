@@ -359,3 +359,31 @@ OK get_saved_locations.sql
 Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/track_order.sql
 OK track_order.sql
 === create_all_functions completed ===
+=== create_all_functions started 2026-06-17T14:44:56.728912 ===
+
+═══ browse_menu.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/browse_menu.sql
+OK browse_menu.sql
+
+═══ get_customer.sql (2/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_customer.sql
+OK get_customer.sql
+
+═══ track_order.sql (3/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/track_order.sql
+OK track_order.sql
+=== create_all_functions completed ===
+=== create_all_functions started 2026-06-17T14:45:07.658174 ===
+
+═══ browse_menu.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/browse_menu.sql
+OK browse_menu.sql
+
+═══ get_customer.sql (2/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_customer.sql
+OK get_customer.sql
+
+═══ track_order.sql (3/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/track_order.sql
+OK track_order.sql
+=== create_all_functions completed ===

@@ -1,0 +1,8 @@
+# Generated artifacts belong in projects/{name}/gen/, not here.
+csv/
+init/
+func/
+proc/
+manifest.json
+wizard-state.json
+test_spec.json

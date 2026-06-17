@@ -168,13 +168,9 @@ async def project_assets():
                         demo.append({"name": f"{subdir}/{f.name}", "size": f.stat().st_size})
     assets["demo"] = demo
 
-    # Manifests
-    manifests = []
-    for mf in ["manifest.json", "routine_manifest.json"]:
-        p = gen_dir / mf
-        if p.exists():
-            manifests.append({"name": mf, "size": p.stat().st_size})
-    assets["manifests"] = manifests
+    # Table schemas from config
+    table_schemas = config.get("data.table_schemas") or []
+    assets["table_schemas"] = [{"name": t["name"], "columns": len(t.get("columns", []))} for t in table_schemas]
 
     total = sum(len(v) for v in assets.values())
     return {"assets": assets, "total": total}

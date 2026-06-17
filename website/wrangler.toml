@@ -1,0 +1,14 @@
+name = "brickforge-site"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+account_id = "68bd4c20ed6384951d7ba6b5acad1a56"
+
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
+
+routes = [
+  { pattern = "brickforge.dev", zone_name = "brickforge.dev" },
+  { pattern = "www.brickforge.dev", zone_name = "brickforge.dev" }
+]

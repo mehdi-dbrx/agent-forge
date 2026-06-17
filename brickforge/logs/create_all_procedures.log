@@ -408,3 +408,23 @@ OK get_or_register_customer.sql
 Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/proc/place_order.sql
 OK place_order.sql
 === create_all_procedures completed ===
+=== create_all_procedures started 2026-06-17T14:45:03.594623 ===
+
+═══ place_order.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/place_order.sql
+OK place_order.sql
+
+═══ register_customer.sql (2/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/register_customer.sql
+OK register_customer.sql
+=== create_all_procedures completed ===
+=== create_all_procedures started 2026-06-17T14:45:14.575472 ===
+
+═══ place_order.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/place_order.sql
+OK place_order.sql
+
+═══ register_customer.sql (2/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/register_customer.sql
+OK register_customer.sql
+=== create_all_procedures completed ===

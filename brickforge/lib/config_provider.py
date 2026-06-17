@@ -69,6 +69,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "use_demo_data": True,
         "use_gen_data": False,
         "stash_dir": None,
+        "table_schemas": [],
     },
     "lakebase": {
         "instance_name": None,
@@ -89,6 +90,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "mage": {
         "enabled": False,
+        "mode": None,
+        "domain": "",
     },
 }
 

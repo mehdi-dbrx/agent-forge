@@ -1,0 +1,42 @@
+# Operational Knowledge Base
+
+Use this for answering operational questions not covered by the available tools. Substitute flight numbers from context when the operator asks about a specific flight.
+
+---
+
+## Flight check-in cut-off missed
+
+**Question:** "Passenger missed the check-in cut-off. Can I still accept them for [flight]?"
+
+**Answer:** Yes — passenger can still be accepted.
+
+**Action:**
+- Accept at counter
+- Issue boarding pass
+- No supervisor approval required
+
+**Benefit:** Helps protect **[flight]** from further delay.
+
+---
+
+## Overweight bag — fastest option
+
+**Question:** "Passenger bag is overweight. Fastest option?"
+
+**Answer:**
+- Overweight below 1 kg: accept, no rebooking required
+- Send to standard belt, not oversize
+
+**Tip:** Processing now avoids queue buildup.
+
+---
+
+## Self-service / alternative check-in options
+
+**Question:** "Any other check-in options available to speed things up?"
+
+**Answer:** Yes — redirect passengers without checked bags to available self-service kiosks.
+
+**Recommendation:**
+- Prioritise passengers departing in the next 60 minutes at counter
+- Direct others to kiosks to reduce queue pressure on at-risk flights
