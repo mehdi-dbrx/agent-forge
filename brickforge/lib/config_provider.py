@@ -54,7 +54,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "features": {
         "MEMORY": {"enabled": False},
-        "CHART": {"enabled": True},
+        "CHART": {"enabled": False},
         "VOICE": {"enabled": False},
         "VISION": {"enabled": False},
         "PERSONAS": {"enabled": False},
@@ -86,6 +86,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "branding": {
         "logo_url": None,
         "brandfetch_api_key": None,
+    },
+    "mage": {
+        "enabled": False,
     },
 }
 

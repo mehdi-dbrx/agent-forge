@@ -1,8 +1,8 @@
 # BrickForge
 
-**Build and deploy Databricks AI agents in minutes.**
+**Describe your agent. Mage builds it.**
 
-BrickForge is a pip-installable tool that takes you from zero to a live, production-grade AI agent on Databricks Apps. A browser-based Setup App walks you through workspace connection, data generation, agent configuration, and one-click deployment. No code, no notebooks, no YAML.
+BrickForge is a pip-installable tool that takes you from zero to a live, production-grade AI agent on Databricks Apps. Tell **Mage** what you need in plain English and it designs the data model, generates everything, and deploys. Or use the visual **Setup Panel** for step-by-step control. No code, no notebooks, no YAML.
 
 ```bash
 pip install brickforge
@@ -11,6 +11,17 @@ brickforge
 
 !!! note "Beta"
     BrickForge is under active development. APIs and features may change.
+
+---
+
+## Two ways to build
+
+| Path | For | How it works |
+|------|-----|-------------|
+| **[Mage](mage.md)** | Everyone | Conversational AI assistant. Describe your domain, Mage builds the agent. **Magic** mode for zero-config, **Author** mode for full control. |
+| **[Setup Panel](setup-blocks.md)** | Power users | Visual DAG with 18 blocks. Configure each resource manually. |
+
+Both produce the same output: a deployed Databricks App with a LangGraph agent and chat UI.
 
 ---
 
@@ -33,6 +44,15 @@ A deployed Databricks App with:
 ---
 
 ## How it works
+
+### With Mage (recommended)
+
+1. Open BrickForge, go to the **Mage** tab
+2. Describe your domain: "I need an agent for my pet hotel"
+3. Pick **Magic** (hands-off) or **Author** (full visibility)
+4. Mage designs, generates, and deploys. You get a live URL.
+
+### With the Setup Panel
 
 | Step | What happens |
 |------|-------------|
@@ -59,6 +79,7 @@ Each block follows the same pattern: **choose** an approach, **configure**, **ex
 | Section | What it covers |
 |---------|---------------|
 | [Getting Started](getting-started.md) | Install, first run, connect workspace, pick warehouse, set schema |
+| [Mage](mage.md) | Conversational agent builder -- Magic mode, Author mode, discovery, self-critique, build pipeline |
 | [Setup Blocks](setup-blocks.md) | All 18 blocks - choices, actions, what happens on execute |
 | [Data Generation](data-generation.md) | AI wizard: domain description to tables, functions, procedures, prompts |
 | [Agent Tools](agent-tools.md) | All tool types: UC functions, Genie, KA, APIs, MCP, A2A, charts, memory |

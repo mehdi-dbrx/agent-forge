@@ -5,3 +5,357 @@
 === create_all_functions started 2026-06-06T14:52:42.561587 ===
 === create_all_functions started 2026-06-08T13:04:54.785222 ===
 === create_all_functions started 2026-06-08T13:12:38.658300 ===
+=== create_all_functions started 2026-06-16T15:18:35.663149 ===
+=== create_all_functions started 2026-06-16T21:02:33.850144 ===
+
+═══ get_traveler_reservations.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/func/get_traveler_reservations.sql
+OK get_traveler_reservations.sql
+
+═══ search_available_rooms.sql (2/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/func/search_available_rooms.sql
+OK search_available_rooms.sql
+=== create_all_functions completed ===
+=== create_all_functions started 2026-06-16T21:03:03.126733 ===
+
+═══ get_traveler_reservations.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/func/get_traveler_reservations.sql
+OK get_traveler_reservations.sql
+
+═══ search_available_rooms.sql (2/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/func/search_available_rooms.sql
+OK search_available_rooms.sql
+=== create_all_functions completed ===
+=== create_all_functions started 2026-06-16T21:03:28.472272 ===
+
+═══ get_traveler_reservations.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/func/get_traveler_reservations.sql
+OK get_traveler_reservations.sql
+
+═══ search_available_rooms.sql (2/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/func/search_available_rooms.sql
+OK search_available_rooms.sql
+=== create_all_functions completed ===
+=== create_all_functions started 2026-06-16T21:05:50.623657 ===
+
+═══ get_traveler_reservations.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/func/get_traveler_reservations.sql
+OK get_traveler_reservations.sql
+
+═══ search_available_rooms.sql (2/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/func/search_available_rooms.sql
+OK search_available_rooms.sql
+=== create_all_functions completed ===
+=== create_all_functions started 2026-06-17T12:47:36.571178 ===
+
+═══ get_customer_by_space_dial.sql (1/5) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_customer_by_space_dial.sql
+OK get_customer_by_space_dial.sql
+
+═══ get_customer_delivery_locations.sql (2/5) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_customer_delivery_locations.sql
+OK get_customer_delivery_locations.sql
+
+═══ get_customer_order_history.sql (3/5) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_customer_order_history.sql
+OK get_customer_order_history.sql
+
+═══ get_menu.sql (4/5) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_menu.sql
+OK get_menu.sql
+
+═══ get_order_status.sql (5/5) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_order_status.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `o`.`order_date` cannot be resolved. Did you mean one of the following? [`o`.`order_id`, `o`.`order_status`, `dt`.`order_id`, `o`.`placed_at`, `dt`.`courier_name`]. SQLSTATE: 42703; line 3 pos 2
+  ✗ get_order_status.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `o`.`order_date` cannot be resolved. Did you mean one of the following? [`o`.`order_id`, `o`.`order_status`, `dt`.`order_id`, `o`.`placed_at`, `dt`.`courier_name`]. SQLSTATE: 42703; line 3 pos 2
+Aborting after get_order_status.sql failed
+=== create_all_functions started 2026-06-17T12:47:59.633215 ===
+
+═══ get_customer_by_space_dial.sql (1/5) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_customer_by_space_dial.sql
+OK get_customer_by_space_dial.sql
+
+═══ get_customer_delivery_locations.sql (2/5) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_customer_delivery_locations.sql
+OK get_customer_delivery_locations.sql
+
+═══ get_customer_order_history.sql (3/5) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_customer_order_history.sql
+OK get_customer_order_history.sql
+
+═══ get_menu.sql (4/5) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_menu.sql
+OK get_menu.sql
+
+═══ get_order_status.sql (5/5) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_order_status.sql
+OK get_order_status.sql
+=== create_all_functions completed ===
+=== create_all_functions started 2026-06-17T12:48:24.402508 ===
+
+═══ get_customer_by_space_dial.sql (1/5) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_customer_by_space_dial.sql
+OK get_customer_by_space_dial.sql
+
+═══ get_customer_delivery_locations.sql (2/5) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_customer_delivery_locations.sql
+OK get_customer_delivery_locations.sql
+
+═══ get_customer_order_history.sql (3/5) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_customer_order_history.sql
+OK get_customer_order_history.sql
+
+═══ get_menu.sql (4/5) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_menu.sql
+OK get_menu.sql
+
+═══ get_order_status.sql (5/5) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_order_status.sql
+OK get_order_status.sql
+=== create_all_functions completed ===
+=== create_all_functions started 2026-06-17T13:25:41.901717 ===
+
+═══ browse_menu.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/browse_menu.sql
+OK browse_menu.sql
+
+═══ get_customer.sql (2/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_customer.sql
+OK get_customer.sql
+
+═══ track_order.sql (3/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/track_order.sql
+OK track_order.sql
+=== create_all_functions completed ===
+=== create_all_functions started 2026-06-17T13:25:49.964036 ===
+
+═══ browse_menu.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/browse_menu.sql
+OK browse_menu.sql
+
+═══ get_customer.sql (2/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_customer.sql
+OK get_customer.sql
+
+═══ track_order.sql (3/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/track_order.sql
+OK track_order.sql
+=== create_all_functions completed ===
+=== create_all_functions started 2026-06-17T13:26:07.191676 ===
+
+═══ browse_menu.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/browse_menu.sql
+OK browse_menu.sql
+
+═══ get_customer.sql (2/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_customer.sql
+OK get_customer.sql
+
+═══ track_order.sql (3/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/track_order.sql
+OK track_order.sql
+=== create_all_functions completed ===
+=== create_all_functions started 2026-06-17T13:26:18.873853 ===
+
+═══ browse_menu.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/browse_menu.sql
+OK browse_menu.sql
+
+═══ get_customer.sql (2/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/get_customer.sql
+OK get_customer.sql
+
+═══ track_order.sql (3/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/func/track_order.sql
+OK track_order.sql
+=== create_all_functions completed ===
+=== create_all_functions started 2026-06-17T13:46:33.464774 ===
+
+═══ browse_menu.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/browse_menu.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `m`.`is_available` cannot be resolved. Did you mean one of the following? [`m`.`available`, `m`.`item_id`, `m`.`name`, `m`.`price`]. SQLSTATE: 42703; line 7 pos 6
+  ✗ browse_menu.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `m`.`is_available` cannot be resolved. Did you mean one of the following? [`m`.`available`, `m`.`item_id`, `m`.`name`, `m`.`price`]. SQLSTATE: 42703; line 7 pos 6
+Aborting after browse_menu.sql failed
+=== create_all_functions started 2026-06-17T13:46:35.370298 ===
+
+═══ browse_menu.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/browse_menu.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `m`.`is_available` cannot be resolved. Did you mean one of the following? [`m`.`available`, `m`.`item_id`, `m`.`name`, `m`.`price`]. SQLSTATE: 42703; line 7 pos 6
+  ✗ browse_menu.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `m`.`is_available` cannot be resolved. Did you mean one of the following? [`m`.`available`, `m`.`item_id`, `m`.`name`, `m`.`price`]. SQLSTATE: 42703; line 7 pos 6
+Aborting after browse_menu.sql failed
+=== create_all_functions started 2026-06-17T13:46:47.060825 ===
+
+═══ browse_menu.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/browse_menu.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `m`.`category` cannot be resolved. Did you mean one of the following? [`m`.`item_id`, `m`.`name`, `m`.`price`, `m`.`available`]. SQLSTATE: 42703; line 7 pos 29
+  ✗ browse_menu.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `m`.`category` cannot be resolved. Did you mean one of the following? [`m`.`item_id`, `m`.`name`, `m`.`price`, `m`.`available`]. SQLSTATE: 42703; line 7 pos 29
+Aborting after browse_menu.sql failed
+=== create_all_functions started 2026-06-17T13:46:48.655896 ===
+
+═══ browse_menu.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/browse_menu.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `m`.`category` cannot be resolved. Did you mean one of the following? [`m`.`item_id`, `m`.`name`, `m`.`price`, `m`.`available`]. SQLSTATE: 42703; line 7 pos 29
+  ✗ browse_menu.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `m`.`category` cannot be resolved. Did you mean one of the following? [`m`.`item_id`, `m`.`name`, `m`.`price`, `m`.`available`]. SQLSTATE: 42703; line 7 pos 29
+Aborting after browse_menu.sql failed
+=== create_all_functions started 2026-06-17T13:47:10.149800 ===
+
+═══ browse_menu.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/browse_menu.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `m`.`category` cannot be resolved. Did you mean one of the following? [`m`.`item_id`, `m`.`name`, `m`.`price`, `m`.`available`]. SQLSTATE: 42703; line 7 pos 29
+  ✗ browse_menu.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `m`.`category` cannot be resolved. Did you mean one of the following? [`m`.`item_id`, `m`.`name`, `m`.`price`, `m`.`available`]. SQLSTATE: 42703; line 7 pos 29
+Aborting after browse_menu.sql failed
+=== create_all_functions started 2026-06-17T13:47:11.684191 ===
+
+═══ browse_menu.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/browse_menu.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `m`.`category` cannot be resolved. Did you mean one of the following? [`m`.`item_id`, `m`.`name`, `m`.`price`, `m`.`available`]. SQLSTATE: 42703; line 7 pos 29
+  ✗ browse_menu.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `m`.`category` cannot be resolved. Did you mean one of the following? [`m`.`item_id`, `m`.`name`, `m`.`price`, `m`.`available`]. SQLSTATE: 42703; line 7 pos 29
+Aborting after browse_menu.sql failed
+=== create_all_functions started 2026-06-17T13:47:24.104299 ===
+
+═══ browse_menu.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/browse_menu.sql
+OK browse_menu.sql
+
+═══ get_saved_locations.sql (2/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/get_saved_locations.sql
+OK get_saved_locations.sql
+
+═══ track_order.sql (3/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/track_order.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `o`.`items` cannot be resolved. Did you mean one of the following? [`o`.`item_id`, `o`.`status`, `o`.`order_id`, `o`.`quantity`, `o`.`ordered_at`]. SQLSTATE: 42703; line 3 pos 2
+  ✗ track_order.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `o`.`items` cannot be resolved. Did you mean one of the following? [`o`.`item_id`, `o`.`status`, `o`.`order_id`, `o`.`quantity`, `o`.`ordered_at`]. SQLSTATE: 42703; line 3 pos 2
+Aborting after track_order.sql failed
+=== create_all_functions started 2026-06-17T13:47:29.709401 ===
+
+═══ browse_menu.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/browse_menu.sql
+OK browse_menu.sql
+
+═══ get_saved_locations.sql (2/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/get_saved_locations.sql
+OK get_saved_locations.sql
+
+═══ track_order.sql (3/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/track_order.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `o`.`items` cannot be resolved. Did you mean one of the following? [`o`.`item_id`, `o`.`status`, `o`.`order_id`, `o`.`quantity`, `o`.`ordered_at`]. SQLSTATE: 42703; line 3 pos 2
+  ✗ track_order.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: [UNRESOLVED_COLUMN.WITH_SUGGESTION] A column, variable, or function parameter with name `o`.`items` cannot be resolved. Did you mean one of the following? [`o`.`item_id`, `o`.`status`, `o`.`order_id`, `o`.`quantity`, `o`.`ordered_at`]. SQLSTATE: 42703; line 3 pos 2
+Aborting after track_order.sql failed
+=== create_all_functions started 2026-06-17T13:47:43.124469 ===
+
+═══ browse_menu.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/browse_menu.sql
+OK browse_menu.sql
+
+═══ get_saved_locations.sql (2/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/get_saved_locations.sql
+OK get_saved_locations.sql
+
+═══ track_order.sql (3/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/track_order.sql
+OK track_order.sql
+=== create_all_functions completed ===
+=== create_all_functions started 2026-06-17T13:47:52.744069 ===
+
+═══ browse_menu.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/browse_menu.sql
+OK browse_menu.sql
+
+═══ get_saved_locations.sql (2/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/get_saved_locations.sql
+OK get_saved_locations.sql
+
+═══ track_order.sql (3/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/func/track_order.sql
+OK track_order.sql
+=== create_all_functions completed ===

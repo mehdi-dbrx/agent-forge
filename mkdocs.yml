@@ -39,6 +39,7 @@ extra_css:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - Mage: mage.md
   - Setup Blocks: setup-blocks.md
   - Data Generation: data-generation.md
   - Agent Tools: agent-tools.md

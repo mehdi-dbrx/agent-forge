@@ -197,7 +197,7 @@ async def clear_routines():
 
 # ── SSE Generation Endpoints ─────────────────────────────────────────────────
 
-def _sse_gen(cmd: list[str], stdin_data: str | None = None):
+def _sse_gen(cmd: list[str], stdin_data: str | None = None, reload_config: bool = False):
     """Create an SSE streaming response for a generation subprocess."""
     async def generate():
         env = _sub_env()
@@ -238,6 +238,19 @@ def _sse_gen(cmd: list[str], stdin_data: str | None = None):
         else:
             async for event in stream_subprocess(cmd, env=env, cwd=PACKAGE_ROOT, detect_result=True):
                 yield event
+
+        # Reload in-memory config if subprocess may have written back
+        if reload_config:
+            try:
+                config = _get_config()
+                _token_before = config._data.get("workspace", {}).get("token")
+                config._data = config._load()
+                if _token_before:
+                    config._data.setdefault("workspace", {})["token"] = _token_before
+                config._save()
+                config._sync_env()
+            except Exception:
+                pass
 
     return StreamingResponse(generate(), media_type="text/event-stream", headers={
         "Cache-Control": "no-cache",
@@ -298,7 +311,7 @@ async def gen_save(request: Request):
 @router.post("/api/gen/provision")
 async def gen_provision():
     cmd = [sys.executable, "data/gen/generate_tables.py", "--mode=provision-gen"]
-    return _sse_gen(cmd)
+    return _sse_gen(cmd, reload_config=True)
 
 
 # ── Routine Generation ────────────────────────────────────────────────────────
@@ -367,4 +380,24 @@ async def routine_save(request: Request):
 @router.post("/api/gen/routine-provision")
 async def routine_provision():
     cmd = [sys.executable, "data/gen/generate_routines.py", "--mode=provision-gen"]
+    return _sse_gen(cmd, reload_config=True)
+
+
+# ── Test Generation & Execution ──────────────────────────────────────────────
+
+@router.post("/api/gen/test-generate")
+async def test_generate():
+    cmd = [sys.executable, "data/gen/test_generator.py", "--mode=generate"]
+    return _sse_gen(cmd)
+
+
+@router.post("/api/gen/test-run")
+async def test_run():
+    cmd = [sys.executable, "data/gen/test_generator.py", "--mode=run"]
+    return _sse_gen(cmd)
+
+
+@router.post("/api/gen/test")
+async def test_generate_and_run():
+    cmd = [sys.executable, "data/gen/test_generator.py", "--mode=generate-and-run"]
     return _sse_gen(cmd)

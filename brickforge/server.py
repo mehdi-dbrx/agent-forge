@@ -16,6 +16,7 @@ from brickforge.routes.gen import router as gen_router
 from brickforge.routes.ka import router as ka_router
 from brickforge.routes.cleanup import router as cleanup_router
 from brickforge.routes.projects import router as projects_router
+from brickforge.routes.mage import router as mage_router
 from brickforge.lib.graph_builder import build_graph
 
 DIST_DIR = Path(__file__).resolve().parent / "static"
@@ -206,6 +207,7 @@ app.include_router(gen_router)
 app.include_router(ka_router)
 app.include_router(cleanup_router)
 app.include_router(projects_router)
+app.include_router(mage_router)
 
 
 # ── Static files + SPA fallback ──────────────────────────────────────────────

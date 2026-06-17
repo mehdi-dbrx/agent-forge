@@ -119,10 +119,28 @@ async def create_project(request: Request):
     if project_file.exists():
         return JSONResponse({"error": f"project '{safe_name}' already exists"}, status_code=409)
 
-    # Fresh config from defaults
+    # Fresh config from defaults, carrying over workspace connection
     import copy
     from brickforge.lib.config_provider import DEFAULT_CONFIG
     fresh = copy.deepcopy(DEFAULT_CONFIG)
+
+    # Carry over workspace connection from active config
+    # New project = new agent data, NOT new workspace
+    config = _get_config()
+    active_ws = config._data.get("workspace", {}) if hasattr(config, '_data') else {}
+    if active_ws.get("host"):
+        fresh["workspace"]["host"] = active_ws.get("host")
+        fresh["workspace"]["token"] = active_ws.get("token")
+        fresh["workspace"]["warehouse_id"] = active_ws.get("warehouse_id")
+        fresh["workspace"]["unity_catalog_schema"] = None  # schema is project-specific
+        fresh["workspace"]["config_profile"] = active_ws.get("config_profile")
+
+    # Carry over model endpoint
+    active_model = config._data.get("model", {}) if hasattr(config, '_data') else {}
+    if active_model.get("endpoint"):
+        fresh["model"]["endpoint"] = active_model.get("endpoint")
+        fresh["model"]["token"] = active_model.get("token")
+
     project_file.write_text(json.dumps(fresh, indent=2) + "\n")
 
     # Create artifact directory

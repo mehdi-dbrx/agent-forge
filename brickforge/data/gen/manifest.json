@@ -1,0 +1,32 @@
+{
+  "generated_at": "2026-06-16T20:59:33.319059",
+  "tables": [
+    {
+      "name": "amenities",
+      "columns": [
+        {
+          "name": "amenity_id",
+          "type": "STRING"
+        },
+        {
+          "name": "hotel_id",
+          "type": "STRING"
+        },
+        {
+          "name": "amenity_name",
+          "type": "STRING"
+        },
+        {
+          "name": "amenity_category",
+          "type": "STRING"
+        },
+        {
+          "name": "extra_cost_credits",
+          "type": "DOUBLE"
+        }
+      ],
+      "row_count": 0,
+      "instructions": ""
+    }
+  ]
+}

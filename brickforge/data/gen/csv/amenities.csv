@@ -1,0 +1,31 @@
+amenity_id,hotel_id,amenity_name,amenity_category,extra_cost_credits
+AMN-001,HTL-001,Zero-G Spa,Wellness,450.0
+AMN-002,HTL-001,Asteroid Observation Deck,Entertainment,0.0
+AMN-003,HTL-002,Plasma Pool,Wellness,300.0
+AMN-004,HTL-002,Holodeck Suite,Entertainment,1200.0
+AMN-005,HTL-003,Spacewalk Tour,Adventure,1800.0
+AMN-006,HTL-003,Nebula Dining,Dining,550.0
+AMN-007,HTL-004,Cryo Sleep Chamber,Wellness,750.0
+AMN-008,HTL-004,Zero-G Spa,Wellness,500.0
+AMN-009,HTL-005,Asteroid Observation Deck,Entertainment,0.0
+AMN-010,HTL-005,Spacewalk Tour,Adventure,2000.0
+AMN-011,HTL-005,Nebula Dining,Dining,620.0
+AMN-012,HTL-006,Holodeck Suite,Entertainment,950.0
+AMN-013,HTL-006,Plasma Pool,Wellness,275.0
+AMN-014,HTL-006,Cryo Sleep Chamber,Wellness,800.0
+AMN-015,HTL-007,Zero-G Spa,Wellness,425.0
+AMN-016,HTL-007,Spacewalk Tour,Adventure,1750.0
+AMN-017,HTL-007,Nebula Dining,Dining,480.0
+AMN-018,HTL-008,Asteroid Observation Deck,Entertainment,150.0
+AMN-019,HTL-008,Holodeck Suite,Entertainment,1100.0
+AMN-020,HTL-008,Plasma Pool,Wellness,350.0
+AMN-021,HTL-009,Cryo Sleep Chamber,Wellness,900.0
+AMN-022,HTL-009,Zero-G Spa,Wellness,600.0
+AMN-023,HTL-009,Spacewalk Tour,Adventure,1950.0
+AMN-024,HTL-010,Nebula Dining,Dining,700.0
+AMN-025,HTL-010,Holodeck Suite,Entertainment,1350.0
+AMN-026,HTL-010,Asteroid Observation Deck,Entertainment,0.0
+AMN-027,HTL-001,Plasma Pool,Wellness,325.0
+AMN-028,HTL-003,Cryo Sleep Chamber,Wellness,850.0
+AMN-029,HTL-004,Nebula Dining,Dining,525.0
+AMN-030,HTL-002,Spacewalk Tour,Adventure,1650.0
