@@ -30,11 +30,8 @@ def _get_config():
 
 def _get_phase(config) -> str:
     """Derive phase from config state — no separate phase tracking.
-    Ready if: mage was used (mode+domain set) OR project was already built (app deployed)."""
+    Ready if mage was used (mode+domain both set)."""
     if config.get("mage.mode") and config.get("mage.domain"):
-        return "ready"
-    # Legacy: project built before mage config existed
-    if config.get("app.name") and config.get("workspace.unity_catalog_schema"):
         return "ready"
     return "startup"
 
@@ -141,7 +138,7 @@ async def _handle_startup(user_message: str, sse_queue: asyncio.Queue, mode_from
             async with httpx.AsyncClient(base_url=f"http://localhost:{port}", timeout=10) as c:
                 resp = await c.post("/api/projects", json={"name": name})
                 if resp.status_code == 409:
-                    await c.post(f"/api/projects/{name}/load")
+                    await c.get(f"/api/projects/{name}")
                 elif resp.status_code != 200:
                     await sse_queue.put({"event": "error", "data": {"message": f"Failed to create project: {resp.text}"}})
                     return True

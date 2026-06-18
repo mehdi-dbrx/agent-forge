@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Wand2, RotateCcw } from 'lucide-react'
 import { ProgressStepper } from './ProgressStepper'
+import { DynamicCard } from './DynamicCard'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -23,9 +24,10 @@ interface ChoiceOption {
 }
 
 interface MageMessage {
-  role: 'user' | 'assistant' | 'progress' | 'error' | 'tool' | 'stepper' | 'choice'
+  role: 'user' | 'assistant' | 'progress' | 'error' | 'tool' | 'stepper' | 'choice' | 'card'
   text: string
   choices?: ChoiceOption[]
+  cardData?: Record<string, unknown>
   toolName?: string
   toolArgs?: Record<string, unknown>
 }
@@ -161,6 +163,9 @@ export function MageView() {
                     description: o.description,
                   })),
                 })
+                break
+              case 'card':
+                appendMessage({ role: 'card', text: parsed.title || '', cardData: parsed })
                 break
               case 'tool_call':
                 if (mode === 'author') {
@@ -346,6 +351,10 @@ export function MageView() {
             ) : msg.role === 'error' ? (
               <div className="max-w-[85%] px-3 py-2 rounded-2xl rounded-bl-sm bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
                 {msg.text}
+              </div>
+            ) : msg.role === 'card' && msg.cardData ? (
+              <div className="max-w-[85%]">
+                <DynamicCard {...msg.cardData as any} sendMessage={sendMessage} />
               </div>
             ) : msg.role === 'tool' ? (
               <div className="px-2 py-1 rounded-md bg-dbx-gray-50 dark:bg-dbx-gray-900 border border-dbx-gray-200 dark:border-dbx-gray-800 text-[10px] font-mono text-dbx-gray-400">

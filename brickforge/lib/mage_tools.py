@@ -153,6 +153,26 @@ class MageToolkit:
 
         return "Spec presented to user. Do NOT repeat or rephrase it. Wait for their confirmation."
 
+    async def suggest_extras(self) -> str:
+        """Present a selector card with all available features and bricks.
+        Call this during discovery, BEFORE presenting the spec.
+        The user toggles what they want, clicks confirm, and their selections come back as a message."""
+        items = [
+            {"key": "CHART", "label": "Charts", "description": "Inline visualizations in chat (bar, line, area, pie)", "default": True, "ready": True},
+            {"key": "VISION", "label": "Vision", "description": "Image upload and analysis in chat", "default": False, "ready": True},
+            {"key": "PERSONAS", "label": "Personas", "description": "Role selector in chat (Agent / Manager)", "default": False, "ready": True},
+            {"key": "MEMORY", "label": "Memory", "description": "Persistent conversation history across sessions", "default": False, "ready": False},
+            {"key": "VOICE", "label": "Voice", "description": "Speech-to-text input in chat", "default": False, "ready": False},
+            {"key": "DASHBOARD", "label": "Dashboard", "description": "Live data tables on the chat home page", "default": False, "ready": False},
+            {"key": "KA", "label": "Knowledge Assistant", "description": "RAG-powered document search with cited sources", "default": False, "ready": False},
+            {"key": "INFO_EXTRACTION", "label": "Info Extraction", "description": "Extract structured data from unstructured text", "default": False, "ready": False},
+            {"key": "DOC_PARSING", "label": "Doc Parsing", "description": "Parse PDFs, Word docs, and HTML into structured content", "default": False, "ready": False},
+            {"key": "TEXT_CLASSIFICATION", "label": "Text Classification", "description": "Categorize text into custom classes", "default": False, "ready": False},
+        ]
+        card = {"type": "selector", "title": "Choose extras for your agent", "items": items}
+        await self.sse_queue.put({"event": "card", "data": card})
+        return "Extras selector presented to user. Wait for their response. They will select features and click Confirm. For items with ready=false, acknowledge their selection but explain the feature is coming soon."
+
     # ── Direct build tools (no subprocess, no gen endpoint) ───────────────
 
     async def generate_routine(self, query_spec: dict) -> str:
@@ -398,7 +418,41 @@ class MageToolkit:
             if proc.returncode != 0:
                 return result + "\n[x] CSV data load failed"
             await self.sse_queue.put({"event": "progress", "data": {"line": "[+] CSV data loaded\n"}})
-            result += "\nCSV data loaded into tables."
+
+            # Verify data is actually in the tables
+            schema = os.environ.get("PROJECT_UNITY_CATALOG_SCHEMA", "")
+            if schema:
+                from databricks.sdk import WorkspaceClient
+                from databricks.sdk.service.sql import ExecuteStatementRequestOnWaitTimeout, Format, Disposition
+                w = WorkspaceClient()
+                wh_id = os.environ.get("DATABRICKS_WAREHOUSE_ID", "")
+                all_ok = True
+                for csv_file in csv_files:
+                    table_name = csv_file.stem.replace("-", "_")
+                    try:
+                        resp = w.statement_execution.execute_statement(
+                            warehouse_id=wh_id,
+                            statement=f"SELECT COUNT(*) FROM {schema}.{table_name}",
+                            wait_timeout="15s",
+                            on_wait_timeout=ExecuteStatementRequestOnWaitTimeout.CONTINUE,
+                            format=Format.JSON_ARRAY,
+                            disposition=Disposition.INLINE,
+                        )
+                        count = 0
+                        if resp.result and resp.result.data_array:
+                            count = int(resp.result.data_array[0][0] or 0)
+                        if count > 0:
+                            await self.sse_queue.put({"event": "progress", "data": {"line": f"[+] {table_name}: {count} rows\n"}})
+                        else:
+                            await self.sse_queue.put({"event": "progress", "data": {"line": f"[x] {table_name}: 0 rows — data load failed\n"}})
+                            all_ok = False
+                    except Exception as e:
+                        await self.sse_queue.put({"event": "progress", "data": {"line": f"[x] {table_name}: verify failed — {e}\n"}})
+                        all_ok = False
+                if not all_ok:
+                    return result + "\n[x] Some tables have no data — check CSV loading"
+
+            result += "\nCSV data loaded and verified."
 
         return result
 
@@ -589,6 +643,7 @@ class MageToolkit:
             ("read_deploy_status", self.read_deploy_status, "Get app deploy status", Empty),
             ("create_project", self.create_project, "Create a new project", NameParam),
             ("present_spec", self.present_spec, "Present the agent spec for user approval. Call this after discovery with a structured spec JSON containing entities, actions, lifecycle, and naming.", SpecParam),
+            ("suggest_extras", self.suggest_extras, "Present a selector card with all available features and bricks. Call during discovery, BEFORE presenting the spec.", Empty),
         ]
 
     def _exec_tool_specs(self):
@@ -675,6 +730,7 @@ class MageToolkit:
             "read_deploy_status": self.read_deploy_status,
             "create_project": self.create_project,
             "present_spec": self.present_spec,
+            "suggest_extras": self.suggest_extras,
             "save_config": self.save_config,
             "generate_routine": self.generate_routine,
             "create_tables_sql": self.create_tables_sql,

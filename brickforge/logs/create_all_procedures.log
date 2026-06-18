@@ -428,3 +428,73 @@ OK place_order.sql
 Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/register_customer.sql
 OK register_customer.sql
 === create_all_procedures completed ===
+=== create_all_procedures started 2026-06-18T00:27:52.333941 ===
+
+═══ place_order.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/place_order.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[MISSING_CLAUSES_FOR_OPERATION] Missing clause SQL SECURITY for operation CREATE PROCEDURE. Please add the required clauses. SQLSTATE: 42601
+== SQL (line 2, position 1) ==
+LANGUAGE SQL
+^^^^^^^^^^^^
+  ✗ place_order.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[MISSING_CLAUSES_FOR_OPERATION] Missing clause SQL SECURITY for operation CREATE PROCEDURE. Please add the required clauses. SQLSTATE: 42601
+== SQL (line 2, position 1) ==
+LANGUAGE SQL
+^^^^^^^^^^^^
+Aborting after place_order.sql failed
+=== create_all_procedures started 2026-06-18T00:28:00.364428 ===
+
+═══ place_order.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/place_order.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[MISSING_CLAUSES_FOR_OPERATION] Missing clause SQL SECURITY for operation CREATE PROCEDURE. Please add the required clauses. SQLSTATE: 42601
+== SQL (line 2, position 1) ==
+LANGUAGE SQL
+^^^^^^^^^^^^
+  ✗ place_order.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[MISSING_CLAUSES_FOR_OPERATION] Missing clause SQL SECURITY for operation CREATE PROCEDURE. Please add the required clauses. SQLSTATE: 42601
+== SQL (line 2, position 1) ==
+LANGUAGE SQL
+^^^^^^^^^^^^
+Aborting after place_order.sql failed
+=== create_all_procedures started 2026-06-18T00:28:14.663184 ===
+
+═══ place_order.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/place_order.sql
+OK place_order.sql
+
+═══ register_customer.sql (2/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/register_customer.sql
+OK register_customer.sql
+=== create_all_procedures completed ===
+=== create_all_procedures started 2026-06-18T00:28:24.555749 ===
+
+═══ place_order.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/place_order.sql
+OK place_order.sql
+
+═══ register_customer.sql (2/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/register_customer.sql
+OK register_customer.sql
+=== create_all_procedures completed ===

@@ -2,7 +2,7 @@
 
 All generated artifacts (prompts, SQL, CSVs) are scoped per project.
 PROJECT_DIR env var points to the active project's artifact directory.
-Falls back to package-level dirs when not set.
+No fallback to package-level dirs — if no project is active, fail loud.
 """
 import os
 from pathlib import Path
@@ -17,25 +17,23 @@ def get_project_dir() -> Path | None:
 
 
 def prompt_dir() -> Path:
-    """Prompt directory: project-scoped if active, else package-level.
-    When a project is active, always uses the project dir (no fallback to shared)."""
+    """Prompt directory: project-scoped only. Raises if no project active."""
     pd = get_project_dir()
     if pd:
         d = pd / "prompt"
         d.mkdir(parents=True, exist_ok=True)
         return d
-    return PACKAGE_ROOT / "conf" / "prompt"
+    raise RuntimeError("No active project. PROJECT_DIR not set. Create or load a project first.")
 
 
 def gen_dir() -> Path:
-    """Gen artifact directory: project-scoped if active, else package-level.
-    When a project is active, always uses the project dir (no fallback to shared)."""
+    """Gen artifact directory: project-scoped only. Raises if no project active."""
     pd = get_project_dir()
     if pd:
         d = pd / "gen"
         d.mkdir(parents=True, exist_ok=True)
         return d
-    return PACKAGE_ROOT / "data" / "gen"
+    raise RuntimeError("No active project. PROJECT_DIR not set. Create or load a project first.")
 
 
 def init_artifact_dirs(artifact_dir: Path) -> None:

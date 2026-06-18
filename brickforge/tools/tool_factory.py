@@ -7,8 +7,11 @@ Action tools call UC stored procedures.
 Two tool patterns:
   1. SQL read  -- calls a UC function: SELECT * FROM TABLE(schema.func(args))
   2. Action    -- calls a UC stored procedure: CALL schema.proc(args)
+
+Both return ```card``` code fences for visual rendering in the chat UI.
 """
 
+import json
 import logging
 import re
 
@@ -19,13 +22,23 @@ from tools.sql_executor import (
     _escape_sql_string,
     execute_query,
     execute_statement,
-    format_query_result,
     get_warehouse,
 )
 
 _log = logging.getLogger(__name__)
 
 _SAFE_NAME_RE = re.compile(r"[^a-zA-Z0-9_]")
+
+
+def _humanize(name: str) -> str:
+    """Convert snake_case tool/param names to readable titles.
+    browse_menu -> 'Browse Menu', p_customer_name -> 'Customer Name'."""
+    s = name.lstrip("p_") if name.startswith("p_") else name
+    return s.replace("_", " ").title()
+
+
+def _card_fence(card: dict) -> str:
+    return f"```card\n{json.dumps(card)}\n```"
 
 
 # ---------------------------------------------------------------------------
@@ -57,10 +70,14 @@ def create_sql_read_tool(
             )
             stmt = f"SELECT * FROM {schema}.{safe_func}({args_sql})"
             columns, rows = execute_query(w, wh_id, stmt)
-            return format_query_result(columns, rows)
+            title = _humanize(name.removeprefix("query_"))
+            card = {"type": "list", "title": title, "columns": columns, "rows": rows}
+            return _card_fence(card)
         except Exception as e:
             _log.error("SQL-read tool %s failed: %s (type: %s)", name, e, type(e).__name__, exc_info=True)
-            return f"Error executing {name}: {type(e).__name__}: {e}"
+            card = {"type": "error", "title": f"{_humanize(name)} Failed",
+                    "fields": [{"label": "Error", "value": f"{type(e).__name__}: {e}"}]}
+            return _card_fence(card)
 
     sql_read_tool.__name__ = name
     sql_read_tool.name = name
@@ -101,11 +118,18 @@ def create_action_tool(
             stmt = f"CALL {schema}.{safe_proc}({args_sql})"
             _log.info("Action tool %s: %s", name, stmt)
             execute_statement(w, wh_id, stmt)
-            param_summary = ", ".join(f"{p}={kwargs.get(p, '')}" for p in params)
-            return f"Procedure {safe_proc} executed successfully ({param_summary})."
+            title = _humanize(name)
+            fields = [
+                {"label": _humanize(p), "value": str(kwargs.get(p, ""))}
+                for p in params
+            ]
+            card = {"type": "confirmation", "title": f"{title} Completed", "fields": fields}
+            return _card_fence(card)
         except Exception as e:
             _log.error("Action tool %s failed: %s (type: %s)", name, e, type(e).__name__, exc_info=True)
-            return f"Error executing {name}: {type(e).__name__}: {e}"
+            card = {"type": "error", "title": f"{_humanize(name)} Failed",
+                    "fields": [{"label": "Error", "value": f"{type(e).__name__}: {e}"}]}
+            return _card_fence(card)
 
     action_tool.__name__ = name
     action_tool.name = name
