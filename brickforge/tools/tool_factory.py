@@ -33,7 +33,7 @@ _SAFE_NAME_RE = re.compile(r"[^a-zA-Z0-9_]")
 def _humanize(name: str) -> str:
     """Convert snake_case tool/param names to readable titles.
     browse_menu -> 'Browse Menu', p_customer_name -> 'Customer Name'."""
-    s = name.lstrip("p_") if name.startswith("p_") else name
+    s = name.removeprefix("p_")
     return s.replace("_", " ").title()
 
 
