@@ -191,6 +191,7 @@ class MageToolkit:
         Uses the SQL template engine - deterministic, no LLM writes SQL.
         Returns the generated SQL string."""
         from brickforge.data.gen.sql_template_engine import generate_sql, validate_spec, build_schema_lookup
+        from brickforge.lib.project_paths import gen_dir
 
         # Load table schemas from config
         from brickforge.server import config as _config
