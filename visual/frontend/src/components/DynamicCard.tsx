@@ -1,24 +1,49 @@
-import { memo, useState } from 'react'
+import { memo, useState } from 'react';
 
-interface SelectorItem {
-  key: string
-  label: string
-  description: string
-  default?: boolean
-  ready?: boolean
+export interface SelectorItem {
+  key: string;
+  label: string;
+  description: string;
+  default?: boolean;
+  ready?: boolean;
 }
 
-interface DynamicCardProps {
-  type: 'confirmation' | 'info' | 'list' | 'error' | 'warning' | 'selector'
-  title: string
-  fields?: { label: string; value: string }[]
-  columns?: string[]
-  rows?: (string | number | null)[][]
-  items?: SelectorItem[]
-  sendMessage?: (text: string, extra?: Record<string, unknown>) => void
+export interface DynamicCardProps {
+  type: 'confirmation' | 'info' | 'list' | 'error' | 'warning' | 'selector';
+  title: string;
+  fields?: { label: string; value: string }[];
+  columns?: string[];
+  rows?: (string | number | null)[][];
+  items?: SelectorItem[];
+  sendMessage?: (text: string, extra?: Record<string, unknown>) => void;
+  theme?: 'default' | 'dbx';
 }
 
-const COLOR_MAP = {
+// Neutral palette per theme — semantic colors (green/blue/red/amber) are shared
+const NEUTRAL = {
+  default: {
+    border: 'border-gray-200 dark:border-gray-700',
+    bg: 'bg-white dark:bg-gray-800/60',
+    header: 'text-gray-700 dark:text-gray-300',
+    label: 'text-gray-500 dark:text-gray-400',
+    value: 'text-gray-800 dark:text-gray-200',
+    muted: 'text-gray-400 dark:text-gray-500',
+    toggleOff: 'bg-gray-300 dark:bg-gray-600',
+    confirm: 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-800',
+  },
+  dbx: {
+    border: 'border-dbx-gray-200 dark:border-dbx-gray-700',
+    bg: 'bg-white dark:bg-dbx-gray-800/60',
+    header: 'text-dbx-gray-700 dark:text-dbx-gray-300',
+    label: 'text-dbx-gray-500 dark:text-dbx-gray-400',
+    value: 'text-dbx-gray-800 dark:text-dbx-gray-200',
+    muted: 'text-dbx-gray-400 dark:text-dbx-gray-500',
+    toggleOff: 'bg-dbx-gray-300 dark:bg-dbx-gray-600',
+    confirm: 'bg-dbx-orange text-white hover:bg-dbx-orange/90',
+  },
+} as const;
+
+const SEMANTIC = {
   confirmation: {
     border: 'border-green-200 dark:border-green-800',
     bg: 'bg-green-50 dark:bg-green-900/20',
@@ -30,12 +55,6 @@ const COLOR_MAP = {
     bg: 'bg-blue-50 dark:bg-blue-900/20',
     header: 'text-blue-700 dark:text-blue-400',
     icon: '\u2139',
-  },
-  list: {
-    border: 'border-dbx-gray-200 dark:border-dbx-gray-700',
-    bg: 'bg-white dark:bg-dbx-gray-800/60',
-    header: 'text-dbx-gray-700 dark:text-dbx-gray-300',
-    icon: '',
   },
   error: {
     border: 'border-red-200 dark:border-red-800',
@@ -49,43 +68,41 @@ const COLOR_MAP = {
     header: 'text-amber-700 dark:text-amber-400',
     icon: '\u26A0',
   },
-  selector: {
-    border: 'border-dbx-gray-200 dark:border-dbx-gray-700',
-    bg: 'bg-white dark:bg-dbx-gray-800/60',
-    header: 'text-dbx-gray-700 dark:text-dbx-gray-300',
-    icon: '',
-  },
-} as const
+} as const;
 
 export const DynamicCard = memo(function DynamicCard(props: DynamicCardProps) {
-  const { type, title, fields, columns, rows, items, sendMessage } = props
-  const colors = COLOR_MAP[type] || COLOR_MAP.info
+  const { type, title, fields, columns, rows, items, sendMessage, theme = 'default' } = props;
+  const n = NEUTRAL[theme];
+  const sem = SEMANTIC[type as keyof typeof SEMANTIC];
+  const colors = sem
+    ? { border: sem.border, bg: sem.bg, header: sem.header, icon: sem.icon }
+    : { border: n.border, bg: n.bg, header: n.header, icon: '' };
 
   const [selections, setSelections] = useState<Record<string, boolean>>(() => {
-    if (!items) return {}
-    return Object.fromEntries(items.map(i => [i.key, i.default ?? false]))
-  })
-  const [confirmed, setConfirmed] = useState(false)
+    if (!items) return {};
+    return Object.fromEntries(items.map(i => [i.key, i.default ?? false]));
+  });
+  const [confirmed, setConfirmed] = useState(false);
 
   const handleToggle = (key: string) => {
-    if (confirmed) return
-    setSelections(prev => ({ ...prev, [key]: !prev[key] }))
-  }
+    if (confirmed) return;
+    setSelections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const handleConfirm = () => {
-    if (confirmed || !sendMessage) return
-    setConfirmed(true)
+    if (confirmed || !sendMessage) return;
+    setConfirmed(true);
     const selected = Object.entries(selections)
       .filter(([, v]) => v)
-      .map(([k]) => k)
+      .map(([k]) => k);
     const labels = (items || [])
       .filter(i => selected.includes(i.key))
-      .map(i => i.label)
+      .map(i => i.label);
     const text = labels.length > 0
       ? `Selected: ${labels.join(', ')}`
-      : 'No extras selected'
-    sendMessage(text, { type: 'card_action', selections: selected })
-  }
+      : 'No extras selected';
+    sendMessage(text, { type: 'card_action', selections: selected });
+  };
 
   return (
     <div
@@ -103,8 +120,8 @@ export const DynamicCard = memo(function DynamicCard(props: DynamicCardProps) {
         <div className="border-t border-inherit px-4 py-2">
           {fields.map((f, i) => (
             <div key={i} className="flex justify-between py-1 text-xs">
-              <span className="text-dbx-gray-500 dark:text-dbx-gray-400">{f.label}</span>
-              <span className="font-medium text-dbx-gray-800 dark:text-dbx-gray-200">{f.value}</span>
+              <span className={n.label}>{f.label}</span>
+              <span className={`font-medium ${n.value}`}>{f.value}</span>
             </div>
           ))}
         </div>
@@ -118,7 +135,7 @@ export const DynamicCard = memo(function DynamicCard(props: DynamicCardProps) {
               <thead>
                 <tr className="border-b border-inherit">
                   {columns.map((col, i) => (
-                    <th key={i} className="px-3 py-1.5 text-left font-medium text-dbx-gray-500 dark:text-dbx-gray-400">
+                    <th key={i} className={`px-3 py-1.5 text-left font-medium ${n.label}`}>
                       {col}
                     </th>
                   ))}
@@ -128,7 +145,7 @@ export const DynamicCard = memo(function DynamicCard(props: DynamicCardProps) {
                 {rows.map((row, i) => (
                   <tr key={i} className="border-b border-inherit last:border-b-0">
                     {row.map((cell, j) => (
-                      <td key={j} className="px-3 py-1.5 text-dbx-gray-800 dark:text-dbx-gray-200">
+                      <td key={j} className={`px-3 py-1.5 ${n.value}`}>
                         {cell ?? ''}
                       </td>
                     ))}
@@ -137,7 +154,7 @@ export const DynamicCard = memo(function DynamicCard(props: DynamicCardProps) {
               </tbody>
             </table>
           ) : (
-            <div className="px-4 py-3 text-xs text-dbx-gray-400 dark:text-dbx-gray-500">
+            <div className={`px-4 py-3 text-xs ${n.muted}`}>
               No results found
             </div>
           )}
@@ -153,8 +170,8 @@ export const DynamicCard = memo(function DynamicCard(props: DynamicCardProps) {
               className={`flex items-center justify-between px-4 py-2.5 border-b border-inherit last:border-b-0 ${confirmed ? 'opacity-60' : ''}`}
             >
               <div className="flex-1 min-w-0 mr-3">
-                <div className="text-xs font-medium text-dbx-gray-800 dark:text-dbx-gray-200">{item.label}</div>
-                <div className="text-[10px] text-dbx-gray-400 dark:text-dbx-gray-500">{item.description}</div>
+                <div className={`text-xs font-medium ${n.value}`}>{item.label}</div>
+                <div className={`text-[10px] ${n.muted}`}>{item.description}</div>
               </div>
               <button
                 type="button"
@@ -163,7 +180,7 @@ export const DynamicCard = memo(function DynamicCard(props: DynamicCardProps) {
                 className={`relative w-8 h-4.5 rounded-full transition-colors ${
                   selections[item.key]
                     ? 'bg-purple-500'
-                    : 'bg-dbx-gray-300 dark:bg-dbx-gray-600'
+                    : n.toggleOff
                 } ${confirmed ? 'cursor-default' : 'cursor-pointer'}`}
               >
                 <span
@@ -179,7 +196,7 @@ export const DynamicCard = memo(function DynamicCard(props: DynamicCardProps) {
               <button
                 type="button"
                 onClick={handleConfirm}
-                className="w-full px-3 py-1.5 rounded-lg bg-dbx-orange text-white text-xs font-medium hover:bg-dbx-orange/90 transition-opacity"
+                className={`w-full px-3 py-1.5 rounded-lg text-xs font-medium transition-opacity ${n.confirm}`}
               >
                 Confirm
               </button>
@@ -188,5 +205,5 @@ export const DynamicCard = memo(function DynamicCard(props: DynamicCardProps) {
         </div>
       )}
     </div>
-  )
-})
+  );
+});

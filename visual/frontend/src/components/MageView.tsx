@@ -359,7 +359,7 @@ export function MageView() {
               </div>
             ) : msg.role === 'card' && msg.cardData ? (
               <div className="max-w-[85%]">
-                <DynamicCard {...msg.cardData as any} sendMessage={sendMessage} />
+                <DynamicCard {...msg.cardData as any} sendMessage={sendMessage} theme="dbx" />
               </div>
             ) : msg.role === 'tool' ? (
               <div className="px-2 py-1 rounded-md bg-dbx-gray-50 dark:bg-dbx-gray-900 border border-dbx-gray-200 dark:border-dbx-gray-800 text-[10px] font-mono text-dbx-gray-400">

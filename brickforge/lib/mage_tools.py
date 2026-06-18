@@ -153,22 +153,33 @@ class MageToolkit:
 
         return "Spec presented to user. Do NOT repeat or rephrase it. Wait for their confirmation."
 
+    # Features/bricks that are fully wired and work on toggle alone
+    _READY_EXTRAS = {"CHART", "VISION", "PERSONAS"}
+
     async def suggest_extras(self) -> str:
         """Present a selector card with all available features and bricks.
         Call this during discovery, BEFORE presenting the spec.
         The user toggles what they want, clicks confirm, and their selections come back as a message."""
-        items = [
-            {"key": "CHART", "label": "Charts", "description": "Inline visualizations in chat (bar, line, area, pie)", "default": True, "ready": True},
-            {"key": "VISION", "label": "Vision", "description": "Image upload and analysis in chat", "default": False, "ready": True},
-            {"key": "PERSONAS", "label": "Personas", "description": "Role selector in chat (Agent / Manager)", "default": False, "ready": True},
-            {"key": "MEMORY", "label": "Memory", "description": "Persistent conversation history across sessions", "default": False, "ready": False},
-            {"key": "VOICE", "label": "Voice", "description": "Speech-to-text input in chat", "default": False, "ready": False},
-            {"key": "DASHBOARD", "label": "Dashboard", "description": "Live data tables on the chat home page", "default": False, "ready": False},
-            {"key": "KA", "label": "Knowledge Assistant", "description": "RAG-powered document search with cited sources", "default": False, "ready": False},
-            {"key": "INFO_EXTRACTION", "label": "Info Extraction", "description": "Extract structured data from unstructured text", "default": False, "ready": False},
-            {"key": "DOC_PARSING", "label": "Doc Parsing", "description": "Parse PDFs, Word docs, and HTML into structured content", "default": False, "ready": False},
-            {"key": "TEXT_CLASSIFICATION", "label": "Text Classification", "description": "Categorize text into custom classes", "default": False, "ready": False},
-        ]
+        from brickforge.routes.setup import FEATURE_REGISTRY, BRICKS_REGISTRY
+
+        items = []
+        for key, meta in FEATURE_REGISTRY.items():
+            items.append({
+                "key": key,
+                "label": meta["label"],
+                "description": meta["desc"],
+                "default": meta["default"].lower() == "true",
+                "ready": key in self._READY_EXTRAS,
+            })
+        for key, meta in BRICKS_REGISTRY.items():
+            items.append({
+                "key": key,
+                "label": meta["label"],
+                "description": meta["desc"],
+                "default": meta["default"].lower() == "true",
+                "ready": key in self._READY_EXTRAS,
+            })
+
         card = {"type": "selector", "title": "Choose extras for your agent", "items": items}
         await self.sse_queue.put({"event": "card", "data": card})
         return "Extras selector presented to user. Wait for their response. They will select features and click Confirm. For items with ready=false, acknowledge their selection but explain the feature is coming soon."
