@@ -315,18 +315,22 @@ class MageAgent:
 
     async def init_llm(self, host: str, token: str | None = None) -> str | None:
         """Initialize LLM. Returns model name on success, None on failure."""
-        model = detect_fmapi_model(host, token)
-        if not model:
+        try:
+            model = detect_fmapi_model(host, token)
+            if not model:
+                return None
+
+            # Set env vars for ChatDatabricks - use what's available
+            os.environ["DATABRICKS_HOST"] = host
+            if token:
+                os.environ["DATABRICKS_TOKEN"] = token
+
+            self.llm = ChatDatabricks(endpoint=model)
+            self.llm_with_tools = self.llm.bind_tools(self.toolkit.get_tools(phase="discovery"))
+            return model
+        except Exception as e:
+            print(f"[mage] LLM init failed: {e}")
             return None
-
-        # Set env vars for ChatDatabricks - use what's available
-        os.environ["DATABRICKS_HOST"] = host
-        if token:
-            os.environ["DATABRICKS_TOKEN"] = token
-
-        self.llm = ChatDatabricks(endpoint=model)
-        self.llm_with_tools = self.llm.bind_tools(self.toolkit.get_tools(phase="discovery"))
-        return model
 
     def _upgrade_to_build_phase(self):
         """Rebind LLM with full tool set after spec confirmation."""

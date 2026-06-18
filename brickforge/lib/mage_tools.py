@@ -113,10 +113,18 @@ class MageToolkit:
         # Validate required fields
         if not isinstance(spec, dict):
             return "Invalid spec: must be a JSON object"
-        if not spec.get("entities"):
-            return "Invalid spec: must include 'entities' (list of tables with fields)"
-        if not spec.get("actions"):
-            return "Invalid spec: must include 'actions' (list of functions/procedures)"
+        entities = spec.get("entities")
+        actions = spec.get("actions")
+        if not entities or not isinstance(entities, list):
+            return "Invalid spec: 'entities' must be a non-empty list of tables with fields"
+        if not actions or not isinstance(actions, list):
+            return "Invalid spec: 'actions' must be a non-empty list of functions/procedures"
+        for e in entities:
+            if not isinstance(e, dict) or not e.get("name"):
+                return f"Invalid entity: each entity must be a dict with 'name'. Got: {e}"
+        for a in actions:
+            if not isinstance(a, dict) or not a.get("name") or not a.get("type"):
+                return f"Invalid action: each action must have 'name' and 'type'. Got: {a}"
 
         # Store the structured spec
         self.spec_json = spec
@@ -572,6 +580,7 @@ class MageToolkit:
                 try:
                     parsed = json.loads(data)
                 except json.JSONDecodeError:
+                    print(f"[mage] malformed SSE data: {data[:100]}")
                     continue
 
                 if current_event == "result":
