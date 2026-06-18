@@ -141,12 +141,6 @@ async def create_project(request: Request):
         fresh["model"]["endpoint"] = active_model.get("endpoint")
         fresh["model"]["token"] = active_model.get("token")
 
-    # Carry over mage state (domain/mode set during startup, before project creation)
-    active_mage = config._data.get("mage", {}) if hasattr(config, '_data') else {}
-    if active_mage.get("domain"):
-        fresh["mage"]["domain"] = active_mage.get("domain")
-        fresh["mage"]["mode"] = active_mage.get("mode")
-
     project_file.write_text(json.dumps(fresh, indent=2) + "\n")
 
     # Create artifact directory

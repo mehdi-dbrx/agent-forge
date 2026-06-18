@@ -21,6 +21,9 @@ router = APIRouter(prefix="/api/mage", tags=["mage"])
 _agent: MageAgent | None = None
 _model: str | None = None
 _startup_step: int = 0
+_startup_domain: str = ""
+_startup_mode: str | None = None
+_force_startup: bool = False
 
 
 def _get_config():
@@ -29,8 +32,10 @@ def _get_config():
 
 
 def _get_phase(config) -> str:
-    """Derive phase from config state — no separate phase tracking.
-    Ready if mage was used (mode+domain both set)."""
+    """Derive phase from config state.
+    _force_startup overrides (set by reset, cleared by project creation)."""
+    if _force_startup:
+        return "startup"
     if config.get("mage.mode") and config.get("mage.domain"):
         return "ready"
     return "startup"
@@ -80,14 +85,14 @@ async def _init_agent(sse_queue: asyncio.Queue, config, preamble: str):
 
 async def _handle_startup(user_message: str, sse_queue: asyncio.Queue, mode_from_ui: str | None = None):
     """Handle scripted startup steps. Returns True if still in startup."""
-    global _startup_step
+    global _startup_step, _startup_domain, _startup_mode, _force_startup
     config = _get_config()
 
     if _startup_step == 0:
-        # Store domain in config
-        config.set("mage.domain", user_message)
+        # Store domain + mode locally — do NOT write to config yet (project doesn't exist)
+        _startup_domain = user_message
         if mode_from_ui in ("magic", "author"):
-            config.set("mage.mode", mode_from_ui)
+            _startup_mode = mode_from_ui
 
         # Use LLM to suggest 3 short project names from the description
         host = config.get("workspace.host") or os.environ.get("DATABRICKS_HOST", "")
@@ -146,10 +151,14 @@ async def _handle_startup(user_message: str, sse_queue: asyncio.Queue, mode_from
             await sse_queue.put({"event": "error", "data": {"message": f"Failed to create project: {e}"}})
             return True
 
-        # Re-read config after project creation (it switches the active config)
+        # Project is now active — write domain + mode to the NEW project's config
+        _force_startup = False
         config = _get_config()
-        mode = config.get("mage.mode")
+        config.set("mage.domain", _startup_domain)
+        if _startup_mode:
+            config.set("mage.mode", _startup_mode)
 
+        mode = config.get("mage.mode")
         if mode:
             mode_label = "Magic" if mode == "magic" else "Author"
             await _init_agent(sse_queue, config, f"Project **{name}** created. **{mode_label}** mode.")
@@ -275,11 +284,13 @@ async def mage_status():
 
     phase = _get_phase(config)
 
+    from brickforge.routes.projects import _read_current
     return JSONResponse({
         "phase": phase,
         "mode": config.get("mage.mode"),
         "domain": config.get("mage.domain") or "",
         "model": model_name,
+        "project": _read_current(),
         "startup_step": _startup_step,
         "prereqs": {
             "workspace": workspace_ok,
@@ -292,14 +303,13 @@ async def mage_status():
 
 @router.post("/reset")
 async def mage_reset():
-    """Reset Mage session."""
-    global _agent, _model, _startup_step
+    """Reset Mage session — starts a new project. Does NOT touch current project's config."""
+    global _agent, _model, _startup_step, _startup_domain, _startup_mode, _force_startup
     _agent = None
     _model = None
     _startup_step = 0
-
-    config = _get_config()
-    config.set("mage.mode", None)
-    config.set("mage.domain", "")
+    _startup_domain = ""
+    _startup_mode = None
+    _force_startup = True
 
     return JSONResponse({"ok": True})

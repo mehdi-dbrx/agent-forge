@@ -50,6 +50,7 @@ export function MageView() {
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [thinking, setThinking] = useState(false)
+  const [project, setProject] = useState<string | null>(null)
   const [mode, setMode] = useState<MageMode>('magic')
   const [phase, setPhase] = useState<string>('startup')
   const [buildStage, setBuildStage] = useState(-1)
@@ -67,6 +68,7 @@ export function MageView() {
         setPhase(data.phase || 'startup')
         if (data.mode) setMode(data.mode)
         if (data.prereqs) setPrereqs(data.prereqs)
+        setProject(data.project || null)
       })
       .catch(() => {})
   }, [])
@@ -311,6 +313,9 @@ export function MageView() {
         <div className="flex items-center gap-2">
           <Wand2 className="w-4 h-4 text-dbx-orange" />
           <span className="text-xs font-medium text-dbx-gray-600 dark:text-dbx-gray-400">Mage</span>
+          {phase === 'ready' && project && (
+            <span className="text-[10px] text-dbx-gray-400 dark:text-dbx-gray-500">/ {project}</span>
+          )}
           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
             mode === 'magic'
               ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
