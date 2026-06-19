@@ -1,0 +1,99 @@
+# STELLAR SLICE — NOVA KNOWLEDGE BASE
+
+---
+
+## ABOUT STELLAR SLICE
+
+- Founded in Stardate 2247 aboard Space Station Mozzarella-9.
+- Delivers to 4,200+ confirmed inhabited locations across 12 star systems.
+- Signature promise: **"Hot in 30 parsecs or your next slice is free."**
+- Fleet of 800+ Warp-Delivery Pods piloted by certified Delivery Cosmonauts.
+- Headquarters: New Naples Orbital Platform, Sector 7-G.
+
+---
+
+## MENU HIGHLIGHTS
+
+### Signature Pizzas
+- **The Milky Way Classic** — Tomato, mozzarella, fresh basil, stardust seasoning.
+- **Nebula Meat Feast** — Pepperoni, sausage, bacon, smoked Venusian ham.
+- **Dark Matter Vegan** — Cashew cheese, roasted cosmic vegetables, truffle oil (vegan, gluten-free crust available).
+- **Supernova Spicy** — Ghost pepper sauce, jalapeños, spicy 'nduja, cooling moon-cream drizzle.
+- **The Black Hole BBQ** — Pulled pork, BBQ sauce, crispy onions, smoked gouda.
+- **Alien Pesto** — Green pesto base, artichoke hearts, sun-dried tomatoes, pine nuts.
+- **Quantum Quattro Formaggi** — Four-cheese blend (mozzarella, gorgonzola, parmesan, provolone).
+
+### Limited Edition / Seasonal
+- **Comet Tail Truffle & Mushroom** — Available Q1 only.
+- **Andromeda Anniversary Special** — Lobster and saffron cream (premium pricing).
+
+### Sides
+- Garlic Meteor Bread, Asteroid Arancini, Saturn Ring Onion Rings, Cosmic Coleslaw.
+
+### Beverages
+- Nebula Sodas (12 flavors), Lunar Lemonade, Zero-G Cold Brew, Starlight Sparkling Water.
+
+### Dietary Options
+- Gluten-free crust available for all pizzas (+2 credits).
+- Vegan cheese available for all pizzas (+1.5 credits).
+- Nut-free, dairy-free, and low-sodium options available — use browse_menu() with filters.
+
+---
+
+## PRICING (Standard Credits)
+- Personal (6") — 8 credits
+- Medium (10") — 14 credits
+- Large (14") — 19 credits
+- Galaxy (18") — 26 credits
+- Extra toppings — 1.5 credits each
+- Delivery fee — 2 credits (waived for Stellar Prime members)
+
+---
+
+## DELIVERY INFORMATION
+
+- **Standard Warp Delivery:** 25–35 parsec-minutes (varies by sector).
+- **Express Hyperdrive Delivery:** 10–15 parsec-minutes (+5 credits).
+- **Scheduled Delivery:** Up to 72 hours in advance.
+- Delivery available to: planets, orbital stations, moon bases, registered deep-space vessels, and asteroid colonies.
+- NOT available to: active combat zones, unregistered vessels, black hole event horizons, or Sector 0 (quarantine).
+
+---
+
+## CUSTOMER ACCOUNTS
+
+- Customers are identified by: Customer ID, registered name, or comm frequency.
+- Profile includes: name, species, delivery coordinates, payment method, order history, dietary preferences.
+- **Stellar Prime Membership:** 25 credits/month — free delivery, 10% off all orders, priority warp routing.
+
+---
+
+## ORDER TRACKING STATUSES
+
+- 🔴 **Order Received** — Transmission confirmed, kitchen crew notified.
+- 🟡 **Preparing** — Your pizza is being crafted with cosmic care.
+- 🟠 **Quality Check** — Final inspection by our Pizza Warden.
+- 🚀 **In Transit** — Delivery pod launched, warp coordinates locked.
+- 🟢 **Arriving** — Pod entering your local airspace/docking bay.
+- ✅ **Delivered** — Enjoy your slice of the universe!
+
+---
+
+## COMMON ISSUES & RESOLUTIONS
+
+| Issue | Resolution |
+|---|---|
+| Order hasn't arrived past ETA | Check track_order(); if delayed >15 min, offer 20% discount on next order |
+| Wrong items delivered | Apologize sincerely; escalate to support@stellarslice.space for redelivery or refund |
+| Customer can't find their order ID | Look up by customer name + approximate order time |
+| Payment declined | Ask customer to update payment method in their profile |
+| Delivery address not found | Verify coordinates; ask for docking bay number or orbital station ID |
+| Item allergy concern | Immediately flag — do not guess; direct to full allergen menu or human support |
+
+---
+
+## ESCALATION
+
+- Refunds: support@stellarslice.space
+- Serious complaints or safety issues: Escalate to human crew immediately.
+- Lost delivery pods: Fleet Control, Frequency 44.7-GHz.

@@ -394,6 +394,27 @@ exec python -c "from agent.start_server import main; main()"
     url = getattr(app_info, "url", "")
     print(f"[+] Agent App: {url}")
 
+    # Poll for app readiness (boot takes 1-3 minutes after deploy)
+    if url:
+        import time as _time
+        import urllib.request
+        print("[~] Waiting for app to start responding...")
+        for attempt in range(30):  # 30 x 10s = 5 min max
+            try:
+                req = urllib.request.Request(url, method="GET")
+                resp = urllib.request.urlopen(req, timeout=5)
+                if resp.status < 500:
+                    print(f"[+] App is live and responding (status {resp.status})")
+                    break
+            except Exception:
+                pass
+            if attempt < 29:
+                _time.sleep(10)
+                if attempt % 3 == 2:
+                    print(f"[~] Still waiting... ({(attempt + 1) * 10}s)")
+        else:
+            print("[~] App did not respond within 5 minutes. It may still be starting.")
+
     return {
         "app_name": app_name,
         "url": url,

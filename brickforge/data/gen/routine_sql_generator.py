@@ -33,6 +33,18 @@ CRITICAL: Use __SCHEMA_QUALIFIED__ as prefix for ALL table and routine names.
 Example: CREATE OR REPLACE FUNCTION __SCHEMA_QUALIFIED__.my_func(...)
 Example: SELECT * FROM __SCHEMA_QUALIFIED__.my_table
 
+CRITICAL: For RETURNS TABLE functions, you MUST qualify all parameter references
+with the function name inside the body. Databricks requires this.
+Correct:
+  CREATE FUNCTION __SCHEMA_QUALIFIED__.search_rooms(p_check_in DATE, p_check_out DATE)
+  RETURNS TABLE (...)
+  RETURN SELECT * FROM rooms WHERE check_in < search_rooms.p_check_out AND check_out > search_rooms.p_check_in
+
+Wrong (will fail with MISSING_ATTRIBUTES error):
+  RETURN SELECT * FROM rooms WHERE check_in < p_check_out AND check_out > p_check_in
+
+The function is called as: SELECT * FROM schema.func(args) — no TABLE() wrapper.
+
 Be minimalist. Write the simplest SQL that works.
 - Only the parameters the user asked for. Nothing extra.
 - Only the columns needed. Nothing extra.
@@ -153,9 +165,40 @@ def _sanitize_sql(sql: str, routine_type: str) -> str:
             raise ValueError("Functions must use RETURN SELECT, not BEGIN...END blocks — rewrite as a single RETURN query")
         # Functions cannot contain write operations
         for kw in ("UPDATE ", "INSERT ", "DELETE "):
-            # Only flag if it's a statement keyword, not inside a column name
             if re.search(rf'^\s*{kw}', sql, re.MULTILINE | re.IGNORECASE):
                 raise ValueError(f"Functions are read-only — cannot contain {kw.strip()} statements")
+
+        # ── Auto-qualify bare parameter references in RETURNS TABLE functions ──
+        # Databricks requires function_name.param_name inside table function bodies
+        if "RETURNS TABLE" in upper:
+            func_name_match = re.search(
+                r'CREATE\s+OR\s+REPLACE\s+FUNCTION\s+(?:__SCHEMA_QUALIFIED__\.)?(\w+)\s*\(',
+                sql, re.IGNORECASE,
+            )
+            param_match = re.search(
+                r'CREATE\s+OR\s+REPLACE\s+FUNCTION\s+\S+\s*\((.*?)\)\s*\n\s*RETURNS',
+                sql, re.DOTALL | re.IGNORECASE,
+            )
+            if func_name_match and param_match:
+                func_name = func_name_match.group(1)
+                params_block = param_match.group(1)
+                param_names = [p.strip().split()[0] for p in params_block.split(',') if p.strip()]
+                # Find the RETURN body (everything after the last RETURN keyword)
+                return_pos = sql.upper().rfind('\nRETURN')
+                if return_pos >= 0:
+                    header = sql[:return_pos]
+                    body = sql[return_pos:]
+                    qualified_any = False
+                    for pname in param_names:
+                        # Only qualify bare references (not already qualified with func_name.)
+                        pattern = rf'(?<!\w\.)(?<!\w)\b({re.escape(pname)})\b'
+                        qualified = f'{func_name}.{pname}'
+                        if qualified not in body and re.search(pattern, body):
+                            body = re.sub(pattern, qualified, body)
+                            qualified_any = True
+                    if qualified_any:
+                        sql = header + body
+                        fixes.append(f"auto-qualified parameter references with {func_name}.")
 
         # ── DEFAULT parameter ordering ──
         param_match = re.search(
@@ -189,6 +232,12 @@ def _sanitize_sql(sql: str, routine_type: str) -> str:
             raise ValueError("Procedure SQL missing CREATE statement")
         if "BEGIN" not in upper or "END" not in upper:
             raise ValueError("Procedure SQL missing BEGIN...END block")
+
+        # ── Ensure SQL SECURITY INVOKER present (required for procedures) ──
+        if "SQL SECURITY INVOKER" not in upper:
+            sql = re.sub(r'(LANGUAGE\s+SQL)\b', r'\1\nSQL SECURITY INVOKER', sql, count=1, flags=re.IGNORECASE)
+            if "SQL SECURITY INVOKER" in sql.upper():
+                fixes.append("added missing SQL SECURITY INVOKER")
 
         # ── Procedure params must be STRING -- auto-fix non-STRING types ──
         param_match = re.search(

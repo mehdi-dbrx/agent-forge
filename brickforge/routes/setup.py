@@ -1802,7 +1802,7 @@ print('[+] Deploy complete', flush=True)
 
         if action in cmd_map:
             cmd = cmd_map[action]
-            async for event in stream_subprocess(cmd, env=sub_env, cwd=PROJECT_ROOT, logger=logger):
+            async for event in stream_subprocess(cmd, env=sub_env, cwd=PACKAGE_ROOT, logger=logger):
                 yield event
             # Reload config if subprocess may have written back (genie ID, mlflow ID, lakebase)
             if action in ("exec-mlflow", "exec-lakebase"):

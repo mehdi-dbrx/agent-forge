@@ -10,9 +10,10 @@ import { DataView } from './components/DataView'
 import { CleanupView } from './components/CleanupView'
 import { KaDocsView } from './components/KaDocsView'
 import { StashHealthView } from './components/StashHealthView'
+import { MageView } from './components/MageView'
 import type { GraphResponse, ArchNode, ArchNodeData } from './types'
 
-type View = 'arch' | 'setup' | 'data' | 'ka' | 'stash' | 'cleanup'
+type View = 'mage' | 'arch' | 'setup' | 'data' | 'ka' | 'stash' | 'cleanup'
 
 interface Project {
   name: string
@@ -513,6 +514,7 @@ export default function App() {
           {/* View tabs */}
           <div className="flex items-center gap-0.5 bg-dbx-gray-100 dark:bg-dbx-gray-800 rounded-lg p-0.5">
             {([
+              ['mage', 'Mage'],
               ['setup', 'Setup'],
               ['data', 'Data'],
               ['stash', 'Assets'],
@@ -594,6 +596,8 @@ export default function App() {
               </ReactFlowProvider>
             ) : null}
           </div>
+        ) : view === 'mage' ? (
+          <MageView />
         ) : view === 'setup' ? (
           <SetupView />
         ) : view === 'data' ? (

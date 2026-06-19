@@ -123,11 +123,11 @@ export function parseResponseBlocks(text: string): ResponseSegment[] {
         segments.push({ type: 'refresh_table', content: inner, parsed: parseRefreshTable(inner) });
       } else if (lang === 'knowledge_base') {
         segments.push({ type: 'knowledge_base', content: inner, parsed: parseKnowledgeBase(inner) });
-      } else if (lang === 'chart') {
-        // Chart block -- parse JSON content for chart rendering
+      } else if (lang === 'chart' || lang === 'card') {
+        // Chart/card block -- parse JSON content for visual rendering
         try {
-          const chartData = JSON.parse(inner.trim());
-          segments.push({ type: 'chart', content: inner, parsed: chartData });
+          const parsed = JSON.parse(inner.trim());
+          segments.push({ type: lang, content: inner, parsed });
         } catch {
           segments.push({ type: 'markdown', content: FENCE + lang + '\n' + inner + FENCE });
         }

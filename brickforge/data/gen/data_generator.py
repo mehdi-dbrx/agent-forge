@@ -6,7 +6,7 @@ from typing import Any
 
 from data.gen.llm_client import call_llm_json
 
-BATCH_SIZE = 30
+BATCH_SIZE = 15
 
 SYSTEM_PROMPT = """\
 You are a synthetic data generator for Databricks Delta tables.
@@ -93,7 +93,7 @@ def generate_data(
     Chunks into batches of BATCH_SIZE for large row counts.
     Returns a list of row dicts.
     """
-    row_count = table.get("row_count", 10)
+    row_count = min(table.get("row_count", 10), 15)  # cap at 15 rows max
     col_names = ", ".join(c["name"] for c in table["columns"])
 
     if row_count <= BATCH_SIZE:

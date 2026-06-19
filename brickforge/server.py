@@ -16,6 +16,7 @@ from brickforge.routes.gen import router as gen_router
 from brickforge.routes.ka import router as ka_router
 from brickforge.routes.cleanup import router as cleanup_router
 from brickforge.routes.projects import router as projects_router
+from brickforge.routes.mage import router as mage_router
 from brickforge.lib.graph_builder import build_graph
 
 DIST_DIR = Path(__file__).resolve().parent / "static"
@@ -167,13 +168,9 @@ async def project_assets():
                         demo.append({"name": f"{subdir}/{f.name}", "size": f.stat().st_size})
     assets["demo"] = demo
 
-    # Manifests
-    manifests = []
-    for mf in ["manifest.json", "routine_manifest.json"]:
-        p = gen_dir / mf
-        if p.exists():
-            manifests.append({"name": mf, "size": p.stat().st_size})
-    assets["manifests"] = manifests
+    # Table schemas from config
+    table_schemas = config.get("data.table_schemas") or []
+    assets["table_schemas"] = [{"name": t["name"], "columns": len(t.get("columns", []))} for t in table_schemas]
 
     total = sum(len(v) for v in assets.values())
     return {"assets": assets, "total": total}
@@ -206,6 +203,7 @@ app.include_router(gen_router)
 app.include_router(ka_router)
 app.include_router(cleanup_router)
 app.include_router(projects_router)
+app.include_router(mage_router)
 
 
 # ── Static files + SPA fallback ──────────────────────────────────────────────

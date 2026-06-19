@@ -41,3 +41,460 @@ OK create_reservation.sql
 Running: /opt/homebrew/opt/python@3.14/bin/python3.14 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-hotel-2/gen/proc/register_new_guest.sql
 OK register_new_guest.sql
 === create_all_procedures completed ===
+=== create_all_procedures started 2026-06-16T15:18:35.725320 ===
+
+═══ create_reservation.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-hotel/gen/proc/create_reservation.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 35, in _wait_for_statement
+    resp = w.statement_execution.execute_statement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/lib/python3.11/site-packages/databricks/sdk/service/sql.py", line 9652, in execute_statement
+    res = self._api.do("POST", "/api/2.0/sql/statements", body=body, headers=headers)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/lib/python3.11/site-packages/databricks/sdk/core.py", line 91, in do
+    return self._api_client.do(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/lib/python3.11/site-packages/databricks/sdk/_base_client.py", line 199, in do
+    response = call(
+               ^^^^^
+  File "/opt/homebrew/lib/python3.11/site-packages/databricks/sdk/retries.py", line 60, in wrapper
+    raise err
+  File "/opt/homebrew/lib/python3.11/site-packages/databricks/sdk/retries.py", line 39, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/lib/python3.11/site-packages/databricks/sdk/_base_client.py", line 301, in _perform
+    raise error from None
+databricks.sdk.errors.platform.PermissionDenied: Invalid access token. [ReqId: 3e6bb8b2-346c-445b-a699-23c6d45a56d8]. Config: host=https://fevm-agent-ops.cloud.databricks.com, token=***, auth_type=pat, warehouse_id=9c331db4250b5300. Env: DATABRICKS_HOST, DATABRICKS_TOKEN, DATABRICKS_WAREHOUSE_ID
+  ✗ create_reservation.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 35, in _wait_for_statement
+    resp = w.statement_execution.execute_statement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/lib/python3.11/site-packages/databricks/sdk/service/sql.py", line 9652, in execute_statement
+    res = self._api.do("POST", "/api/2.0/sql/statements", body=body, headers=headers)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/lib/python3.11/site-packages/databricks/sdk/core.py", line 91, in do
+    return self._api_client.do(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/lib/python3.11/site-packages/databricks/sdk/_base_client.py", line 199, in do
+    response = call(
+               ^^^^^
+  File "/opt/homebrew/lib/python3.11/site-packages/databricks/sdk/retries.py", line 60, in wrapper
+    raise err
+  File "/opt/homebrew/lib/python3.11/site-packages/databricks/sdk/retries.py", line 39, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/lib/python3.11/site-packages/databricks/sdk/_base_client.py", line 301, in _perform
+    raise error from None
+databricks.sdk.errors.platform.PermissionDenied: Invalid access token. [ReqId: 3e6bb8b2-346c-445b-a699-23c6d45a56d8]. Config: host=https://fevm-agent-ops.cloud.databricks.com, token=***, auth_type=pat, warehouse_id=9c331db4250b5300. Env: DATABRICKS_HOST, DATABRICKS_TOKEN, DATABRICKS_WAREHOUSE_ID
+Aborting after create_reservation.sql failed
+=== create_all_procedures started 2026-06-16T21:02:38.947887 ===
+
+═══ cancel_reservation.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/cancel_reservation.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[MISSING_CLAUSES_FOR_OPERATION] Missing clause SQL SECURITY INVOKER for operation CREATE PROCEDURE. Please add the required clauses. SQLSTATE: 42601
+== SQL (line 2, position 1) ==
+LANGUAGE SQL
+^^^^^^^^^^^^
+  ✗ cancel_reservation.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[MISSING_CLAUSES_FOR_OPERATION] Missing clause SQL SECURITY INVOKER for operation CREATE PROCEDURE. Please add the required clauses. SQLSTATE: 42601
+== SQL (line 2, position 1) ==
+LANGUAGE SQL
+^^^^^^^^^^^^
+Aborting after cancel_reservation.sql failed
+=== create_all_procedures started 2026-06-16T21:03:08.478696 ===
+
+═══ cancel_reservation.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/cancel_reservation.sql
+OK cancel_reservation.sql
+
+═══ make_reservation.sql (2/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/make_reservation.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[PARSE_SYNTAX_ERROR] Syntax error at or near end of input: missing 'END'. SQLSTATE: 42601 (line 15, pos 34)
+
+== SQL ==
+CREATE OR REPLACE PROCEDURE `space`.`hotel`.make_reservation(
+  p_traveler_id STRING,
+  p_hotel_id STRING,
+  p_room_type_id STRING,
+  p_check_in STRING,
+  p_check_out STRING,
+  p_num_guests STRING
+)
+LANGUAGE SQL
+SQL SECURITY INVOKER
+BEGIN
+  DECLARE v_reservation_id STRING;
+  DECLARE v_total_cost DOUBLE;
+  DECLARE v_price_per_night DOUBLE;
+  DECLARE v_price_modifier DOUBLE;
+----------------------------------^^^
+  ✗ make_reservation.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[PARSE_SYNTAX_ERROR] Syntax error at or near end of input: missing 'END'. SQLSTATE: 42601 (line 15, pos 34)
+
+== SQL ==
+CREATE OR REPLACE PROCEDURE `space`.`hotel`.make_reservation(
+  p_traveler_id STRING,
+  p_hotel_id STRING,
+  p_room_type_id STRING,
+  p_check_in STRING,
+  p_check_out STRING,
+  p_num_guests STRING
+)
+LANGUAGE SQL
+SQL SECURITY INVOKER
+BEGIN
+  DECLARE v_reservation_id STRING;
+  DECLARE v_total_cost DOUBLE;
+  DECLARE v_price_per_night DOUBLE;
+  DECLARE v_price_modifier DOUBLE;
+----------------------------------^^^
+Aborting after make_reservation.sql failed
+=== create_all_procedures started 2026-06-16T21:03:32.805742 ===
+
+═══ cancel_reservation.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/cancel_reservation.sql
+OK cancel_reservation.sql
+
+═══ make_reservation.sql (2/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/make_reservation.sql
+OK make_reservation.sql
+
+═══ modify_reservation.sql (3/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/modify_reservation.sql
+OK modify_reservation.sql
+=== create_all_procedures completed ===
+=== create_all_procedures started 2026-06-16T21:05:55.611625 ===
+
+═══ cancel_reservation.sql (1/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/cancel_reservation.sql
+OK cancel_reservation.sql
+
+═══ make_reservation.sql (2/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/make_reservation.sql
+OK make_reservation.sql
+
+═══ modify_reservation.sql (3/3) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/modify_reservation.sql
+OK modify_reservation.sql
+=== create_all_procedures completed ===
+=== create_all_procedures started 2026-06-17T12:48:09.696651 ===
+
+═══ add_delivery_location.sql (1/4) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/add_delivery_location.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[PARSE_SYNTAX_ERROR] Syntax error at or near end of input: missing 'END'. SQLSTATE: 42601 (line 17, pos 9)
+
+== SQL ==
+CREATE OR REPLACE PROCEDURE `space`.`space_pizza`.add_delivery_location(
+  p_location_id STRING,
+  p_customer_id STRING,
+  p_location_label STRING,
+  p_location_type STRING,
+  p_vessel_or_planet_name STRING,
+  p_dock_bay_or_surface_coords STRING,
+  p_quadrant STRING,
+  p_warp_zone STRING,
+  p_is_default STRING
+)
+BEGIN
+  IF CAST(p_is_default AS BOOLEAN) = true THEN
+    UPDATE `space`.`space_pizza`.delivery_locations
+    SET is_default = false
+    WHERE customer_id = p_customer_id;
+  END IF;
+---------^^^
+  ✗ add_delivery_location.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[PARSE_SYNTAX_ERROR] Syntax error at or near end of input: missing 'END'. SQLSTATE: 42601 (line 17, pos 9)
+
+== SQL ==
+CREATE OR REPLACE PROCEDURE `space`.`space_pizza`.add_delivery_location(
+  p_location_id STRING,
+  p_customer_id STRING,
+  p_location_label STRING,
+  p_location_type STRING,
+  p_vessel_or_planet_name STRING,
+  p_dock_bay_or_surface_coords STRING,
+  p_quadrant STRING,
+  p_warp_zone STRING,
+  p_is_default STRING
+)
+BEGIN
+  IF CAST(p_is_default AS BOOLEAN) = true THEN
+    UPDATE `space`.`space_pizza`.delivery_locations
+    SET is_default = false
+    WHERE customer_id = p_customer_id;
+  END IF;
+---------^^^
+Aborting after add_delivery_location.sql failed
+=== create_all_procedures started 2026-06-17T12:48:34.752434 ===
+
+═══ add_delivery_location.sql (1/4) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/add_delivery_location.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[PARSE_SYNTAX_ERROR] Syntax error at or near end of input: missing 'END'. SQLSTATE: 42601 (line 15, pos 69)
+
+== SQL ==
+CREATE OR REPLACE PROCEDURE `space`.`space_pizza`.add_delivery_location(
+  p_location_id STRING,
+  p_customer_id STRING,
+  p_location_label STRING,
+  p_location_type STRING,
+  p_vessel_or_planet_name STRING,
+  p_dock_bay_or_surface_coords STRING,
+  p_quadrant STRING,
+  p_warp_zone STRING,
+  p_is_default STRING
+)
+LANGUAGE SQL
+SQL SECURITY INVOKER
+BEGIN
+  DECLARE v_is_default BOOLEAN DEFAULT CAST(p_is_default AS BOOLEAN);
+---------------------------------------------------------------------^^^
+  ✗ add_delivery_location.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[PARSE_SYNTAX_ERROR] Syntax error at or near end of input: missing 'END'. SQLSTATE: 42601 (line 15, pos 69)
+
+== SQL ==
+CREATE OR REPLACE PROCEDURE `space`.`space_pizza`.add_delivery_location(
+  p_location_id STRING,
+  p_customer_id STRING,
+  p_location_label STRING,
+  p_location_type STRING,
+  p_vessel_or_planet_name STRING,
+  p_dock_bay_or_surface_coords STRING,
+  p_quadrant STRING,
+  p_warp_zone STRING,
+  p_is_default STRING
+)
+LANGUAGE SQL
+SQL SECURITY INVOKER
+BEGIN
+  DECLARE v_is_default BOOLEAN DEFAULT CAST(p_is_default AS BOOLEAN);
+---------------------------------------------------------------------^^^
+Aborting after add_delivery_location.sql failed
+=== create_all_procedures started 2026-06-17T13:25:48.584324 ===
+
+═══ place_order.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/place_order.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[MISSING_CLAUSES_FOR_OPERATION] Missing clause SQL SECURITY for operation CREATE PROCEDURE. Please add the required clauses. SQLSTATE: 42601
+== SQL (line 2, position 1) ==
+LANGUAGE SQL
+^^^^^^^^^^^^
+  ✗ place_order.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[MISSING_CLAUSES_FOR_OPERATION] Missing clause SQL SECURITY for operation CREATE PROCEDURE. Please add the required clauses. SQLSTATE: 42601
+== SQL (line 2, position 1) ==
+LANGUAGE SQL
+^^^^^^^^^^^^
+Aborting after place_order.sql failed
+=== create_all_procedures started 2026-06-17T13:25:56.184635 ===
+
+═══ place_order.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/place_order.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[MISSING_CLAUSES_FOR_OPERATION] Missing clause SQL SECURITY for operation CREATE PROCEDURE. Please add the required clauses. SQLSTATE: 42601
+== SQL (line 2, position 1) ==
+LANGUAGE SQL
+^^^^^^^^^^^^
+  ✗ place_order.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[MISSING_CLAUSES_FOR_OPERATION] Missing clause SQL SECURITY for operation CREATE PROCEDURE. Please add the required clauses. SQLSTATE: 42601
+== SQL (line 2, position 1) ==
+LANGUAGE SQL
+^^^^^^^^^^^^
+Aborting after place_order.sql failed
+=== create_all_procedures started 2026-06-17T13:26:13.794031 ===
+
+═══ place_order.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/place_order.sql
+OK place_order.sql
+
+═══ register_customer.sql (2/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/register_customer.sql
+OK register_customer.sql
+=== create_all_procedures completed ===
+=== create_all_procedures started 2026-06-17T13:26:27.851382 ===
+
+═══ place_order.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/place_order.sql
+OK place_order.sql
+
+═══ register_customer.sql (2/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/register_customer.sql
+OK register_customer.sql
+=== create_all_procedures completed ===
+=== create_all_procedures started 2026-06-17T13:47:49.198130 ===
+
+═══ get_or_register_customer.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/proc/get_or_register_customer.sql
+OK get_or_register_customer.sql
+
+═══ place_order.sql (2/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/proc/place_order.sql
+OK place_order.sql
+=== create_all_procedures completed ===
+=== create_all_procedures started 2026-06-17T13:47:59.096087 ===
+
+═══ get_or_register_customer.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/proc/get_or_register_customer.sql
+OK get_or_register_customer.sql
+
+═══ place_order.sql (2/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/galactic-delivery/gen/proc/place_order.sql
+OK place_order.sql
+=== create_all_procedures completed ===
+=== create_all_procedures started 2026-06-17T14:45:03.594623 ===
+
+═══ place_order.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/place_order.sql
+OK place_order.sql
+
+═══ register_customer.sql (2/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/register_customer.sql
+OK register_customer.sql
+=== create_all_procedures completed ===
+=== create_all_procedures started 2026-06-17T14:45:14.575472 ===
+
+═══ place_order.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/place_order.sql
+OK place_order.sql
+
+═══ register_customer.sql (2/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/projects/space-pizza/gen/proc/register_customer.sql
+OK register_customer.sql
+=== create_all_procedures completed ===
+=== create_all_procedures started 2026-06-18T00:27:52.333941 ===
+
+═══ place_order.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/place_order.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[MISSING_CLAUSES_FOR_OPERATION] Missing clause SQL SECURITY for operation CREATE PROCEDURE. Please add the required clauses. SQLSTATE: 42601
+== SQL (line 2, position 1) ==
+LANGUAGE SQL
+^^^^^^^^^^^^
+  ✗ place_order.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[MISSING_CLAUSES_FOR_OPERATION] Missing clause SQL SECURITY for operation CREATE PROCEDURE. Please add the required clauses. SQLSTATE: 42601
+== SQL (line 2, position 1) ==
+LANGUAGE SQL
+^^^^^^^^^^^^
+Aborting after place_order.sql failed
+=== create_all_procedures started 2026-06-18T00:28:00.364428 ===
+
+═══ place_order.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/place_order.sql
+stderr: Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[MISSING_CLAUSES_FOR_OPERATION] Missing clause SQL SECURITY for operation CREATE PROCEDURE. Please add the required clauses. SQLSTATE: 42601
+== SQL (line 2, position 1) ==
+LANGUAGE SQL
+^^^^^^^^^^^^
+  ✗ place_order.sql (exit 1): Traceback (most recent call last):
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/run_sql.py", line 42, in <module>
+    _wait_for_statement(w, wh_id, sql)
+  File "/Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/py/csv_to_delta.py", line 47, in _wait_for_statement
+    raise RuntimeError(f"Statement {state}: {msg}")
+RuntimeError: Statement FAILED: 
+[MISSING_CLAUSES_FOR_OPERATION] Missing clause SQL SECURITY for operation CREATE PROCEDURE. Please add the required clauses. SQLSTATE: 42601
+== SQL (line 2, position 1) ==
+LANGUAGE SQL
+^^^^^^^^^^^^
+Aborting after place_order.sql failed
+=== create_all_procedures started 2026-06-18T00:28:14.663184 ===
+
+═══ place_order.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/place_order.sql
+OK place_order.sql
+
+═══ register_customer.sql (2/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/register_customer.sql
+OK register_customer.sql
+=== create_all_procedures completed ===
+=== create_all_procedures started 2026-06-18T00:28:24.555749 ===
+
+═══ place_order.sql (1/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/place_order.sql
+OK place_order.sql
+
+═══ register_customer.sql (2/2) ═══
+Running: /opt/homebrew/opt/python@3.11/bin/python3.11 data/py/run_sql.py /Users/mehdi.lamrani/code/code/agent-forge/brickforge/data/gen/proc/register_customer.sql
+OK register_customer.sql
+=== create_all_procedures completed ===

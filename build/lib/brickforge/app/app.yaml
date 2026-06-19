@@ -1,0 +1,6 @@
+command: ["sh", "-c", "npm install && npm run build:client && npm run start"]
+runtime: nodejs20
+
+env:
+  - name: DATABRICKS_SERVING_ENDPOINT
+    valueFrom: serving-endpoint

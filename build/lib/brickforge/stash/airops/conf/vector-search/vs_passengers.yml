@@ -1,0 +1,11 @@
+vector_search:
+  display_name: "passenger-rights-vs"
+  description: "Vector search over EU passenger rights PDFs"
+  endpoint_name: "agent-forge-vs"
+  embedding_model: "databricks-bge-large-en"
+  chunk_size: 1000
+  chunk_overlap: 200
+
+source:
+  type: "pdf"
+  path: "{volume_path}"

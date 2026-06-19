@@ -74,10 +74,16 @@ This schema is where all your tables, functions, and procedures land.
 
 ## Next steps
 
-With workspace, warehouse, and schema configured, you can:
+### Fastest path: use Mage
+
+Click the **Mage** tab. Describe what you want. Mage handles the rest -- data model, generation, prompts, deploy. See [Mage](mage.md).
+
+### Manual path: Setup Panel
+
+With workspace, warehouse, and schema configured, work through the [setup blocks](setup-blocks.md) top to bottom:
 
 - [Generate synthetic data](data-generation.md) with the AI wizard
 - [Configure agent tools](agent-tools.md) (Genie, KA, APIs)
 - [Deploy your agent](deploy.md) to Databricks Apps
 
-Work through the [setup blocks](setup-blocks.md) top to bottom. Each block follows the same pattern: choose an approach, configure, execute, done.
+Each block follows the same pattern: choose an approach, configure, execute, done.

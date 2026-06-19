@@ -5,6 +5,7 @@ import { Response } from './elements/response';
 import { MessageContent } from './elements/message';
 import { KnowledgeBaseCard } from './elements/knowledge-base-card';
 import { ChartCard } from './elements/chart-card';
+import { DynamicCard } from './elements/dynamic-card';
 import { domainCardRenderers } from '@/domain';
 import { parseResponseBlocks, hasResponseBlocks } from '@/lib/response-blocks';
 import {
@@ -251,6 +252,9 @@ const PurePreviewMessage = ({
                           }
                           if (seg.type === 'chart') {
                             return <ChartCard key={i} data={seg.parsed} />;
+                          }
+                          if (seg.type === 'card') {
+                            return <DynamicCard key={i} {...seg.parsed} />;
                           }
                           {/* Domain card registry -- renders any card type registered by the loaded domain */}
                           const DomainCard = domainCardRenderers[seg.type];

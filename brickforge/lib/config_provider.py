@@ -54,7 +54,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "features": {
         "MEMORY": {"enabled": False},
-        "CHART": {"enabled": True},
+        "CHART": {"enabled": False},
         "VOICE": {"enabled": False},
         "VISION": {"enabled": False},
         "PERSONAS": {"enabled": False},
@@ -69,6 +69,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "use_demo_data": True,
         "use_gen_data": False,
         "stash_dir": None,
+        "table_schemas": [],
     },
     "lakebase": {
         "instance_name": None,
@@ -86,6 +87,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "branding": {
         "logo_url": None,
         "brandfetch_api_key": None,
+    },
+    "mage": {
+        "enabled": False,
+        "mode": None,
+        "domain": "",
     },
 }
 
